@@ -1,0 +1,47 @@
+PS C:\temp\white_walker_3.13.1_ER1\white_walker_3.13.1_ER1> .\Run-WhiteWalkerTests.ps1
+========================================
+WhiteWalker v3.13.0 Test Suite
+========================================
+
+Using Pester version: 5.3.3
+
+Exception setting "Exit": "Cannot convert the "False" value of type "System.Management.Automation.SwitchParameter" to type "Pester.BoolOption"."
+At C:\temp\white_walker_3.13.1_ER1\white_walker_3.13.1_ER1\Run-WhiteWalkerTests.ps1:39 char:1
++ $config.Run.Exit = $CI
++ ~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], SetValueInvocationException
+    + FullyQualifiedErrorId : ExceptionWhenSetting
+
+
+Starting discovery in 1 files.
+Discovery found 58 tests in 193ms.
+Running tests.
+[-] WhiteWalker v3.13.0 - FlareGun Integration.Send-FlareEvent - WhatIf Mode.Should not send flare in WhatIf mode 52ms (50ms|2ms)
+ Expected Start-Process to be called 0 times exactly but was called 1 times
+ at Should -Invoke @__params__p, C:\Program Files\WindowsPowerShell\Modules\Pester\5.3.3\Pester.psm1:14596
+[-] WhiteWalker v3.13.0 - Core Functions (Existing).Wake from Sleep Detection.Should return false when wake event too old 33ms (31ms|2ms)
+ Expected $false, but got $true.
+ at $result | Should -Be $false, C:\temp\white_walker_3.13.1_ER1\white_walker_3.13.1_ER1\WW_Tests.ps1:637
+ at <ScriptBlock>, C:\temp\white_walker_3.13.1_ER1\white_walker_3.13.1_ER1\WW_Tests.ps1:637
+[-] WhiteWalker v3.13.0 - Core Functions (Existing).Configuration Values.Should have correct version number 9ms (8ms|2ms)
+ Expected strings to be the same, but they were different.
+ Expected length: 6
+ Actual length:   10
+ Strings differ at index 5.
+ Expected: '3.13.0'
+ But was:  '3.13.1_ER1'
+            -----^
+ at $ver | Should -Be "3.13.0", C:\temp\white_walker_3.13.1_ER1\white_walker_3.13.1_ER1\WW_Tests.ps1:643
+ at <ScriptBlock>, C:\temp\white_walker_3.13.1_ER1\white_walker_3.13.1_ER1\WW_Tests.ps1:643
+Tests completed in 2.64s
+Tests Passed: 55, Failed: 3, Skipped: 0 NotRun: 0
+
+========================================
+Test Summary
+========================================
+Total:
+Passed:
+Failed:
+Skipped:
+
+ALL TESTS PASSED!
