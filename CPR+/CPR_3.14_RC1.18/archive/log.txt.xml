@@ -1,0 +1,496 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="149" errors="0" failures="17" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-04-08" time="16:51:32">
+  <environment clr-version="4.0.30319.42000" user-domain="MS" cwd="C:\ProgramData\WhiteWalker" platform="Microsoft Windows 11 Enterprise|C:\WINDOWS|\Device\Harddisk0\Partition3" machine-name="LHTU05CD1503KF5" nunit-version="2.5.8.0" os-version="10.0.22631" user="shorto39" />
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Failure" success="False" time="12.6222" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1" executed="True" result="Failure" success="False" time="12.6222" asserts="0" description="C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Get-NwCheckResult - RC1 Primary Preflight" executed="True" result="Success" success="True" time="0.2934" asserts="0" description="Get-NwCheckResult - RC1 Primary Preflight">
+            <results>
+              <test-suite type="TestFixture" name="Get-NwCheckResult - RC1 Primary Preflight.HTTP 200 response (clean internet)" executed="True" result="Success" success="True" time="0.0245" asserts="0" description="Get-NwCheckResult - RC1 Primary Preflight.HTTP 200 response (clean internet)">
+                <results>
+                  <test-case description="Should return Status=online for HTTP 200" name="Get-NwCheckResult - RC1 Primary Preflight.HTTP 200 response (clean internet).Should return Status=online for HTTP 200" time="0.0167" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-NwCheckResult - RC1 Primary Preflight.HTTP 404 with correct gateway body signature" executed="True" result="Success" success="True" time="0.0726" asserts="0" description="Get-NwCheckResult - RC1 Primary Preflight.HTTP 404 with correct gateway body signature">
+                <results>
+                  <test-case description="Should return Status=online when body contains gateway signature" name="Get-NwCheckResult - RC1 Primary Preflight.HTTP 404 with correct gateway body signature.Should return Status=online when body contains gateway signature" time="0.0109" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return Status=unreachable when body does NOT match gateway signature" name="Get-NwCheckResult - RC1 Primary Preflight.HTTP 404 with correct gateway body signature.Should return Status=unreachable when body does NOT match gateway signature" time="0.0094" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return Status=unreachable when body is empty" name="Get-NwCheckResult - RC1 Primary Preflight.HTTP 404 with correct gateway body signature.Should return Status=unreachable when body is empty" time="0.0108" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return Status=unreachable when body is a captive portal 404 page" name="Get-NwCheckResult - RC1 Primary Preflight.HTTP 404 with correct gateway body signature.Should return Status=unreachable when body is a captive portal 404 page" time="0.0085" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-NwCheckResult - RC1 Primary Preflight.Redirect responses (captive/ISE)" executed="True" result="Success" success="True" time="0.2104" asserts="0" description="Get-NwCheckResult - RC1 Primary Preflight.Redirect responses (captive/ISE)">
+                <results>
+                  <test-case description="Should return Status=redirect with location for 302" name="Get-NwCheckResult - RC1 Primary Preflight.Redirect responses (captive/ISE).Should return Status=redirect with location for 302" time="0.0126" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return Status=redirect with location for 301" name="Get-NwCheckResult - RC1 Primary Preflight.Redirect responses (captive/ISE).Should return Status=redirect with location for 301" time="0.1166" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-NwCheckResult - RC1 Primary Preflight.Unreachable / exception" executed="True" result="Success" success="True" time="0.2434" asserts="0" description="Get-NwCheckResult - RC1 Primary Preflight.Unreachable / exception">
+                <results>
+                  <test-case description="Should return Status=unreachable on connection failure" name="Get-NwCheckResult - RC1 Primary Preflight.Unreachable / exception.Should return Status=unreachable on connection failure" time="0.0134" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return Status=unreachable on timeout" name="Get-NwCheckResult - RC1 Primary Preflight.Unreachable / exception.Should return Status=unreachable on timeout" time="0.0105" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-NwCheckResult - RC1 Primary Preflight.Return object contract" executed="True" result="Success" success="True" time="0.2859" asserts="0" description="Get-NwCheckResult - RC1 Primary Preflight.Return object contract">
+                <results>
+                  <test-case description="Should always return object with Status property" name="Get-NwCheckResult - RC1 Primary Preflight.Return object contract.Should always return object with Status property" time="0.0204" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Status should only be one of three known values" name="Get-NwCheckResult - RC1 Primary Preflight.Return object contract.Status should only be one of three known values" time="0.013" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Invoke-LogRotation - Size-Based Log Rotation" executed="True" result="Success" success="True" time="0.7373" asserts="0" description="Invoke-LogRotation - Size-Based Log Rotation">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-LogRotation - Size-Based Log Rotation.No rotation needed" executed="True" result="Success" success="True" time="0.0706" asserts="0" description="Invoke-LogRotation - Size-Based Log Rotation.No rotation needed">
+                <results>
+                  <test-case description="Should not rotate when log file does not exist" name="Invoke-LogRotation - Size-Based Log Rotation.No rotation needed.Should not rotate when log file does not exist" time="0.0291" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should not rotate when log is under 1MB" name="Invoke-LogRotation - Size-Based Log Rotation.No rotation needed.Should not rotate when log is under 1MB" time="0.0311" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-LogRotation - Size-Based Log Rotation.Rotation triggered at 1MB" executed="True" result="Success" success="True" time="0.3978" asserts="0" description="Invoke-LogRotation - Size-Based Log Rotation.Rotation triggered at 1MB">
+                <results>
+                  <test-case description="Should trigger rotation when log exceeds 1MB" name="Invoke-LogRotation - Size-Based Log Rotation.Rotation triggered at 1MB.Should trigger rotation when log exceeds 1MB" time="0.122" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should drop oldest log (.5) before shifting" name="Invoke-LogRotation - Size-Based Log Rotation.Rotation triggered at 1MB.Should drop oldest log (.5) before shifting" time="0.1173" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should not throw when older rotation files are missing" name="Invoke-LogRotation - Size-Based Log Rotation.Rotation triggered at 1MB.Should not throw when older rotation files are missing" time="0.079" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-LogRotation - Size-Based Log Rotation.Rotation keeps last 5 files" executed="True" result="Success" success="True" time="0.4358" asserts="0" description="Invoke-LogRotation - Size-Based Log Rotation.Rotation keeps last 5 files">
+                <results>
+                  <test-case description="LogRotationKeep should be 5" name="Invoke-LogRotation - Size-Based Log Rotation.Rotation keeps last 5 files.LogRotationKeep should be 5" time="0.0131" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="LogRotationMaxBytes should be 1MB" name="Invoke-LogRotation - Size-Based Log Rotation.Rotation keeps last 5 files.LogRotationMaxBytes should be 1MB" time="0.0154" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Invoke-BlackholeAction - VPN Hairpin Prevention" executed="True" result="Failure" success="False" time="3.44" asserts="0" description="Invoke-BlackholeAction - VPN Hairpin Prevention">
+            <results>
+              <test-suite type="TestFixture" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature disabled (BlackholeEnabled = false)" executed="True" result="Success" success="True" time="0.1561" asserts="0" description="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature disabled (BlackholeEnabled = false)">
+                <results>
+                  <test-case description="Should be a complete no-op when disabled - on_prem tag" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature disabled (BlackholeEnabled = false).Should be a complete no-op when disabled - on_prem tag" time="0.0449" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should be a complete no-op when disabled - off_prem_no_vpn tag" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature disabled (BlackholeEnabled = false).Should be a complete no-op when disabled - off_prem_no_vpn tag" time="0.0387" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should be a complete no-op when disabled - startup tag" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature disabled (BlackholeEnabled = false).Should be a complete no-op when disabled - startup tag" time="0.0328" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should be a complete no-op when disabled - no_net_transient" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature disabled (BlackholeEnabled = false).Should be a complete no-op when disabled - no_net_transient" time="0.03" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add" executed="True" result="Failure" success="False" time="0.7635" asserts="0" description="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add">
+                <results>
+                  <test-case description="Should fire -add for on-prem tag: on_prem" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should fire -add for on-prem tag: on_prem" time="0.0622" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Start-Process to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Start-Process -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should create flag file for on-prem tag: on_prem" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should create flag file for on-prem tag: on_prem" time="0.0581" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Set-Content to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Set-Content -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should fire -add for on-prem tag: ise_employee_posture_redirect" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should fire -add for on-prem tag: ise_employee_posture_redirect" time="0.0578" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Start-Process to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Start-Process -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should create flag file for on-prem tag: ise_employee_posture_redirect" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should create flag file for on-prem tag: ise_employee_posture_redirect" time="0.0591" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Set-Content to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Set-Content -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should fire -add for on-prem tag: ise_posture_compliant" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should fire -add for on-prem tag: ise_posture_compliant" time="0.0621" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Start-Process to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Start-Process -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should create flag file for on-prem tag: ise_posture_compliant" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should create flag file for on-prem tag: ise_posture_compliant" time="0.0574" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Set-Content to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Set-Content -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should fire -add for on-prem tag: ise_posture_failed" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should fire -add for on-prem tag: ise_posture_failed" time="0.0692" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Start-Process to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Start-Process -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should create flag file for on-prem tag: ise_posture_failed" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should create flag file for on-prem tag: ise_posture_failed" time="0.0556" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Set-Content to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Set-Content -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should fire -add for on-prem tag: ise_posture_service_unavailable" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should fire -add for on-prem tag: ise_posture_service_unavailable" time="0.0585" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Start-Process to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Start-Process -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:289</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should create flag file for on-prem tag: ise_posture_service_unavailable" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - on-prem tags trigger -add.Should create flag file for on-prem tag: ise_posture_service_unavailable" time="0.0576" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Set-Content to be called at least 1 times but was called 0 times</message>
+                      <stack-trace>at Should -Invoke Set-Content -ParameterFilter {, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:296</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists" executed="True" result="Success" success="True" time="2.1871" asserts="0" description="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists">
+                <results>
+                  <test-case description="Should fire -rm for non-on-prem tag: user_tun" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: user_tun" time="0.0649" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: user_tun" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: user_tun" time="0.0606" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: mgmt_tun" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: mgmt_tun" time="0.0678" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: mgmt_tun" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: mgmt_tun" time="0.0643" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: off_prem_no_vpn" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: off_prem_no_vpn" time="0.0703" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: off_prem_no_vpn" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: off_prem_no_vpn" time="0.0671" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: no_net_transient" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: no_net_transient" time="0.0681" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: no_net_transient" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: no_net_transient" time="0.061" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: no_network_connection" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: no_network_connection" time="0.0607" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: no_network_connection" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: no_network_connection" time="0.0632" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: waiting_user_response" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: waiting_user_response" time="0.0609" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: waiting_user_response" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: waiting_user_response" time="0.0665" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: startup" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: startup" time="0.0635" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: startup" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: startup" time="0.0631" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: captive_portal_non_ise" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: captive_portal_non_ise" time="0.0604" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: captive_portal_non_ise" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: captive_portal_non_ise" time="0.0652" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: captive_portal_ise_guest" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: captive_portal_ise_guest" time="0.0609" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: captive_portal_ise_guest" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: captive_portal_ise_guest" time="0.0629" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: unknown_captive_portal" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: unknown_captive_portal" time="0.0639" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: unknown_captive_portal" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: unknown_captive_portal" time="0.0613" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm for non-on-prem tag: captive_portal_browser" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should fire -rm for non-on-prem tag: captive_portal_browser" time="0.066" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should remove flag file for non-on-prem tag: captive_portal_browser" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - non-on-prem tags trigger -rm when flag exists.Should remove flag file for non-on-prem tag: captive_portal_browser" time="0.0636" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - -rm fires even when flag does NOT exist" executed="True" result="Success" success="True" time="2.3638" asserts="0" description="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - -rm fires even when flag does NOT exist">
+                <results>
+                  <test-case description="Should STILL fire -rm even when flag does not exist" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - -rm fires even when flag does NOT exist.Should STILL fire -rm even when flag does not exist" time="0.0594" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm on startup tag even with no flag" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - -rm fires even when flag does NOT exist.Should fire -rm on startup tag even with no flag" time="0.0538" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should fire -rm on no_net_transient even with no flag" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Feature enabled - -rm fires even when flag does NOT exist.Should fire -rm on no_net_transient even with no flag" time="0.0538" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Script file missing" executed="True" result="Success" success="True" time="2.4317" asserts="0" description="Invoke-BlackholeAction - VPN Hairpin Prevention.Script file missing">
+                <results>
+                  <test-case description="Should not throw when script is missing on -add" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Script file missing.Should not throw when script is missing on -add" time="0.0305" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should not call Start-Process when script is missing" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Script file missing.Should not call Start-Process when script is missing" time="0.0295" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-BlackholeAction - VPN Hairpin Prevention.WhatIf mode" executed="True" result="Failure" success="False" time="2.5911" asserts="0" description="Invoke-BlackholeAction - VPN Hairpin Prevention.WhatIf mode">
+                <results>
+                  <test-case description="Should NOT call Start-Process in WhatIf mode for -add" name="Invoke-BlackholeAction - VPN Hairpin Prevention.WhatIf mode.Should NOT call Start-Process in WhatIf mode for -add" time="0.0717" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Start-Process to be called 0 times exactly but was called 1 times</message>
+                      <stack-trace>at Should -Invoke Start-Process -Times 0, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:404
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:404</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should NOT call Start-Process in WhatIf mode for -rm" name="Invoke-BlackholeAction - VPN Hairpin Prevention.WhatIf mode.Should NOT call Start-Process in WhatIf mode for -rm" time="0.0794" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected Start-Process to be called 0 times exactly but was called 1 times</message>
+                      <stack-trace>at Should -Invoke Start-Process -Times 0, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:409
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:409</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Startup safety -rm" executed="True" result="Success" success="True" time="2.6932" asserts="0" description="Invoke-BlackholeAction - VPN Hairpin Prevention.Startup safety -rm">
+                <results>
+                  <test-case description="startup tag should NOT be in the on-prem set" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Startup safety -rm.startup tag should NOT be in the on-prem set" time="0.0166" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="startup tag should route to -rm path (not -add)" name="Invoke-BlackholeAction - VPN Hairpin Prevention.Startup safety -rm.startup tag should route to -rm path (not -add)" time="0.0735" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Test-CaptivePortalCleared - Uses Get-NwCheckResult" executed="True" result="Success" success="True" time="3.6151" asserts="0" description="Test-CaptivePortalCleared - Uses Get-NwCheckResult">
+            <results>
+              <test-case description="Should return true when Get-NwCheckResult returns online" name="Test-CaptivePortalCleared - Uses Get-NwCheckResult.Should return true when Get-NwCheckResult returns online" time="0.0227" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should return false when Get-NwCheckResult returns redirect" name="Test-CaptivePortalCleared - Uses Get-NwCheckResult.Should return false when Get-NwCheckResult returns redirect" time="0.024" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should return false when Get-NwCheckResult returns unreachable" name="Test-CaptivePortalCleared - Uses Get-NwCheckResult.Should return false when Get-NwCheckResult returns unreachable" time="0.0213" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should use legacy check when UseNewPreflight is false" name="Test-CaptivePortalCleared - Uses Get-NwCheckResult.Should use legacy check when UseNewPreflight is false" time="0.0973" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Get-VpnTunnelFlavor - Tunnel Type Detection" executed="True" result="Success" success="True" time="3.8236" asserts="0" description="Get-VpnTunnelFlavor - Tunnel Type Detection">
+            <results>
+              <test-suite type="TestFixture" name="Get-VpnTunnelFlavor - Tunnel Type Detection.Management tunnel detection" executed="True" result="Success" success="True" time="0.0449" asserts="0" description="Get-VpnTunnelFlavor - Tunnel Type Detection.Management tunnel detection">
+                <results>
+                  <test-case description="Should return mgmt_tun when Management Connection State: Connected" name="Get-VpnTunnelFlavor - Tunnel Type Detection.Management tunnel detection.Should return mgmt_tun when Management Connection State: Connected" time="0.0164" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should detect mgmt_tun before user_tun when both patterns could match" name="Get-VpnTunnelFlavor - Tunnel Type Detection.Management tunnel detection.Should detect mgmt_tun before user_tun when both patterns could match" time="0.0194" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-VpnTunnelFlavor - Tunnel Type Detection.User tunnel detection" executed="True" result="Success" success="True" time="0.0895" asserts="0" description="Get-VpnTunnelFlavor - Tunnel Type Detection.User tunnel detection">
+                <results>
+                  <test-case description="Should return user_tun when Management Connection State: Disconnected (user tunnel active)" name="Get-VpnTunnelFlavor - Tunnel Type Detection.User tunnel detection.Should return user_tun when Management Connection State: Disconnected (user tunnel active)" time="0.0165" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT match mgmt pattern for user tunnel output" name="Get-VpnTunnelFlavor - Tunnel Type Detection.User tunnel detection.Should NOT match mgmt pattern for user tunnel output" time="0.0169" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-VpnTunnelFlavor - Tunnel Type Detection.No VPN / disconnected" executed="True" result="Success" success="True" time="0.1207" asserts="0" description="Get-VpnTunnelFlavor - Tunnel Type Detection.No VPN / disconnected">
+                <results>
+                  <test-case description="Should detect no_vpn from Management Connection State: Disconnected alone" name="Get-VpnTunnelFlavor - Tunnel Type Detection.No VPN / disconnected.Should detect no_vpn from Management Connection State: Disconnected alone" time="0.0221" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-VpnTunnelFlavor - Tunnel Type Detection.Fallback detection (no Management Connection State line)" executed="True" result="Success" success="True" time="0.153" asserts="0" description="Get-VpnTunnelFlavor - Tunnel Type Detection.Fallback detection (no Management Connection State line)">
+                <results>
+                  <test-case description="Should use fallback when no Management Connection State line present" name="Get-VpnTunnelFlavor - Tunnel Type Detection.Fallback detection (no Management Connection State line).Should use fallback when no Management Connection State line present" time="0.0229" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-VpnTunnelFlavor - Tunnel Type Detection.Critical: mgmt_tun not misidentified as on_prem" executed="True" result="Success" success="True" time="0.1994" asserts="0" description="Get-VpnTunnelFlavor - Tunnel Type Detection.Critical: mgmt_tun not misidentified as on_prem">
+                <results>
+                  <test-case description="mgmt_tun flavor should NOT fall through to DC check in online branch" name="Get-VpnTunnelFlavor - Tunnel Type Detection.Critical: mgmt_tun not misidentified as on_prem.mgmt_tun flavor should NOT fall through to DC check in online branch" time="0.0178" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="no_vpn flavor should fall through to DC check" name="Get-VpnTunnelFlavor - Tunnel Type Detection.Critical: mgmt_tun not misidentified as on_prem.no_vpn flavor should fall through to DC check" time="0.0179" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="APIPA Early Exit - No Real Network Connection" executed="True" result="Success" success="True" time="3.8895" asserts="0" description="APIPA Early Exit - No Real Network Connection">
+            <results>
+              <test-suite type="TestFixture" name="APIPA Early Exit - No Real Network Connection.APIPA detection logic" executed="True" result="Success" success="True" time="0.0578" asserts="0" description="APIPA Early Exit - No Real Network Connection.APIPA detection logic">
+                <results>
+                  <test-case description="Should detect 169.254.x.x address" name="APIPA Early Exit - No Real Network Connection.APIPA detection logic.Should detect 169.254.x.x address" time="0.0075" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT flag valid corp IP as APIPA" name="APIPA Early Exit - No Real Network Connection.APIPA detection logic.Should NOT flag valid corp IP as APIPA" time="0.0086" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT flag valid private IP as APIPA" name="APIPA Early Exit - No Real Network Connection.APIPA detection logic.Should NOT flag valid private IP as APIPA" time="0.0072" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="APIPA + N/A gateway = no network" name="APIPA Early Exit - No Real Network Connection.APIPA detection logic.APIPA + N/A gateway = no network" time="0.0071" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="APIPA + valid gateway = should NOT trigger early exit" name="APIPA Early Exit - No Real Network Connection.APIPA detection logic.APIPA + valid gateway = should NOT trigger early exit" time="0.0088" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Valid IP + N/A gateway = should NOT trigger early exit" name="APIPA Early Exit - No Real Network Connection.APIPA detection logic.Valid IP + N/A gateway = should NOT trigger early exit" time="0.0078" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="WLANi03 - On-Prem Corp SSID Awareness" executed="True" result="Success" success="True" time="4.0021" asserts="0" description="WLANi03 - On-Prem Corp SSID Awareness">
+            <results>
+              <test-suite type="TestFixture" name="WLANi03 - On-Prem Corp SSID Awareness.SSID identification" executed="True" result="Success" success="True" time="0.0351" asserts="0" description="WLANi03 - On-Prem Corp SSID Awareness.SSID identification">
+                <results>
+                  <test-case description="Should match WLANi03 exactly" name="WLANi03 - On-Prem Corp SSID Awareness.SSID identification.Should match WLANi03 exactly" time="0.0074" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT match partial SSID" name="WLANi03 - On-Prem Corp SSID Awareness.SSID identification.Should NOT match partial SSID" time="0.0079" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="PowerShell -eq is case-insensitive so wlani03 matches WLANi03 (by design)" name="WLANi03 - On-Prem Corp SSID Awareness.SSID identification.PowerShell -eq is case-insensitive so wlani03 matches WLANi03 (by design)" time="0.0094" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="WLANi03 - On-Prem Corp SSID Awareness.IP wait trigger conditions" executed="True" result="Success" success="True" time="0.0883" asserts="0" description="WLANi03 - On-Prem Corp SSID Awareness.IP wait trigger conditions">
+                <results>
+                  <test-case description="Should trigger wait when SSID is WLANi03 and IP is N/A" name="WLANi03 - On-Prem Corp SSID Awareness.IP wait trigger conditions.Should trigger wait when SSID is WLANi03 and IP is N/A" time="0.0075" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should trigger wait when SSID is WLANi03 and IP is APIPA" name="WLANi03 - On-Prem Corp SSID Awareness.IP wait trigger conditions.Should trigger wait when SSID is WLANi03 and IP is APIPA" time="0.0093" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT trigger wait when SSID is WLANi03 but IP is valid" name="WLANi03 - On-Prem Corp SSID Awareness.IP wait trigger conditions.Should NOT trigger wait when SSID is WLANi03 but IP is valid" time="0.0078" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT trigger wait when SSID is not WLANi03 even with APIPA" name="WLANi03 - On-Prem Corp SSID Awareness.IP wait trigger conditions.Should NOT trigger wait when SSID is not WLANi03 even with APIPA" time="0.0093" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="WLANi03 wait should allow up to 6 retries (18s at 3s each)" name="WLANi03 - On-Prem Corp SSID Awareness.IP wait trigger conditions.WLANi03 wait should allow up to 6 retries (18s at 3s each)" time="0.0075" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="WLANi03 - On-Prem Corp SSID Awareness.Normal preflight still runs after WLANi03 IP wait" executed="True" result="Success" success="True" time="0.1039" asserts="0" description="WLANi03 - On-Prem Corp SSID Awareness.Normal preflight still runs after WLANi03 IP wait">
+                <results>
+                  <test-case description="WLANi03 path does NOT skip Get-NwCheckResult" name="WLANi03 - On-Prem Corp SSID Awareness.Normal preflight still runs after WLANi03 IP wait.WLANi03 path does NOT skip Get-NwCheckResult" time="0.0069" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="VPN Intermediate State - Force Disconnect Before Probing" executed="True" result="Success" success="True" time="4.0965" asserts="0" description="VPN Intermediate State - Force Disconnect Before Probing">
+            <results>
+              <test-suite type="TestFixture" name="VPN Intermediate State - Force Disconnect Before Probing.Intermediate state detection" executed="True" result="Success" success="True" time="0.0464" asserts="0" description="VPN Intermediate State - Force Disconnect Before Probing.Intermediate state detection">
+                <results>
+                  <test-case description="Should identify Connecting as intermediate" name="VPN Intermediate State - Force Disconnect Before Probing.Intermediate state detection.Should identify Connecting as intermediate" time="0.0073" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should identify Reconnecting as intermediate" name="VPN Intermediate State - Force Disconnect Before Probing.Intermediate state detection.Should identify Reconnecting as intermediate" time="0.0066" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should identify Unknown as intermediate" name="VPN Intermediate State - Force Disconnect Before Probing.Intermediate state detection.Should identify Unknown as intermediate" time="0.0096" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT flag Connected as intermediate" name="VPN Intermediate State - Force Disconnect Before Probing.Intermediate state detection.Should NOT flag Connected as intermediate" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT flag Disconnected as intermediate" name="VPN Intermediate State - Force Disconnect Before Probing.Intermediate state detection.Should NOT flag Disconnected as intermediate" time="0.0063" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="VPN Intermediate State - Force Disconnect Before Probing.Post-disconnect re-probe logic" executed="True" result="Success" success="True" time="0.0849" asserts="0" description="VPN Intermediate State - Force Disconnect Before Probing.Post-disconnect re-probe logic">
+                <results>
+                  <test-case description="Should re-probe nwcheck after disconnect before trying enroll.cisco.com" name="VPN Intermediate State - Force Disconnect Before Probing.Post-disconnect re-probe logic.Should re-probe nwcheck after disconnect before trying enroll.cisco.com" time="0.0123" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should skip enroll probe if nwcheck returns online after disconnect" name="VPN Intermediate State - Force Disconnect Before Probing.Post-disconnect re-probe logic.Should skip enroll probe if nwcheck returns online after disconnect" time="0.0073" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should proceed to enroll probe if nwcheck still unreachable after disconnect" name="VPN Intermediate State - Force Disconnect Before Probing.Post-disconnect re-probe logic.Should proceed to enroll probe if nwcheck still unreachable after disconnect" time="0.0094" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="RC1 Configuration Defaults" executed="True" result="Failure" success="False" time="4.1994" asserts="0" description="RC1 Configuration Defaults">
+            <results>
+              <test-case description="Should use gateway.optum.com as preflight URL" name="RC1 Configuration Defaults.Should use gateway.optum.com as preflight URL" time="0.0067" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should have UseNewPreflight set to true" name="RC1 Configuration Defaults.Should have UseNewPreflight set to true" time="0.0071" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should have BlackholeEnabled set to false by default" name="RC1 Configuration Defaults.Should have BlackholeEnabled set to false by default" time="0.0163" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected $false, but got $true.</message>
+                  <stack-trace>at $BlackholeEnabled | Should -Be $false, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:769
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:769</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="Should have BlackholeScriptPath set correctly" name="RC1 Configuration Defaults.Should have BlackholeScriptPath set correctly" time="0.007" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should have BlackholeFlagFile set correctly" name="RC1 Configuration Defaults.Should have BlackholeFlagFile set correctly" time="0.0065" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should have LogRotationMaxBytes set to 1MB" name="RC1 Configuration Defaults.Should have LogRotationMaxBytes set to 1MB" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should have LogRotationKeep set to 5" name="RC1 Configuration Defaults.Should have LogRotationKeep set to 5" time="0.0066" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should have initial_sleep set to 3 seconds" name="RC1 Configuration Defaults.Should have initial_sleep set to 3 seconds" time="0.0075" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should have version set to RC1.9" name="RC1 Configuration Defaults.Should have version set to RC1.9" time="0.0187" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected strings to be the same, but they were different.
+Expected length: 12
+Actual length:   13
+Strings differ at index 11.
+Expected: '3.14.0_RC1.9'
+But was:  '3.14.0_RC1.10'
+           -----------^</message>
+                  <stack-trace>at $ver | Should -Be "3.14.0_RC1.9", C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:793
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:793</stack-trace>
+                </failure>
+              </test-case>
+              <test-case description="Should have enroll.cisco.com as ISE redirect test URL" name="RC1 Configuration Defaults.Should have enroll.cisco.com as ISE redirect test URL" time="0.0081" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="DNS Chicken/Egg - Captive Portal No DNS Notification" executed="True" result="Success" success="True" time="4.558" asserts="0" description="DNS Chicken/Egg - Captive Portal No DNS Notification">
+            <results>
+              <test-suite type="TestFixture" name="DNS Chicken/Egg - Captive Portal No DNS Notification.Test-CaptivePortalCompatibility - DNS failure detection" executed="True" result="Success" success="True" time="0.1517" asserts="0" description="DNS Chicken/Egg - Captive Portal No DNS Notification.Test-CaptivePortalCompatibility - DNS failure detection">
+                <results>
+                  <test-case description="Should detect DNS_BLOCKED when host resolution fails" name="DNS Chicken/Egg - Captive Portal No DNS Notification.Test-CaptivePortalCompatibility - DNS failure detection.Should detect DNS_BLOCKED when host resolution fails" time="0.0838" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should set HasIssues=true on DNS_BLOCKED" name="DNS Chicken/Egg - Captive Portal No DNS Notification.Test-CaptivePortalCompatibility - DNS failure detection.Should set HasIssues=true on DNS_BLOCKED" time="0.0258" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should set AllowRetry=false for DNS_BLOCKED (retrying won't fix DNS)" name="DNS Chicken/Egg - Captive Portal No DNS Notification.Test-CaptivePortalCompatibility - DNS failure detection.Should set AllowRetry=false for DNS_BLOCKED (retrying won't fix DNS)" time="0.0162" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT set AllowRetry=false for clean portal" name="DNS Chicken/Egg - Captive Portal No DNS Notification.Test-CaptivePortalCompatibility - DNS failure detection.Should NOT set AllowRetry=false for clean portal" time="0.0152" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="DNS Chicken/Egg - Captive Portal No DNS Notification.DNS chicken/egg flag file" executed="True" result="Success" success="True" time="0.239" asserts="0" description="DNS Chicken/Egg - Captive Portal No DNS Notification.DNS chicken/egg flag file">
+                <results>
+                  <test-case description="Should write DNS_BLOCKED to flag file on detection" name="DNS Chicken/Egg - Captive Portal No DNS Notification.DNS chicken/egg flag file.Should write DNS_BLOCKED to flag file on detection" time="0.0306" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Flag file JSON should contain issue_type DNS_BLOCKED" name="DNS Chicken/Egg - Captive Portal No DNS Notification.DNS chicken/egg flag file.Flag file JSON should contain issue_type DNS_BLOCKED" time="0.016" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Flag file JSON should contain redirect_url" name="DNS Chicken/Egg - Captive Portal No DNS Notification.DNS chicken/egg flag file.Flag file JSON should contain redirect_url" time="0.0173" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="dns_chicken_egg_issue.flag should be in stale flag cleanup list" name="DNS Chicken/Egg - Captive Portal No DNS Notification.DNS chicken/egg flag file.dns_chicken_egg_issue.flag should be in stale flag cleanup list" time="0.0139" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="DNS Chicken/Egg - Captive Portal No DNS Notification.Flare events on DNS chicken/egg detection" executed="True" result="Success" success="True" time="0.3028" asserts="0" description="DNS Chicken/Egg - Captive Portal No DNS Notification.Flare events on DNS chicken/egg detection">
+                <results>
+                  <test-case description="captive_portal_dns_misconfiguration flare tag should be a valid string" name="DNS Chicken/Egg - Captive Portal No DNS Notification.Flare events on DNS chicken/egg detection.captive_portal_dns_misconfiguration flare tag should be a valid string" time="0.0277" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="captive_portal_browser flare should fire after DNS issue detected" name="DNS Chicken/Egg - Captive Portal No DNS Notification.Flare events on DNS chicken/egg detection.captive_portal_browser flare should fire after DNS issue detected" time="0.0263" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="DNS Chicken/Egg - Captive Portal No DNS Notification.User notification content" executed="True" result="Success" success="True" time="0.3497" asserts="0" description="DNS Chicken/Egg - Captive Portal No DNS Notification.User notification content">
+                <results>
+                  <test-case description="User message should explain the DNS chicken/egg problem clearly" name="DNS Chicken/Egg - Captive Portal No DNS Notification.User notification content.User message should explain the DNS chicken/egg problem clearly" time="0.0214" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="User message should NOT suggest retrying (AllowRetry=false)" name="DNS Chicken/Egg - Captive Portal No DNS Notification.User notification content.User message should NOT suggest retrying (AllowRetry=false)" time="0.0153" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Get-RedirectType - Redirect URL Classification" executed="True" result="Failure" success="False" time="4.729" asserts="0" description="Get-RedirectType - Redirect URL Classification">
+            <results>
+              <test-suite type="TestFixture" name="Get-RedirectType - Redirect URL Classification.ISE Employee (PSN) detection" executed="True" result="Failure" success="False" time="0.057" asserts="0" description="Get-RedirectType - Redirect URL Classification.ISE Employee (PSN) detection">
+                <results>
+                  <test-case description="Should classify isepsn URL as ISE_EMPLOYEE" name="Get-RedirectType - Redirect URL Classification.ISE Employee (PSN) detection.Should classify isepsn URL as ISE_EMPLOYEE" time="0.02" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should classify URL with psn in hostname as ISE_EMPLOYEE" name="Get-RedirectType - Redirect URL Classification.ISE Employee (PSN) detection.Should classify URL with psn in hostname as ISE_EMPLOYEE" time="0.028" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected strings to be the same, but they were different.
+Expected length: 12
+Actual length:   7
+Strings differ at index 0.
+Expected: 'ISE_EMPLOYEE'
+But was:  'NON_ISE'
+           ^</message>
+                      <stack-trace>at $result | Should -Be "ISE_EMPLOYEE", C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:978
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:978</stack-trace>
+                    </failure>
+                  </test-case>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-RedirectType - Redirect URL Classification.ISE Guest detection" executed="True" result="Success" success="True" time="0.0869" asserts="0" description="Get-RedirectType - Redirect URL Classification.ISE Guest detection">
+                <results>
+                  <test-case description="Should classify isegst URL as ISE_GUEST" name="Get-RedirectType - Redirect URL Classification.ISE Guest detection.Should classify isegst URL as ISE_GUEST" time="0.0204" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-RedirectType - Redirect URL Classification.Non-ISE captive portal" executed="True" result="Success" success="True" time="0.1327" asserts="0" description="Get-RedirectType - Redirect URL Classification.Non-ISE captive portal">
+                <results>
+                  <test-case description="Should classify hotel portal as NON_ISE" name="Get-RedirectType - Redirect URL Classification.Non-ISE captive portal.Should classify hotel portal as NON_ISE" time="0.0158" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should classify Starbucks portal as NON_ISE" name="Get-RedirectType - Redirect URL Classification.Non-ISE captive portal.Should classify Starbucks portal as NON_ISE" time="0.0203" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-RedirectType - Redirect URL Classification.Unknown/null redirect" executed="True" result="Success" success="True" time="0.1618" asserts="0" description="Get-RedirectType - Redirect URL Classification.Unknown/null redirect">
+                <results>
+                  <test-case description="Should return UNKNOWN for null URL" name="Get-RedirectType - Redirect URL Classification.Unknown/null redirect.Should return UNKNOWN for null URL" time="0.0102" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return UNKNOWN for empty URL" name="Get-RedirectType - Redirect URL Classification.Unknown/null redirect.Should return UNKNOWN for empty URL" time="0.0097" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Test-DefaultGateway - Gateway Reachability" executed="True" result="Success" success="True" time="4.8486" asserts="0" description="Test-DefaultGateway - Gateway Reachability">
+            <results>
+              <test-case description="Should return true when gateway is reachable" name="Test-DefaultGateway - Gateway Reachability.Should return true when gateway is reachable" time="0.0412" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should return false when no gateway configured" name="Test-DefaultGateway - Gateway Reachability.Should return false when no gateway configured" time="0.0276" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should return false when gateway unreachable" name="Test-DefaultGateway - Gateway Reachability.Should return false when gateway unreachable" time="0.0406" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Test-NwCheckAfterCompliance - Post-Posture nwcheck Poll" executed="True" result="Success" success="True" time="10.9727" asserts="0" description="Test-NwCheckAfterCompliance - Post-Posture nwcheck Poll">
+            <results>
+              <test-case description="Should return true when nwcheck comes online after compliance" name="Test-NwCheckAfterCompliance - Post-Posture nwcheck Poll.Should return true when nwcheck comes online after compliance" time="0.0352" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should return false when nwcheck still redirected after compliance" name="Test-NwCheckAfterCompliance - Post-Posture nwcheck Poll.Should return false when nwcheck still redirected after compliance" time="3.0421" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should return false when nwcheck unreachable after compliance" name="Test-NwCheckAfterCompliance - Post-Posture nwcheck Poll.Should return false when nwcheck unreachable after compliance" time="3.0378" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Cooldown Functions" executed="True" result="Failure" success="False" time="11.093" asserts="0" description="Cooldown Functions">
+            <results>
+              <test-suite type="TestFixture" name="Cooldown Functions.Rescan-InCooldown" executed="True" result="Failure" success="False" time="0.0561" asserts="0" description="Cooldown Functions.Rescan-InCooldown">
+                <results>
+                  <test-case description="Should return false when no prior rescan" name="Cooldown Functions.Rescan-InCooldown.Should return false when no prior rescan" time="0.0132" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return true when rescan was recent" name="Cooldown Functions.Rescan-InCooldown.Should return true when rescan was recent" time="0.0184" asserts="0" success="False" result="Failure" executed="True">
+                    <failure>
+                      <message>Expected $true, but got $false.</message>
+                      <stack-trace>at $result | Should -Be $true, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:1118
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:1118</stack-trace>
+                    </failure>
+                  </test-case>
+                  <test-case description="Should return false when rescan was long ago" name="Cooldown Functions.Rescan-InCooldown.Should return false when rescan was long ago" time="0.0145" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Cooldown Functions.In-Cooldown" executed="True" result="Success" success="True" time="0.1112" asserts="0" description="Cooldown Functions.In-Cooldown">
+                <results>
+                  <test-case description="Should return false when no prior flare stamp" name="Cooldown Functions.In-Cooldown.Should return false when no prior flare stamp" time="0.0165" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return true when flare was fired recently" name="Cooldown Functions.In-Cooldown.Should return true when flare was fired recently" time="0.0132" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return false when flare cooldown has expired" name="Cooldown Functions.In-Cooldown.Should return false when flare cooldown has expired" time="0.0155" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Get-NetworkInfo - Network State Detection" executed="True" result="Success" success="True" time="11.8229" asserts="0" description="Get-NetworkInfo - Network State Detection">
+            <results>
+              <test-suite type="TestFixture" name="Get-NetworkInfo - Network State Detection.Connection type detection" executed="True" result="Success" success="True" time="0.6706" asserts="0" description="Get-NetworkInfo - Network State Detection.Connection type detection">
+                <results>
+                  <test-case description="Should detect WiFi connection type" name="Get-NetworkInfo - Network State Detection.Connection type detection.Should detect WiFi connection type" time="0.42" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should return N/A IP when no active adapter" name="Get-NetworkInfo - Network State Detection.Connection type detection.Should return N/A IP when no active adapter" time="0.241" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="Get-NetworkInfo - Network State Detection.SSID detection" executed="True" result="Success" success="True" time="0.7219" asserts="0" description="Get-NetworkInfo - Network State Detection.SSID detection">
+                <results>
+                  <test-case description="Should detect SSID on WiFi connection" name="Get-NetworkInfo - Network State Detection.SSID detection.Should detect SSID on WiFi connection" time="0.0295" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="Should NOT use IP address as SSID (VPN adapter bug)" name="Get-NetworkInfo - Network State Detection.SSID detection.Should NOT use IP address as SSID (VPN adapter bug)" time="0.0109" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Clear-StaleFlagFiles - RC1.9 Complete Flag List" executed="True" result="Success" success="True" time="11.8738" asserts="0" description="Clear-StaleFlagFiles - RC1.9 Complete Flag List">
+            <results>
+              <test-case description="Should include vpn_blocked.flag in stale cleanup" name="Clear-StaleFlagFiles - RC1.9 Complete Flag List.Should include vpn_blocked.flag in stale cleanup" time="0.0153" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should have BlackholeFlagFile defined" name="Clear-StaleFlagFiles - RC1.9 Complete Flag List.Should have BlackholeFlagFile defined" time="0.0126" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="dns_chicken_egg_issue.flag hardcoded path should be correct" name="Clear-StaleFlagFiles - RC1.9 Complete Flag List.dns_chicken_egg_issue.flag hardcoded path should be correct" time="0.0132" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Send-FlareEvent - Blackhole Hook Integration" executed="True" result="Failure" success="False" time="12.1101" asserts="0" description="Send-FlareEvent - Blackhole Hook Integration">
+            <results>
+              <test-case description="Should call Invoke-BlackholeAction after firing any flare" name="Send-FlareEvent - Blackhole Hook Integration.Should call Invoke-BlackholeAction after firing any flare" time="0.0751" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should pass the flare tag to Invoke-BlackholeAction" name="Send-FlareEvent - Blackhole Hook Integration.Should pass the flare tag to Invoke-BlackholeAction" time="0.0656" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Should NOT call Invoke-BlackholeAction when flare is deduped" name="Send-FlareEvent - Blackhole Hook Integration.Should NOT call Invoke-BlackholeAction when flare is deduped" time="0.0843" asserts="0" success="False" result="Failure" executed="True">
+                <failure>
+                  <message>Expected Invoke-BlackholeAction to be called 0 times exactly but was called 1 times</message>
+                  <stack-trace>at Should -Invoke Invoke-BlackholeAction -Times 0, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:1287
+at &lt;ScriptBlock&gt;, C:\ProgramData\WhiteWalker\WW_Tests_RC1.10.ps1:1287</stack-trace>
+                </failure>
+              </test-case>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
