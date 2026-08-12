@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VPN Blackhole Information</title>
+  <style>
+    :root {
+      --navy: #002677;
+      --orange: #FF612B;
+      --white: #ffffff;
+      --grey: #F4F4F4;
+      --text: #1f2a37;
+      --border: #d7dde7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--grey);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 860px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 24px;
+      border-bottom: 4px solid var(--orange);
+    }
+    .brand {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      margin: 0 0 6px;
+      color: #c7d7ff;
+    }
+    h1 { margin: 0; font-size: 1.75rem; }
+    .subtitle { margin: 8px 0 0; color: #e9efff; }
+    main { padding: 24px; }
+    section { margin-bottom: 24px; }
+    h2 {
+      margin: 0 0 10px;
+      color: var(--navy);
+      font-size: 1.2rem;
+      border-left: 4px solid var(--orange);
+      padding-left: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--white);
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eef3ff;
+      color: var(--navy);
+    }
+    .placeholder-note {
+      background: #fff5f1;
+      border: 1px solid #ffd7c8;
+      color: #7a2f13;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    details {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcff;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--navy);
+    }
+    footer {
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px 24px;
+      font-size: 0.92rem;
+      color: #445;
+    }
+    @media (max-width: 640px) {
+      h1 { font-size: 1.45rem; }
+      header, main, footer { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <header>
+        <p class="brand">CPR+ / VPN Blackhole</p>
+        <h1>Why is my VPN blocked on this network?</h1>
+        <p class="subtitle">OptumCare Network Access — VPN Blackhole Protection</p>
+      </header>
+
+      <main>
+        <section>
+          <h2>What just happened?</h2>
+          <p>
+            When you connected to a corporate network (office WiFi or wired), the system detected that you are on-premises and temporarily blocked VPN connections to your corporate headend.
+            This is intentional and by design.
+          </p>
+        </section>
+
+        <section>
+          <h2>Why does this exist?</h2>
+          <p>
+            This protection prevents "hairpinning." Without it, your laptop can send all internet traffic into the VPN tunnel, route it to a datacentre, and then back out to the internet — even when you are physically on a corporate network.
+            That path wastes bandwidth, increases latency, and can slow your connection significantly. VPN Blackhole prevents that automatically.
+          </p>
+        </section>
+
+        <section>
+          <h2>Do I need to do anything?</h2>
+          <p>
+            No. This process is automatic. When you leave the office and connect from home, a hotel, or another off-site network, the block is removed automatically.
+            You do not need to restart anything.
+          </p>
+        </section>
+
+        <section>
+          <h2>What if my job requires VPN while on-premises?</h2>
+          <p>
+            Some roles require VPN while on corporate networks (for example lab access, specific compliance workflows, or cross-region resource access).
+            If you believe you need an exemption, use the contacts below:
+          </p>
+
+          <table aria-label="VPN exemption contacts">
+            <thead>
+              <tr>
+                <th>Contact</th>
+                <th>Purpose</th>
+                <th>Link</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Network Access Team</td>
+                <td>General VPN exemption requests</td>
+                <!-- PLACEHOLDER -->
+                <td>network-access@optum.com <strong>[PLACEHOLDER]</strong></td>
+              </tr>
+              <tr>
+                <td>Global Group: VPN_OnPrem_Exempt</td>
+                <td>Exemption group membership</td>
+                <!-- PLACEHOLDER -->
+                <td>Contact your manager to request <strong>[PLACEHOLDER]</strong></td>
+                <td>NOTE: For CPR+ Test users, temp exempt GG to request is:<strong>on_prem_vpn_allow</strong></td>
+              </tr>
+              <tr>
+                <td>IT Service Desk</td>
+                <td>General questions</td>
+                <!-- PLACEHOLDER -->
+                <td>1-800-XXX-XXXX <strong>[PLACEHOLDER]</strong></td>
+              </tr>
+              <tr>
+                <td>Self-Service Portal</td>
+                <td>Submit access request</td>
+                <!-- PLACEHOLDER -->
+                <td><a href="https://myaccess.optum.com">https://myaccess.optum.com</a> <strong>[PLACEHOLDER]</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="placeholder-note">Placeholder contact information — update before deployment.</p>
+        </section>
+
+        <section>
+          <h2>Technical reference</h2>
+          <details>
+            <summary>Show technical details for IT support and curious users</summary>
+            <ul>
+              <li>The block is implemented via a managed hosts file entry (<code>vpn_blocked.flag</code> signals active state).</li>
+              <li>The subsystem is called <strong>VPN Blackhole</strong> and is part of the CPR+ framework.</li>
+              <li>It is controlled by the <code>BlackholeEnabled</code> configuration flag.</li>
+              <li><code>Set-VpnHostsEntry.ps1</code> manages the actual hosts file entries.</li>
+              <li>The block is removed automatically on every non-on-prem network transition.</li>
+            </ul>
+          </details>
+        </section>
+      </main>
+
+      <footer>
+        <div>This page was generated by CPR+ Framework</div>
+        <div>Version: v1.10.0_RC1.17</div>
+        <div>For IT support, contact the Employee VPN SLO team</div>
+        <div><strong>Last updated: May 2026</strong></div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
