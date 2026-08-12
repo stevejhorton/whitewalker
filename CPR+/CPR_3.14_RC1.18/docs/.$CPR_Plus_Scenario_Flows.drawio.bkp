@@ -1,0 +1,241 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.6 Chrome/140.0.7339.249 Electron/38.8.0 Safari/537.36" version="29.3.6">
+  <diagram id="CPR-Scenarios" name="Scenario-Specific Flows">
+    <mxGraphModel dx="1799" dy="1036" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1" value="CPR+ Scenario-Specific Flows" vertex="1">
+          <mxGeometry height="40" width="600" x="400" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="scen-a-box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fontSize=14;fontStyle=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="SCENARIO A: Corp Guest WiFi (ISE Posture Issue)" vertex="1">
+          <mxGeometry height="500" width="320" x="40" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" parent="scen-a-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="User Connects&#xa;to Corp Guest WiFi" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" parent="scen-a-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="DHCP Event" vertex="1">
+          <mxGeometry height="40" width="200" x="60" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" parent="scen-a-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="WW_main runs" vertex="1">
+          <mxGeometry height="40" width="200" x="60" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" parent="scen-a-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="VPN: NO&#xa;DC: NO&#xa;Preflight: BLOCKED (ACL)" vertex="1">
+          <mxGeometry height="60" width="200" x="60" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" parent="scen-a-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="enroll.cisco.com&#xa;→ 302 Redirect to ISE" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" parent="scen-a-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" value="DETECTED:&#xa;ISE Posture Problem" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="a7" parent="scen-a-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" value="Action: vpncli -s&#xa;restoreposture" vertex="1">
+          <mxGeometry height="40" width="200" x="60" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-a1" edge="1" parent="scen-a-box" source="a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="a2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-a2" edge="1" parent="scen-a-box" source="a2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="a3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-a3" edge="1" parent="scen-a-box" source="a3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="a4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-a4" edge="1" parent="scen-a-box" source="a4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="a5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-a5" edge="1" parent="scen-a-box" source="a5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="a6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-a6" edge="1" parent="scen-a-box" source="a6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="a7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scen-b-box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fontSize=14;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SCENARIO B: Public WiFi with Captive Portal" vertex="1">
+          <mxGeometry height="640" width="320" x="400" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="User Connects&#xa;to Public WiFi" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="DHCP Event" vertex="1">
+          <mxGeometry height="40" width="200" x="60" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="WW_main runs" vertex="1">
+          <mxGeometry height="40" width="200" x="60" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="VPN: NO&#xa;DC: NO&#xa;Preflight: HTTP/200" vertex="1">
+          <mxGeometry height="60" width="200" x="60" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="enroll.cisco.com&#xa;→ HTTP/200 (No ISE)" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="b6" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Other Sites&#xa;→ 302/307 Redirect" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="b7" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" value="DETECTED:&#xa;Captive Portal" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="b8" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Create Event Log +&#xa;Task Scheduler Job" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="b9" parent="scen-b-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1" value="WW_cap_portal_runner&#xa;→ USER context" vertex="1">
+          <mxGeometry height="40" width="200" x="60" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-b1" edge="1" parent="scen-b-box" source="b1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="b2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-b2" edge="1" parent="scen-b-box" source="b2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="b3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-b3" edge="1" parent="scen-b-box" source="b3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="b4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-b4" edge="1" parent="scen-b-box" source="b4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="b5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-b5" edge="1" parent="scen-b-box" source="b5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="b6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-b6" edge="1" parent="scen-b-box" source="b6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="b7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-b7" edge="1" parent="scen-b-box" source="b7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="b8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-b8" edge="1" parent="scen-b-box" source="b8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="b9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scen-c-box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fontSize=14;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="SCENARIO C: On-Premises (Corporate LAN)" vertex="1">
+          <mxGeometry height="400" width="320" x="760" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" parent="scen-c-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="System Unlock&#xa;or DHCP Event" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" parent="scen-c-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="WW_main runs" vertex="1">
+          <mxGeometry height="40" width="200" x="60" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" parent="scen-c-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="VPN: NO&#xa;DC: YES&#xa;(netcheck HTTP/200)" vertex="1">
+          <mxGeometry height="60" width="200" x="60" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" parent="scen-c-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" value="DETECTED:&#xa;On Corporate Network" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" parent="scen-c-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" value="FlareGun: ON-PREM&#xa;→ Ivanti EM" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-c1" edge="1" parent="scen-c-box" source="c1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="c2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-c2" edge="1" parent="scen-c-box" source="c2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="c3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-c3" edge="1" parent="scen-c-box" source="c3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="c4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-c4" edge="1" parent="scen-c-box" source="c4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="c5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="scen-d-box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fontSize=14;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;" value="SCENARIO D: VPN Already Active" vertex="1">
+          <mxGeometry height="340" width="320" x="1120" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" parent="scen-d-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="DHCP Event or&#xa;System Unlock" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" parent="scen-d-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="WW_main runs" vertex="1">
+          <mxGeometry height="40" width="200" x="60" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="d3" parent="scen-d-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="VPN: YES&#xa;(Management Connection&#xa;State)" vertex="1">
+          <mxGeometry height="60" width="200" x="60" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="d4" parent="scen-d-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" value="DETECTED:&#xa;VPN Active" vertex="1">
+          <mxGeometry height="50" width="200" x="60" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-d1" edge="1" parent="scen-d-box" source="d1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="d2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-d2" edge="1" parent="scen-d-box" source="d2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="d3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-d3" edge="1" parent="scen-d-box" source="d3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=classic;endFill=1;" target="d4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flare-legend" parent="1" style="swimlane;whiteSpace=wrap;html=1;fontSize=14;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;" value="FLAREGUN SIGNAL STATES" vertex="1">
+          <mxGeometry height="200" width="680" x="40" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="fl1" parent="flare-legend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="VPN-ACTIVE" vertex="1">
+          <mxGeometry height="40" width="140" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fl1-desc" parent="flare-legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="VPN is connected" vertex="1">
+          <mxGeometry height="20" width="140" x="20" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="fl2" parent="flare-legend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="ON-PREM" vertex="1">
+          <mxGeometry height="40" width="140" x="180" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fl2-desc" parent="flare-legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="On corporate network" vertex="1">
+          <mxGeometry height="20" width="140" x="180" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="fl3" parent="flare-legend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="ISE-REMEDIATE" vertex="1">
+          <mxGeometry height="40" width="140" x="340" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fl3-desc" parent="flare-legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="ISE posture triggered" vertex="1">
+          <mxGeometry height="20" width="140" x="340" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="fl4" parent="flare-legend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="PORTAL-DETECTED" vertex="1">
+          <mxGeometry height="40" width="160" x="500" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fl4-desc" parent="flare-legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="Captive portal found" vertex="1">
+          <mxGeometry height="20" width="160" x="500" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="fl5" parent="flare-legend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="PORTAL-AUTH" vertex="1">
+          <mxGeometry height="40" width="140" x="20" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="fl5-desc" parent="flare-legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="Portal auth in progress" vertex="1">
+          <mxGeometry height="20" width="140" x="20" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="fl6" parent="flare-legend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="NO-CONNECTIVITY" vertex="1">
+          <mxGeometry height="40" width="140" x="180" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="fl6-desc" parent="flare-legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="Network unreachable" vertex="1">
+          <mxGeometry height="20" width="140" x="180" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="fl7" parent="flare-legend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="NO-PORTAL" vertex="1">
+          <mxGeometry height="40" width="140" x="340" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="fl7-desc" parent="flare-legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="No portal detected" vertex="1">
+          <mxGeometry height="20" width="140" x="340" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="key-box" parent="1" style="swimlane;whiteSpace=wrap;html=1;fontSize=14;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;startSize=30;" value="KEY COMPONENTS" vertex="1">
+          <mxGeometry height="200" width="680" x="760" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="key1" parent="key-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="AWS Preflight" vertex="1">
+          <mxGeometry height="40" width="140" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="key1-desc" parent="key-box" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="netcheck/nwcheck.optum.com&#xa;HTTP/200 = Internet Life" vertex="1">
+          <mxGeometry height="30" width="200" x="20" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="key2" parent="key-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="WW_main.ps1" vertex="1">
+          <mxGeometry height="40" width="140" x="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="key2-desc" parent="key-box" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="SYSTEM context&#xa;Detection &amp; remediation logic" vertex="1">
+          <mxGeometry height="30" width="200" x="240" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="key3" parent="key-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" value="WW_cap_portal_runner" vertex="1">
+          <mxGeometry height="40" width="200" x="460" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="key3-desc" parent="key-box" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="USER context&#xa;Browser launch for auth" vertex="1">
+          <mxGeometry height="30" width="200" x="460" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="key4" parent="key-box" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="Wireless Controller ACL" vertex="1">
+          <mxGeometry height="40" width="200" x="20" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="key4-desc" parent="key-box" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" value="Blocks preflight until ISE posture" vertex="1">
+          <mxGeometry height="20" width="220" x="240" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="note1" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontStyle=2" value="⚠ All scenarios send FlareGun signals to Ivanti EM for centralized visibility" vertex="1">
+          <mxGeometry height="40" width="680" x="40" y="980" as="geometry" />
+        </mxCell>
+        <mxCell id="note2" parent="1" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontStyle=2" value="⚠ Preflight checks validate Internet connectivity before attempting remediation" vertex="1">
+          <mxGeometry height="40" width="680" x="760" y="990" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
