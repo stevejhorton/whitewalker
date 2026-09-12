@@ -4,5 +4,6 @@
   "asa_port": 2002,
   "verify_tls": false,
   "ca_bundle": "",
-  "request_timeout_seconds": 25
+  "request_timeout_seconds": 25,
+  "batch_workers": 2
 }

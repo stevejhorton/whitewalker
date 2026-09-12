@@ -1,0 +1,2 @@
+# Update this one line if the rotating credential files move.
+CREDENTIAL_DIR=~/creds

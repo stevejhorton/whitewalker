@@ -1,0 +1,9 @@
+PipeWrench/un.txt
+PipeWrench/pw.txt
+PipeWrench/headends.local.txt
+PipeWrench/__pycache__/
+PipeWrench/tests/__pycache__/
+PipeWrench/archives/*.tmp
+PipeWrench/baselines/*.tmp
+PipeWrench/batches/*.tmp
+

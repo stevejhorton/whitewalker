@@ -5,12 +5,12 @@ PipeWrench is a local, read-only operations console for Cisco Secure Firewall AS
 ## First run
 
 1. Add one headend short name per line to `headends.txt`. Do not include `:2002`.
-2. Create `un.txt` and put only your current username in it.
-3. Create `pw.txt` and put only your current password in it.
+2. Create `~/creds/un.txt` and put only your current username in it.
+3. Create `~/creds/pw.txt` and put only your current password in it.
 4. On Windows, double-click `Start-PipeWrench.bat`. On macOS or Linux, run `./start.sh`.
 5. Open <http://127.0.0.1:8765> if it does not open automatically.
 
-Credentials are read again for every ASA request. Update `pw.txt` after a Delinea password rotation; PipeWrench does not need to be restarted.
+Credentials are read again for every ASA request. Update `~/creds/pw.txt` after a Delinea password rotation; PipeWrench does not need to be restarted. If the credential directory moves, change the single `CREDENTIAL_DIR` line in `VARS`.
 
 ## Device lists
 
@@ -25,6 +25,27 @@ The health snapshot retrieves hostname, version and uptime, failover, interface,
 
 The standards review retrieves focused running-configuration sections for AAA, SNMP, group policies, SSL, SSH, WebVPN, IP, logging, banners, management access, ACLs, MTU, ASDM, crypto, names, address assignment, pools, DNS, usernames, domain name, HTTP, ICMP, and tunnel groups. It also retrieves detailed clock and VPN capacity/session information. Common password, secret, pre-shared-key, and SNMP community values are masked before output reaches the browser.
 
+## Snapshots and gold profiles
+
+After an inspection, choose **Save snapshot** to write a timestamped JSON record under `archives/`. The filename begins with UTC `YYYYMMDDHHMMSS`, and `snapshot_version` is the first field in the document. These files are intentionally suitable for Git archival.
+
+Open a prior result from **Past results**. A yellow clock banner remains visible whenever historical data is on screen. A saved standards snapshot can be promoted to a gold profile using a platform family (such as `41xx` or `42xx`) and a location (such as `amer` or `emea`). Gold records live under `baselines/` and can be compared with any saved result. Comparison ignores blank lines, line order, repeated whitespace, and concrete IPv4/IPv6 values so site addressing does not create false positives. Command structure, object names, and list membership remain meaningful. Dedicated lint rules validate relationships such as pool-to-Null0 coverage.
+
+## Multi-headend walks
+
+Expand **Multi-headend walk**, select headends, and optionally select a platform/location gold profile. PipeWrench runs up to `batch_workers` headends concurrently, automatically archives each result, and writes progress under `batches/`. Leave the PipeWrench server running; the browser can be reopened after the work finishes and the saved results will still be available.
+
+## Built-in standards findings
+
+Standards reviews currently flag:
+
+- missing IP or dynamic split-tunnel assignments under `DfltGrpPolicy`;
+- IP local pool ranges without a covering `Null0` route;
+- expired certificates referenced by SSL, crypto, or WebVPN configuration;
+- expired certificates that appear unused and may be cleanup candidates.
+
+Certificate removal is never automatic. ASA output can vary by release, so validate reported usage against the full configuration before removing a trustpoint.
+
 ## Management certificates
 
 Certificate verification is disabled by default because the internal management short names do not match the VPN-facing certificate names, and some ASA management listeners present self-signed certificates. This exception is limited to HTTPS connections made by PipeWrench; it does not change Windows, browser, or Python trust settings system-wide.
@@ -33,4 +54,4 @@ If management certificates are later issued for the internal names, set `verify_
 
 ## Safety boundary
 
-Version 0.1 exposes only named inspection actions. It does not accept arbitrary ASA commands from the browser and it does not contain configuration-write routes.
+Version 0.3 exposes only named inspection actions. It does not accept arbitrary ASA commands from the browser and it does not contain configuration-write routes.
