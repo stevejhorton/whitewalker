@@ -1,0 +1,8 @@
+{
+  "listen_host": "127.0.0.1",
+  "listen_port": 8765,
+  "asa_port": 2002,
+  "verify_tls": false,
+  "ca_bundle": "",
+  "request_timeout_seconds": 25
+}

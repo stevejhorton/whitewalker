@@ -1,0 +1,2 @@
+# One ASA short name per line. Port 2002 is added automatically.
+# asactc01vpn30
