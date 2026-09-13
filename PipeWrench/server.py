@@ -454,8 +454,8 @@ def time_sync_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
     family = platform_family(results)
     if family == "41xx":
         text = result_output(results, "show clock detail")
-        synced = bool(re.search(r"(?i)(?:sync\w*.*chassis|chassis.*sync\w*)", text))
-        return finding("Time synchronization", "ok" if synced else "warning", "Clock reports synchronization to the chassis." if synced else "41xx clock output did not confirm synchronization to the chassis.")
+        synced = bool(re.search(r"(?im)^\s*time source is\s+.*\bchassis\s*\[\s*NTP\s*\]\s*$", text))
+        return finding("Time synchronization", "ok" if synced else "warning", "Clock source is the chassis using NTP." if synced else "41xx clock output did not confirm the chassis as an NTP-synchronized time source.")
     if family == "42xx":
         text = result_output(results, "show run ntp")
         configured = bool(text and re.search(r"(?im)^\s*ntp\s+", text))

@@ -91,8 +91,10 @@ class PipeWrenchTests(unittest.TestCase):
 
     def test_platform_specific_time_sync(self):
         version_41 = {"status": "ok", "command": "show version", "output": "Hardware: FPR-4115"}
-        clock = {"status": "ok", "command": "show clock detail", "output": "Clock synchronized to chassis"}
+        clock = {"status": "ok", "command": "show clock detail", "output": "14:13:05.591 UTC Sun Sep 13 2026\nTime source is SSPXRU-OS chassis [NTP]"}
         self.assertEqual(server.time_sync_finding([version_41, clock])["status"], "ok")
+        clock["output"] = "14:13:05.591 UTC Sun Sep 13 2026\nTime source is SSPXRU-OS chassis [LOCAL]"
+        self.assertEqual(server.time_sync_finding([version_41, clock])["status"], "warning")
         version_42 = {"status": "ok", "command": "show version", "output": "Hardware: FPR-4245"}
         ntp = {"status": "ok", "command": "show run ntp", "output": "ntp server 10.10.10.10 source outside"}
         self.assertEqual(server.time_sync_finding([version_42, ntp])["status"], "ok")
