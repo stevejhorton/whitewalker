@@ -1,0 +1,36 @@
+{
+  "batch_id": "20260913041123_d9bab18e",
+  "created_at": "2026-09-13T04:11:23Z",
+  "status": "completed",
+  "action": "standards",
+  "baseline_id": null,
+  "devices": [
+    "asaph518vpn02",
+    "asaph550vpn02"
+  ],
+  "total": 2,
+  "completed": 2,
+  "results": [
+    {
+      "device": "asaph550vpn02",
+      "snapshot_id": "20260913041153_asaph550vpn02_standards_99328cb7",
+      "summary": {
+        "ok": 35,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaph518vpn02",
+      "snapshot_id": "20260913041154_asaph518vpn02_standards_87fb64d1",
+      "summary": {
+        "ok": 35,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    }
+  ],
+  "completed_at": "2026-09-13T04:11:54Z"
+}

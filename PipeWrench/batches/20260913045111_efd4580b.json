@@ -1,0 +1,25 @@
+{
+  "batch_id": "20260913045111_efd4580b",
+  "created_at": "2026-09-13T04:51:11Z",
+  "status": "completed",
+  "action": "standards",
+  "baseline_id": null,
+  "devices": [
+    "asactc01vpn27"
+  ],
+  "total": 1,
+  "completed": 1,
+  "results": [
+    {
+      "device": "asactc01vpn27",
+      "snapshot_id": "20260913045119_asactc01vpn27_standards_4ba8cc46",
+      "summary": {
+        "ok": 35,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    }
+  ],
+  "completed_at": "2026-09-13T04:51:19Z"
+}

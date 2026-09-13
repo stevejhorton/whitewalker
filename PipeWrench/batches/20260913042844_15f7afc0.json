@@ -1,0 +1,47 @@
+{
+  "batch_id": "20260913042844_15f7afc0",
+  "created_at": "2026-09-13T04:28:44Z",
+  "status": "completed",
+  "action": "standards",
+  "baseline_id": null,
+  "devices": [
+    "asaatc01vpn21",
+    "asaatc01vpn22",
+    "asactc01vpn21"
+  ],
+  "total": 3,
+  "completed": 3,
+  "results": [
+    {
+      "device": "asaatc01vpn21",
+      "snapshot_id": "20260913042852_asaatc01vpn21_standards_c508c604",
+      "summary": {
+        "ok": 37,
+        "warning": 0,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaatc01vpn22",
+      "snapshot_id": "20260913042853_asaatc01vpn22_standards_5fc86c0c",
+      "summary": {
+        "ok": 37,
+        "warning": 0,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn21",
+      "snapshot_id": "20260913042857_asactc01vpn21_standards_41620c39",
+      "summary": {
+        "ok": 35,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    }
+  ],
+  "completed_at": "2026-09-13T04:28:58Z"
+}

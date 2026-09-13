@@ -1,0 +1,96 @@
+{
+  "batch_id": "20260913035629_b85bbd0a",
+  "created_at": "2026-09-13T03:56:29Z",
+  "status": "completed",
+  "action": "standards",
+  "baseline_id": "42xx__global",
+  "devices": [
+    "asaatc01vpn21",
+    "asaatc01vpn22"
+  ],
+  "total": 2,
+  "completed": 2,
+  "results": [
+    {
+      "device": "asaatc01vpn21",
+      "snapshot_id": "20260913035637_asaatc01vpn21_standards_9581c785",
+      "summary": {
+        "ok": 37,
+        "warning": 0,
+        "error": 0
+      },
+      "comparison": {
+        "baseline_id": "42xx__global",
+        "baseline_name": "42xx / global",
+        "matched": false,
+        "findings": [
+          {
+            "label": "NTP",
+            "command": "PIPEWRENCH COMPLIANCE",
+            "status": "warning",
+            "output": "Output differs from the gold baseline."
+          }
+        ]
+      }
+    },
+    {
+      "device": "asaatc01vpn22",
+      "snapshot_id": "20260913035637_asaatc01vpn22_standards_da5877d1",
+      "summary": {
+        "ok": 37,
+        "warning": 0,
+        "error": 0
+      },
+      "comparison": {
+        "baseline_id": "42xx__global",
+        "baseline_name": "42xx / global",
+        "matched": false,
+        "findings": [
+          {
+            "label": "SNMP users & hosts",
+            "command": "PIPEWRENCH COMPLIANCE",
+            "status": "warning",
+            "output": "Output differs from the gold baseline."
+          },
+          {
+            "label": "SSL",
+            "command": "PIPEWRENCH COMPLIANCE",
+            "status": "warning",
+            "output": "Output differs from the gold baseline."
+          },
+          {
+            "label": "SSH",
+            "command": "PIPEWRENCH COMPLIANCE",
+            "status": "warning",
+            "output": "Output differs from the gold baseline."
+          },
+          {
+            "label": "IP",
+            "command": "PIPEWRENCH COMPLIANCE",
+            "status": "warning",
+            "output": "Output differs from the gold baseline."
+          },
+          {
+            "label": "Crypto",
+            "command": "PIPEWRENCH COMPLIANCE",
+            "status": "warning",
+            "output": "Output differs from the gold baseline."
+          },
+          {
+            "label": "Tunnel groups",
+            "command": "PIPEWRENCH COMPLIANCE",
+            "status": "warning",
+            "output": "Output differs from the gold baseline."
+          },
+          {
+            "label": "NTP",
+            "command": "PIPEWRENCH COMPLIANCE",
+            "status": "warning",
+            "output": "Output differs from the gold baseline."
+          }
+        ]
+      }
+    }
+  ],
+  "completed_at": "2026-09-13T03:56:38Z"
+}

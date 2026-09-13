@@ -249,6 +249,11 @@ def health_metrics(results: list[dict[str, Any]]) -> list[dict[str, str]]:
             "Since last restart",
         ),
         (
+            "HW Ver",
+            first_match(r"\bFPR[- ]?(4\d{3})\b", version_output),
+            "Running softwa",
+        ),
+        (
             "ASA version",
             first_match(r"Adaptive Security Appliance Software Version\s+([^\r\n]+)", version_output),
             "Running software",
@@ -289,7 +294,7 @@ def run_health(device: str) -> dict[str, Any]:
         futures = [pool.submit(execute_command, device, label, command) for label, command in HEALTH_COMMANDS]
         results = [future.result() for future in futures]
     if platform_family(results) == "42xx":
-        results.append(execute_command(device, "NTP", "show ntp"))
+        results.append(execute_command(device, "NTP", "show run ntp"))
     return decorate_run({
         "action": "health",
         "device": device,
@@ -305,7 +310,7 @@ def run_standards(device: str) -> dict[str, Any]:
         futures = [pool.submit(execute_command, device, label, command) for label, command in STANDARD_COMMANDS]
         results = [future.result() for future in futures]
     if platform_family(results) == "42xx":
-        results.append(execute_command(device, "NTP", "show ntp"))
+        results.append(execute_command(device, "NTP", "show run ntp"))
     for result in results:
         if result.get("status") == "ok":
             result["output"] = redact_config_secrets(str(result.get("output", "")))
@@ -340,15 +345,14 @@ def decorate_run(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def platform_family(results: list[dict[str, Any]]) -> str:
-    model = first_match(r"\bFPR[- ]?(4\d{3})\b", result_output(results, "show version"))
+    model = first_match(r"Hardware:\s*(FPR(?:4K)?-\d+),",result_output(results, "show version"),)
     if not model:
         return "unknown"
-    if model.startswith("41"):
-        return "41xx"
-    if model.startswith("42"):
+    if model.startswith("FPR-42"):
         return "42xx"
+    if model.startswith("FPR4K-"):
+        return "41xx"
     return model
-
 
 def finding(label: str, status: str, detail: str) -> dict[str, Any]:
     return {"label": label, "command": "PIPEWRENCH COMPLIANCE", "status": status, "output": detail}
@@ -447,7 +451,7 @@ def time_sync_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
         synced = bool(re.search(r"(?i)(?:sync\w*.*chassis|chassis.*sync\w*)", text))
         return finding("Time synchronization", "ok" if synced else "warning", "Clock reports synchronization to the chassis." if synced else "41xx clock output did not confirm synchronization to the chassis.")
     if family == "42xx":
-        text = result_output(results, "show ntp")
+        text = result_output(results, "show clock detail")
         synced = bool(text and not re.search(r"(?i)unsynchron|not synchron|disabled", text))
         return finding("Time synchronization", "ok" if synced else "warning", "The 42xx returned NTP status." if synced else "The 42xx did not return a usable synchronized NTP status.")
     return finding("Time synchronization", "warning", "Platform family could not be determined, so the platform-specific time check was skipped.")
