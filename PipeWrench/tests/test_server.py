@@ -34,7 +34,7 @@ class PipeWrenchTests(unittest.TestCase):
             {
                 "status": "ok",
                 "command": "show version",
-                "output": "Cisco Adaptive Security Appliance Software Version 9.20(4)\nasa-test up 91 days 3 hours",
+                "output": "Cisco Adaptive Security Appliance Software Version 9.20(4)\nasa-test up 91 days 3 hours\nHardware: FPR-4215, 214632 MB RAM",
             },
             {"status": "ok", "command": "show failover", "output": "This host: Primary - Active"},
             {"status": "ok", "command": "show cpu usage", "output": "CPU utilization for 5 seconds = 7%"},
@@ -48,6 +48,7 @@ class PipeWrenchTests(unittest.TestCase):
         metrics = {item["label"]: item["value"] for item in server.health_metrics(results)}
         self.assertEqual(metrics["Hostname"], "asa-test")
         self.assertEqual(metrics["Uptime"], "91 days 3 hours")
+        self.assertEqual(metrics["HW Ver"], "FPR-4215")
         self.assertEqual(metrics["Memory used"], "20%")
         self.assertEqual(metrics["HA role"], "Primary - Active")
         self.assertEqual(metrics["Active VPN"], "2113")
@@ -93,8 +94,19 @@ class PipeWrenchTests(unittest.TestCase):
         clock = {"status": "ok", "command": "show clock detail", "output": "Clock synchronized to chassis"}
         self.assertEqual(server.time_sync_finding([version_41, clock])["status"], "ok")
         version_42 = {"status": "ok", "command": "show version", "output": "Hardware: FPR-4245"}
-        ntp = {"status": "ok", "command": "show ntp", "output": "Clock is synchronized, stratum 3"}
+        ntp = {"status": "ok", "command": "show run ntp", "output": "ntp server 10.10.10.10 source outside"}
         self.assertEqual(server.time_sync_finding([version_42, ntp])["status"], "ok")
+
+    def test_fpr4k_hardware_models_are_41xx(self):
+        for model in ("FPR4K-SM-32S", "FPR4K-SM-36"):
+            results = [{"status": "ok", "command": "show version", "output": f"Hardware:   {model}, 173570 MB RAM"}]
+            self.assertEqual(server.hardware_model(results[0]["output"]), model)
+            self.assertEqual(server.platform_family(results), "41xx")
+
+    def test_fpr42_hardware_models_are_42xx(self):
+        results = [{"status": "ok", "command": "show version", "output": "Hardware: FPR-4215, 214632 MB RAM"}]
+        self.assertEqual(server.hardware_model(results[0]["output"]), "FPR-4215")
+        self.assertEqual(server.platform_family(results), "42xx")
 
     def test_expired_certificates_are_classified_by_use(self):
         results = [

@@ -233,6 +233,11 @@ def first_match(pattern: str, text: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
+def hardware_model(version_output: str) -> str | None:
+    """Return the ASA Hardware field through, but not including, its first comma."""
+    return first_match(r"^\s*Hardware\s*:\s*([^,\r\n]+)", version_output)
+
+
 def health_metrics(results: list[dict[str, Any]]) -> list[dict[str, str]]:
     hostname_output = result_output(results, "show running-config hostname")
     version_output = result_output(results, "show version")
@@ -250,8 +255,8 @@ def health_metrics(results: list[dict[str, Any]]) -> list[dict[str, str]]:
         ),
         (
             "HW Ver",
-            first_match(r"\bFPR[- ]?(4\d{3})\b", version_output),
-            "Running softwa",
+            hardware_model(version_output),
+            "Hardware platform",
         ),
         (
             "ASA version",
@@ -345,14 +350,16 @@ def decorate_run(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def platform_family(results: list[dict[str, Any]]) -> str:
-    model = first_match(r"Hardware:\s*(FPR(?:4K)?-\d+),",result_output(results, "show version"),)
+    model = hardware_model(result_output(results, "show version"))
     if not model:
         return "unknown"
-    if model.startswith("FPR-42"):
-        return "42xx"
-    if model.startswith("FPR4K-"):
+    normalized = model.upper()
+    if normalized.startswith("FPR4K-") or normalized.startswith("FPR-41"):
         return "41xx"
+    if normalized.startswith("FPR-42"):
+        return "42xx"
     return model
+
 
 def finding(label: str, status: str, detail: str) -> dict[str, Any]:
     return {"label": label, "command": "PIPEWRENCH COMPLIANCE", "status": status, "output": detail}
@@ -451,9 +458,9 @@ def time_sync_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
         synced = bool(re.search(r"(?i)(?:sync\w*.*chassis|chassis.*sync\w*)", text))
         return finding("Time synchronization", "ok" if synced else "warning", "Clock reports synchronization to the chassis." if synced else "41xx clock output did not confirm synchronization to the chassis.")
     if family == "42xx":
-        text = result_output(results, "show clock detail")
-        synced = bool(text and not re.search(r"(?i)unsynchron|not synchron|disabled", text))
-        return finding("Time synchronization", "ok" if synced else "warning", "The 42xx returned NTP status." if synced else "The 42xx did not return a usable synchronized NTP status.")
+        text = result_output(results, "show run ntp")
+        configured = bool(text and re.search(r"(?im)^\s*ntp\s+", text))
+        return finding("Time synchronization", "ok" if configured else "warning", "The 42xx returned NTP configuration." if configured else "The 42xx did not return usable NTP configuration.")
     return finding("Time synchronization", "warning", "Platform family could not be determined, so the platform-specific time check was skipped.")
 
 
@@ -507,7 +514,10 @@ def save_snapshot(run: dict[str, Any]) -> dict[str, Any]:
 
 
 def snapshot_metadata(document: dict[str, Any]) -> dict[str, Any]:
-    return {key: document.get(key) for key in ("snapshot_id", "captured_at", "device", "action", "platform", "summary")}
+    metadata = {key: document.get(key) for key in ("snapshot_id", "captured_at", "device", "action", "platform", "summary")}
+    if metadata.get("platform") in {None, "", "unknown"}:
+        metadata["platform"] = platform_family(document.get("results", []))
+    return metadata
 
 
 def list_snapshots() -> list[dict[str, Any]]:
@@ -525,6 +535,8 @@ def load_named_json(directory: Path, item_id: str) -> dict[str, Any]:
     value = read_json(path, {})
     if not isinstance(value, dict):
         raise ValueError("Saved item is invalid.")
+    if directory == ARCHIVES and value.get("platform") in {None, "", "unknown"}:
+        value["platform"] = platform_family(value.get("results", []))
     return value
 
 
