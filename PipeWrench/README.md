@@ -29,7 +29,9 @@ The standards review retrieves focused running-configuration sections for AAA, S
 
 After an inspection, choose **Save snapshot** to write a timestamped JSON record under `archives/`. The filename begins with UTC `YYYYMMDDHHMMSS`, and `snapshot_version` is the first field in the document. These files are intentionally suitable for Git archival.
 
-Open a prior result from **Past results**. A yellow clock banner remains visible whenever historical data is on screen. A saved standards snapshot can be promoted to a gold profile using a platform family (such as `41xx` or `42xx`) and a location (such as `amer` or `emea`). Gold records live under `baselines/` and can be compared with any saved result. Comparison ignores blank lines, line order, repeated whitespace, and concrete IPv4/IPv6 values so site addressing does not create false positives. Command structure, object names, and list membership remain meaningful. Dedicated lint rules validate relationships such as pool-to-Null0 coverage.
+Open a prior result from **Past results**. A yellow clock banner remains visible whenever historical data is on screen. A saved standards snapshot can be promoted to a gold profile using a platform family (such as `41xx` or `42xx`) and a location (such as `amer` or `emea`). Gold records live under `baselines/` and can be compared with any saved result.
+
+Gold comparison is section-aware. Device-specific addresses, SNMP engine IDs, trustpoint names, and VPN listener hostnames are parameterized where appropriate. Split-tunnel IPs and domains are compared as exact unordered sets. Large or volatile sections such as certificates, crypto, sessions, clocks, full ACL output, tunnel groups, and group policies use lint rules instead of raw equality.
 
 ## Multi-headend walks
 
@@ -39,10 +41,15 @@ Expand **Multi-headend walk**, select headends, and optionally select a platform
 
 Standards reviews currently flag:
 
+- missing required settings for AAA, SNMP, SSL, SSH, WebVPN, interfaces, logging, ASDM, DNS, HTTP, MTU, ICMP, crypto, and other focused sections defined in `lint_rules.json`;
 - missing IP or dynamic split-tunnel assignments under `DfltGrpPolicy`;
+- missing or malformed split-tunnel version markers and duplicate/invalid entries;
 - IP local pool ranges without a covering `Null0` route;
+- tunnel groups that reference nonexistent group policies;
 - expired certificates referenced by SSL, crypto, or WebVPN configuration;
 - expired certificates that appear unused and may be cleanup candidates.
+
+The IP split list accepts an `update:<date>` remark. The dynamic split list expects exactly one `dd.mmm.yy.optum.com` marker as its first domain entry. Until that marker is deployed, PipeWrench reports a review warning rather than a command failure. Edit `lint_rules.json` to version-control required section settings without changing Python code.
 
 Certificate removal is never automatic. ASA output can vary by release, so validate reported usage against the full configuration before removing a trustpoint.
 
@@ -54,4 +61,4 @@ If management certificates are later issued for the internal names, set `verify_
 
 ## Safety boundary
 
-Version 0.3 exposes only named inspection actions. It does not accept arbitrary ASA commands from the browser and it does not contain configuration-write routes.
+Version 0.4 exposes only named inspection actions. It does not accept arbitrary ASA commands from the browser and it does not contain configuration-write routes.

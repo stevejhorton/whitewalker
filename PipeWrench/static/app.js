@@ -190,8 +190,9 @@ async function pollBatch(batchId) {
   try {
     const job = await request(`/api/batches/${batchId}`);
     const errors = job.results.filter((item) => item.error).length;
+    const reviews = job.results.reduce((count, item) => count + (item.summary?.warning || 0), 0);
     const anomalies = job.results.reduce((count, item) => count + (item.comparison?.findings?.length || 0), 0);
-    $('#batchStatus').textContent = `${job.status === 'completed' ? 'Completed' : 'Running'}: ${job.completed}/${job.total} headends · ${anomalies} gold differences · ${errors} errors`;
+    $('#batchStatus').textContent = `${job.status === 'completed' ? 'Completed' : 'Running'}: ${job.completed}/${job.total} headends · ${reviews} compliance reviews · ${anomalies} gold differences · ${errors} connection errors`;
     renderBatch(job);
     if (job.status === 'completed') { $('#batchButton').disabled = false; await refreshSaved(); return; }
     state.batchTimer = setTimeout(() => pollBatch(batchId), 3000);

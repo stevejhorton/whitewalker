@@ -1,0 +1,32 @@
+{
+  "rules_version": "2026-09-13",
+  "sections": {
+    "AAA servers": {"required": [["Primary LDAP group", "^aaa-server\\s+MS_DOMAIN\\s+protocol\\s+ldap$"], ["Secondary LDAP group", "^aaa-server\\s+MS_DOMAIN_2\\s+protocol\\s+ldap$"], ["NPS RADIUS group", "^aaa-server\\s+NPS_RADIUS\\s+protocol\\s+radius$"], ["LDAP over SSL", "^\\s*ldap-over-ssl\\s+enable$"]]},
+    "SNMP users & hosts": {"required": [["SNMPv3 user", "^snmp-server\\s+user\\s+\\S+"], ["SNMP manager host", "^snmp-server\\s+host\\s+\\S+"], ["SNMP traps", "^snmp-server\\s+enable\\s+traps"]]},
+    "SSL": {"required": [["TLS 1.2 FIPS cipher", "^ssl\\s+cipher\\s+tlsv1\\.2\\s+fips$"], ["DTLS 1.2 FIPS cipher", "^ssl\\s+cipher\\s+dtlsv1\\.2\\s+fips$"], ["Outside trustpoint", "^ssl\\s+trust-point\\s+\\S+\\s+outside(?:\\s|$)"]]},
+    "SSH": {"required": [["Strict host-key checking", "^ssh\\s+stricthostkeycheck$"], ["Ten-minute timeout", "^ssh\\s+timeout\\s+10$"], ["Approved CTR ciphers", "^ssh\\s+cipher\\s+encryption\\s+custom"], ["Approved key-exchange group", "^ssh\\s+key-exchange\\s+group\\s+dh-group14-sha1$"]]},
+    "WebVPN": {"required": [["WebVPN enabled outside", "^\\s*enable\\s+outside$"], ["AnyConnect enabled", "^\\s*anyconnect\\s+enable$"], ["HostScan enabled", "^\\s*hostscan\\s+enable$"], ["HSTS server", "^\\s*hsts-server$"], ["Content-security policy", "^\\s*content-security-policy$"]]},
+    "IP": {"required": [["Inside interface", "^\\s*nameif\\s+inside$"], ["Outside interface", "^\\s*nameif\\s+outside$"], ["Interface addressing", "^\\s*ip\\s+address\\s+"]]},
+    "Logging": {"required": [["Logging enabled", "^logging\\s+enable$"], ["Standard trap list", "^logging\\s+trap\\s+Standard$"], ["Hostname device ID", "^logging\\s+device-id\\s+hostname$"], ["Syslog destination", "^logging\\s+host\\s+"]]},
+    "Banners": {"required": [["Login banner", "^banner\\s+login\\s+"]]},
+    "Management access": {"required": [["Inside management access", "^management-access\\s+inside$"]]},
+    "ASDM": {"required": [["ASDM image", "^asdm\\s+image\\s+disk0:/asdm-"], ["ASDM history disabled", "^no\\s+asdm\\s+history\\s+enable$"]]},
+    "Crypto": {"required": [["CA trustpoint", "^crypto\\s+ca\\s+trustpoint\\s+"], ["CA trustpool policy", "^crypto\\s+ca\\s+trustpool\\s+policy$"]]},
+    "VPN address assignment": {"required": [["AAA address assignment disabled", "^no\\s+vpn-addr-assign\\s+aaa$"], ["DHCP address assignment disabled", "^no\\s+vpn-addr-assign\\s+dhcp$"]]},
+    "IP local pools": {"required": [["Local VPN pool", "^ip\\s+local\\s+pool\\s+"]]},
+    "Routes": {"required": [["Null0 route", "^route\\s+Null0\\s+"]]},
+    "DNS": {"required": [["Default DNS group", "^DNS\\s+server-group\\s+DefaultDNS$"], ["DNS domain", "^\\s*domain-name\\s+uhc\\.com$"], ["DNS servers", "^\\s*name-server\\s+"]], "minimum_matches": [["At least two DNS servers", "^\\s*name-server\\s+", 2]]},
+    "Usernames": {"required": [["Local break-glass username", "^username\\s+\\S+\\s+password\\s+"]]},
+    "Domain name": {"required": [["UHC domain", "^domain-name\\s+uhc\\.com$"]]},
+    "HTTP": {"required": [["ASDM HTTP port", "^http\\s+server\\s+enable\\s+2002$"], ["Inside HTTP access", "^http\\s+\\S+\\s+\\S+\\s+inside$"]]},
+    "MTU": {"required": [["Inside MTU", "^mtu\\s+inside\\s+\\d+$"], ["Outside MTU", "^mtu\\s+outside\\s+\\d+$"]]},
+    "ICMP": {"required": [["ICMP rate limit", "^icmp\\s+unreachable\\s+rate-limit\\s+"], ["Inside ICMP", "^icmp\\s+permit\\s+any\\s+inside$"]]}
+  },
+  "gold_comparison": {
+    "semantic": ["AAA servers", "SNMP users & hosts", "SSL", "SSH", "WebVPN", "IP", "Logging", "Banners", "Management access", "ASDM", "Names", "VPN address assignment", "IP local pools", "Routes", "DNS", "Usernames", "Domain name", "HTTP", "MTU", "ICMP"],
+    "parameterize_ips": ["AAA servers", "SNMP users & hosts", "SSH", "IP", "Logging", "Names", "IP local pools", "Routes", "DNS", "HTTP"],
+    "split_ip": ["Access lists(SPLIT_TUNNEL_IP)"],
+    "split_domains": ["Access lists(SPLIT_TUNNEL_DOMAINS)"],
+    "rule_only": ["Version & platform", "Clock detail", "Access lists(ALL)", "Crypto", "Certificates", "VPN capacity & sessions", "VPN load-balancing", "Tunnel groups", "Group policies", "NTP"]
+  }
+}

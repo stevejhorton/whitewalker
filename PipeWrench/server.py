@@ -22,23 +22,18 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
+import linters
+
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
 ARCHIVES = ROOT / "archives"
 BASELINES = ROOT / "baselines"
 BATCHES = ROOT / "batches"
-APP_VERSION = "0.3.0"
+APP_VERSION = "0.4.0"
 SNAPSHOT_VERSION = 1
 SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 BATCH_LOCK = threading.Lock()
-GOLD_EXCLUDED_LABELS = {
-    "Clock detail",
-    "Certificates",
-    "Version & platform",
-    "VPN capacity & sessions",
-    "VPN load-balancing",
-}
 
 HEALTH_COMMANDS = [
     ("Hostname", "show running-config hostname"),
@@ -111,6 +106,10 @@ def config() -> dict[str, Any]:
         "request_timeout_seconds": int(values.get("request_timeout_seconds", 25)),
         "batch_workers": max(1, min(int(values.get("batch_workers", 2)), 4)),
     }
+
+
+def lint_config() -> dict[str, Any]:
+    return read_json(ROOT / "lint_rules.json", {})
 
 
 def read_lines(path: Path) -> list[str]:
@@ -319,7 +318,7 @@ def run_standards(device: str) -> dict[str, Any]:
     for result in results:
         if result.get("status") == "ok":
             result["output"] = redact_config_secrets(str(result.get("output", "")))
-    results = compliance_findings(results) + results
+    results = compliance_findings(results) + linters.lint_results(results, lint_config()) + results
     return decorate_run({
         "action": "standards",
         "device": device,
@@ -537,35 +536,49 @@ def load_named_json(directory: Path, item_id: str) -> dict[str, Any]:
         raise ValueError("Saved item is invalid.")
     if directory == ARCHIVES and value.get("platform") in {None, "", "unknown"}:
         value["platform"] = platform_family(value.get("results", []))
+    if directory == ARCHIVES and value.get("action") == "standards":
+        raw_results = [item for item in value.get("results", []) if item.get("command") != linters.COMPLIANCE_COMMAND]
+        value["results"] = compliance_findings(raw_results) + linters.lint_results(raw_results, lint_config()) + raw_results
+        value["summary"] = summarize(value["results"])
     return value
 
 
-def normalize_output(value: str) -> str:
-    # Compare configuration shape while treating device/site IPs as parameters.
-    value = re.sub(r"(?<![A-Fa-f0-9:])(?:\d{1,3}\.){3}\d{1,3}(?![A-Fa-f0-9:])", "<IPV4>", value)
-    value = re.sub(r"(?<![A-Fa-f0-9:])(?:[A-Fa-f0-9]{0,4}:){2,}[A-Fa-f0-9:]{0,4}(?![A-Fa-f0-9:])", "<IPV6>", value)
-    lines = [re.sub(r"\s+", " ", line.strip()) for line in value.splitlines() if line.strip() and line.strip() != "!"]
-    return "\n".join(sorted(lines, key=str.lower))
-
-
 def compare_runs(current: dict[str, Any], baseline: dict[str, Any]) -> dict[str, Any]:
-    gold = {
-        item.get("label"): item for item in baseline.get("results", [])
-        if item.get("command") != "PIPEWRENCH COMPLIANCE" and item.get("label") not in GOLD_EXCLUDED_LABELS
-    }
+    comparison = lint_config().get("gold_comparison", {})
+    current_sections = {item.get("label"): item for item in current.get("results", []) if item.get("command") != linters.COMPLIANCE_COMMAND}
+    gold_sections = {item.get("label"): item for item in baseline.get("results", []) if item.get("command") != linters.COMPLIANCE_COMMAND}
     findings = []
-    current_labels = set()
-    for item in current.get("results", []):
-        if item.get("command") == "PIPEWRENCH COMPLIANCE" or item.get("label") in GOLD_EXCLUDED_LABELS:
+    compared = 0
+    for label in sorted(set(current_sections) | set(gold_sections), key=str.lower):
+        current_item = current_sections.get(label)
+        gold_item = gold_sections.get(label)
+        sample = current_item or gold_item or {}
+        if linters.comparable_value(str(label), str(sample.get("output", "")), comparison) is None:
             continue
-        current_labels.add(item.get("label"))
-        reference = gold.get(item.get("label"))
-        if not reference:
-            findings.append(finding(str(item.get("label")), "warning", "Section does not exist in the gold baseline."))
-        elif normalize_output(str(item.get("output", ""))) != normalize_output(str(reference.get("output", ""))):
-            findings.append(finding(str(item.get("label")), "warning", "Output differs from the gold baseline."))
-    findings.extend(finding(str(label), "warning", "Section exists in gold but is missing from this result.") for label in sorted(set(gold) - current_labels))
-    return {"baseline_id": baseline.get("baseline_id"), "baseline_name": baseline.get("name"), "matched": not findings, "findings": findings}
+        compared += 1
+        if not current_item or not gold_item:
+            detail = "Section is missing from the current result." if not current_item else "Section does not exist in the gold profile."
+            findings.append(finding(str(label), "warning", detail))
+            continue
+        current_value = linters.comparable_value(str(label), str(current_item.get("output", "")), comparison) or set()
+        gold_value = linters.comparable_value(str(label), str(gold_item.get("output", "")), comparison) or set()
+        removed = sorted(gold_value - current_value)
+        added = sorted(current_value - gold_value)
+        if removed or added:
+            detail = [f"Semantic difference: {len(removed)} missing, {len(added)} additional."]
+            if removed:
+                detail.append("Missing: " + "; ".join(removed[:5]))
+            if added:
+                detail.append("Additional: " + "; ".join(added[:5]))
+            findings.append(finding(str(label), "warning", "\n".join(detail)))
+    return {
+        "baseline_id": baseline.get("baseline_id"),
+        "baseline_name": baseline.get("name"),
+        "matched": not findings,
+        "compared_sections": compared,
+        "rule_only_sections": comparison.get("rule_only", []),
+        "findings": findings,
+    }
 
 
 def create_baseline(snapshot_id: str, platform: str, location: str) -> dict[str, Any]:
