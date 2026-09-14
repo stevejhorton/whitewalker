@@ -1,0 +1,36 @@
+{
+  "batch_id": "20260913142848_caa157c8",
+  "created_at": "2026-09-13T14:28:48Z",
+  "status": "completed",
+  "action": "standards",
+  "baseline_id": null,
+  "devices": [
+    "asaatc01vpn21",
+    "asactc01vpn21"
+  ],
+  "total": 2,
+  "completed": 2,
+  "results": [
+    {
+      "device": "asactc01vpn21",
+      "snapshot_id": "20260913142853_asactc01vpn21_standards_d860ed4b",
+      "summary": {
+        "ok": 39,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaatc01vpn21",
+      "snapshot_id": "20260913142856_asaatc01vpn21_standards_36016ca0",
+      "summary": {
+        "ok": 40,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    }
+  ],
+  "completed_at": "2026-09-13T14:28:56Z"
+}
