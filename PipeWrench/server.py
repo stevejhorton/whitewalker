@@ -31,7 +31,7 @@ ARCHIVES = ROOT / "archives"
 BASELINES = ROOT / "baselines"
 BATCHES = ROOT / "batches"
 CAPACITY_REPORTS = ROOT / "capacity-reports"
-APP_VERSION = "0.5.3"
+APP_VERSION = "0.6.0"
 SNAPSHOT_VERSION = 1
 SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 BATCH_LOCK = threading.Lock()
@@ -52,6 +52,7 @@ HEALTH_COMMANDS = [
 STANDARD_COMMANDS = [
     ("Version & platform", "show version"),
     ("AAA servers", "show running-config aaa-server"),
+    ("AAA TACACS policy", "show running-config | grep TACACS"),
     ("SNMP users & hosts", "show running-config snmp-server"),
     ("SSL", "show running-config ssl"),
     ("SSH", "show running-config ssh"),
@@ -550,6 +551,59 @@ def default_group_policy_finding(results: list[dict[str, Any]]) -> dict[str, Any
     return finding("DfltGrpPolicy split tunnels", "warning" if missing else "ok", "Missing: " + ", ".join(missing) if missing else "Both IP and dynamic split tunnel lists are assigned.")
 
 
+def management_aaa_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
+    """Validate the sole local fallback account and the TACACS-first access policy."""
+    username_text = result_output(results, "show running-config username")
+    server_text = result_output(results, "show running-config aaa-server")
+    policy_text = result_output(results, "show running-config | grep TACACS")
+    issues: list[str] = []
+
+    usernames = set(re.findall(r"(?m)^username\s+(\S+)", username_text))
+    if "ec_T3ch1_y" not in usernames:
+        issues.append("required local user ec_T3ch1_y is missing")
+    extras = sorted(usernames - {"ec_T3ch1_y"}, key=str.lower)
+    if extras:
+        issues.append("unexpected local user(s): " + ", ".join(extras))
+    if "ec_T3ch1_y" in usernames and not re.search(
+        r"(?m)^username\s+ec_T3ch1_y\s+password\s+\S+\s+pbkdf2\s+privilege\s+15\s*$",
+        username_text,
+    ):
+        issues.append("ec_T3ch1_y must use a PBKDF2 password and privilege 15")
+
+    if not re.search(r"(?im)^aaa-server\s+TACACS\s+protocol\s+tacacs\+\s*$", server_text):
+        issues.append("AAA server group TACACS is not configured for tacacs+")
+    inside_hosts = sorted(set(re.findall(r"(?im)^aaa-server\s+TACACS\s+\(Inside\)\s+host\s+(\S+)", server_text)))
+    if not inside_hosts:
+        issues.append("AAA server group TACACS has no host bound to Inside")
+
+    required_policy = [
+        "aaa authentication http console TACACS LOCAL",
+        "aaa authentication ssh console TACACS LOCAL",
+        "aaa authentication telnet console TACACS LOCAL",
+        "aaa authorization command TACACS LOCAL",
+        "aaa accounting enable console TACACS",
+        "aaa accounting serial console TACACS",
+        "aaa accounting ssh console TACACS",
+        "aaa accounting telnet console TACACS",
+        "aaa accounting command TACACS",
+    ]
+    if not policy_text:
+        issues.append("TACACS authentication, authorization, and accounting output is unavailable")
+    else:
+        normalized_policy = {re.sub(r"\s+", " ", line.strip()).lower() for line in policy_text.splitlines()}
+        missing_policy = [line for line in required_policy if line.lower() not in normalized_policy]
+        if missing_policy:
+            issues.append("missing policy line(s):\n" + "\n".join(missing_policy))
+
+    if issues:
+        return finding("Management AAA and local fallback", "warning", "\n".join(issues))
+    return finding(
+        "Management AAA and local fallback",
+        "ok",
+        "Only ec_T3ch1_y is configured locally with PBKDF2/privilege 15. TACACS is bound to Inside, and remote authentication checks TACACS then LOCAL. Command authorization and accounting are configured.",
+    )
+
+
 def pool_null_route_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
     pool_text = result_output(results, "show running-config ip local pool")
     route_text = result_output(results, "show running-config route")
@@ -624,7 +678,7 @@ def time_sync_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def compliance_findings(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [time_sync_finding(results), default_group_policy_finding(results), pool_null_route_finding(results), capacity_finding(results), *certificate_findings(results)]
+    return [time_sync_finding(results), management_aaa_finding(results), default_group_policy_finding(results), pool_null_route_finding(results), capacity_finding(results), *certificate_findings(results)]
 
 
 def ensure_data_dirs() -> None:

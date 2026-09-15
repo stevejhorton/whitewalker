@@ -48,6 +48,7 @@ Open the **Tools** tab and run **Service-wide VPN capacity** when a fresh capaci
 Standards reviews currently flag:
 
 - missing required settings for AAA, SNMP, SSL, SSH, WebVPN, interfaces, logging, ASDM, DNS, HTTP, MTU, ICMP, crypto, and other focused sections defined in `lint_rules.json`;
+- a missing or incorrectly configured `ec_T3ch1_y` PBKDF2/privilege-15 fallback account, any additional local usernames, TACACS without an `Inside` host, or missing TACACS-first/LOCAL-fallback management authentication, authorization, and accounting lines;
 - missing IP or dynamic split-tunnel assignments under `DfltGrpPolicy`;
 - missing or malformed split-tunnel version markers and duplicate/invalid entries;
 - IP local pool ranges without a covering `Null0` route;

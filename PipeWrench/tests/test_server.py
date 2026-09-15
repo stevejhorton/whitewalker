@@ -200,6 +200,43 @@ class PipeWrenchTests(unittest.TestCase):
         results[0]["output"] = results[0]["output"].replace(" anyconnect-custom", " no-anyconnect-custom")
         self.assertEqual(server.default_group_policy_finding(results)["status"], "warning")
 
+    def test_management_aaa_requires_exact_local_fallback_and_tacacs_policy(self):
+        policy = "\n".join([
+            "aaa-server TACACS protocol tacacs+",
+            "aaa-server TACACS (Inside) host 10.50.48.9",
+            "aaa authentication http console TACACS LOCAL",
+            "aaa authentication ssh console TACACS LOCAL",
+            "aaa authentication telnet console TACACS LOCAL",
+            "aaa authorization command TACACS LOCAL",
+            "aaa accounting enable console TACACS",
+            "aaa accounting serial console TACACS",
+            "aaa accounting ssh console TACACS",
+            "aaa accounting telnet console TACACS",
+            "aaa accounting command TACACS",
+        ])
+        results = [
+            {"status": "ok", "command": "show running-config username", "output": "username ec_T3ch1_y password ******** pbkdf2 privilege 15"},
+            {"status": "ok", "command": "show running-config aaa-server", "output": "aaa-server TACACS protocol tacacs+\naaa-server TACACS (Inside) host 10.50.48.9"},
+            {"status": "ok", "command": "show running-config | grep TACACS", "output": policy},
+        ]
+        self.assertEqual(server.management_aaa_finding(results)["status"], "ok")
+
+        results[0]["output"] += "\nusername admin password ******** pbkdf2 privilege 15"
+        finding = server.management_aaa_finding(results)
+        self.assertEqual(finding["status"], "warning")
+        self.assertIn("unexpected local user(s): admin", finding["output"])
+
+    def test_management_aaa_flags_wrong_local_hash_and_missing_remote_fallback(self):
+        results = [
+            {"status": "ok", "command": "show running-config username", "output": "username ec_T3ch1_y password ******** encrypted privilege 15"},
+            {"status": "ok", "command": "show running-config aaa-server", "output": "aaa-server TACACS protocol tacacs+\naaa-server TACACS (Inside) host 10.50.48.9"},
+            {"status": "ok", "command": "show running-config | grep TACACS", "output": "aaa authentication ssh console TACACS"},
+        ]
+        finding = server.management_aaa_finding(results)
+        self.assertEqual(finding["status"], "warning")
+        self.assertIn("PBKDF2", finding["output"])
+        self.assertIn("aaa authentication ssh console TACACS LOCAL", finding["output"])
+
     def test_ip_local_pools_require_covering_null_route(self):
         results = [
             {"status": "ok", "command": "show running-config ip local pool", "output": "ip local pool VPN 10.4.8.10-10.4.8.200 mask 255.255.255.0"},
