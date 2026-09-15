@@ -31,7 +31,7 @@ ARCHIVES = ROOT / "archives"
 BASELINES = ROOT / "baselines"
 BATCHES = ROOT / "batches"
 CAPACITY_REPORTS = ROOT / "capacity-reports"
-APP_VERSION = "0.5.1"
+APP_VERSION = "0.5.2"
 SNAPSHOT_VERSION = 1
 SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 BATCH_LOCK = threading.Lock()
@@ -816,10 +816,33 @@ def list_batches() -> list[dict[str, Any]]:
 
 
 def run_capacity_device(device: str) -> dict[str, Any]:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(CAPACITY_COMMANDS)) as pool:
-        futures = [pool.submit(execute_command, device, label, command) for label, command in CAPACITY_COMMANDS]
-        command_results = [future.result() for future in futures]
+    # The outer report already walks multiple headends concurrently. Serializing
+    # commands per ASA avoids bursts of ASDM requests that can return an empty
+    # running-config section even though the section exists.
+    command_results = [execute_command(device, label, command) for label, command in CAPACITY_COMMANDS]
     capacity = capacity_summary(command_results)
+
+    retry_commands: set[str] = set()
+    if capacity["address_source"] == "unknown":
+        retry_commands.update({
+            "show running-config ip local pool",
+            "show running-config vpn-addr-assign",
+            "show running-config tunnel-group",
+            "show running-config group-policy",
+        })
+    if capacity["provisioned_capacity"] is None or capacity["active_sessions"] is None:
+        retry_commands.add("show vpn-sessiondb summary")
+    if capacity["configured_limit"] is None:
+        retry_commands.add("show running-config all vpn-sessiondb")
+
+    retried: list[str] = []
+    for index, (label, command) in enumerate(CAPACITY_COMMANDS):
+        if command in retry_commands:
+            command_results[index] = execute_command(device, label, command)
+            retried.append(command)
+    if retried:
+        capacity = capacity_summary(command_results)
+
     errors = [str(item.get("output", "Command failed.")) for item in command_results if item.get("status") == "error"]
     if len(errors) == len(CAPACITY_COMMANDS):
         status = "error"
@@ -827,7 +850,7 @@ def run_capacity_device(device: str) -> dict[str, Any]:
         status = "warning"
     else:
         status = "ok"
-    return {"device": device, "status": status, "errors": errors, **capacity}
+    return {"device": device, "status": status, "errors": errors, "retried_commands": retried, **capacity}
 
 
 def capacity_totals(results: list[dict[str, Any]]) -> dict[str, Any]:

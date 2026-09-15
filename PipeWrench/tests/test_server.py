@@ -140,6 +140,31 @@ class PipeWrenchTests(unittest.TestCase):
         self.assertEqual(totals["configured_limit_devices"], 1)
         self.assertEqual(totals["error_devices"], 1)
 
+    def test_capacity_collection_retries_a_transient_missing_pool(self):
+        calls: dict[str, int] = {}
+
+        def fake_execute(_device, label, command):
+            calls[command] = calls.get(command, 0) + 1
+            outputs = {
+                "show running-config ip local pool": "" if calls[command] == 1 else "ip local pool POOL_UHGVPNEMP 10.21.0.1-10.21.63.254 mask 255.255.192.0",
+                "show running-config vpn-addr-assign": "no vpn-addr-assign dhcp",
+                "show running-config tunnel-group": "tunnel-group DefaultWEBVPNGroup general-attributes\n address-pool POOL_UHGVPNEMP",
+                "show running-config group-policy": "group-policy DfltGrpPolicy attributes",
+                "show vpn-sessiondb summary": "AnyConnect Client : 6826 : 10000 : 7000 : 0\nDevice Total VPN Capacity : 20000",
+                "show running-config all vpn-sessiondb": "vpn-sessiondb max-anyconnect-premium-or-essentials-limit 16382",
+            }
+            output = outputs[command]
+            return {"label": label, "command": command, "status": "ok", "output": output or "Command completed with no output."}
+
+        with patch.object(server, "execute_command", side_effect=fake_execute):
+            result = server.run_capacity_device("asaatc01vpn25")
+
+        self.assertEqual(result["pool_addresses"], 16382)
+        self.assertEqual(result["effective_capacity"], 16382)
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(calls["show running-config ip local pool"], 2)
+        self.assertIn("show running-config ip local pool", result["retried_commands"])
+
     def test_config_secret_redaction(self):
         source = "username bob password abc123 encrypted\nsnmp-server community public\npre-shared-key local letmein\n key aaa-secret\nsnmp-server user bob group v3 auth sha auth-secret priv aes 128 priv-secret"
         redacted = server.redact_config_secrets(source)
