@@ -91,6 +91,43 @@ class PipeWrenchTests(unittest.TestCase):
         self.assertEqual(capacity["pool_addresses"], 15)
         self.assertEqual(capacity["overlapping_addresses"], 6)
 
+    def test_capacity_summary_identifies_external_dhcp_without_guessing_scope_size(self):
+        results = [
+            {"status": "ok", "command": "show running-config vpn-addr-assign", "output": "vpn-addr-assign dhcp\nno vpn-addr-assign local"},
+            {"status": "ok", "command": "show running-config tunnel-group", "output": "tunnel-group VPN general-attributes\n dhcp-server 10.204.67.162\n dhcp-server 10.106.147.102"},
+            {"status": "ok", "command": "show running-config group-policy", "output": "group-policy VPN attributes\n dhcp-network-scope 10.73.32.0"},
+            {"status": "ok", "command": "show vpn-sessiondb summary", "output": "Device Total VPN Capacity : 20000"},
+            {"status": "ok", "command": "show running-config all vpn-sessiondb", "output": "vpn-sessiondb max-anyconnect-premium-or-essentials-limit 15000"},
+        ]
+        capacity = server.capacity_summary(results)
+        self.assertEqual(capacity["address_source"], "dhcp")
+        self.assertEqual(capacity["dhcp_servers"], ["10.106.147.102", "10.204.67.162"])
+        self.assertEqual(capacity["dhcp_scopes"], ["10.73.32.0"])
+        self.assertIsNone(capacity["pool_addresses"])
+        self.assertIsNone(capacity["effective_capacity"])
+        self.assertEqual(capacity["unquantified"], ["external DHCP scope capacity"])
+        self.assertNotIn("address pools", capacity["missing"])
+
+    def test_capacity_summary_marks_local_and_dhcp_as_mixed(self):
+        results = [
+            {"status": "ok", "command": "show running-config ip local pool", "output": "ip local pool LOCAL 192.0.2.1-192.0.2.10"},
+            {"status": "ok", "command": "show running-config tunnel-group", "output": " dhcp-server 10.0.0.10"},
+        ]
+        capacity = server.capacity_summary(results)
+        self.assertEqual(capacity["address_source"], "mixed")
+        self.assertEqual(capacity["pool_addresses"], 10)
+        self.assertIsNone(capacity["effective_capacity"])
+
+    def test_dhcp_only_headend_does_not_fail_local_pool_null_route_check(self):
+        results = [
+            {"status": "ok", "command": "show running-config ip local pool", "output": ""},
+            {"status": "ok", "command": "show running-config route", "output": "route outside 0.0.0.0 0.0.0.0 192.0.2.1"},
+            {"status": "ok", "command": "show running-config tunnel-group", "output": " dhcp-server 10.0.0.10"},
+        ]
+        result = server.pool_null_route_finding(results)
+        self.assertEqual(result["status"], "ok")
+        self.assertIn("external DHCP", result["output"])
+
     def test_capacity_totals_track_partial_coverage(self):
         totals = server.capacity_totals([
             {"status": "ok", "pool_addresses": 100, "provisioned_capacity": 200, "configured_limit": 150, "effective_capacity": 100, "active_sessions": 50},

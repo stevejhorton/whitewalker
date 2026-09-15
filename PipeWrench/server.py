@@ -31,7 +31,7 @@ ARCHIVES = ROOT / "archives"
 BASELINES = ROOT / "baselines"
 BATCHES = ROOT / "batches"
 CAPACITY_REPORTS = ROOT / "capacity-reports"
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.5.1"
 SNAPSHOT_VERSION = 1
 SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 BATCH_LOCK = threading.Lock()
@@ -86,6 +86,9 @@ STANDARD_COMMANDS = [
 
 CAPACITY_COMMANDS = [
     ("IP local pools", "show running-config ip local pool"),
+    ("VPN address assignment", "show running-config vpn-addr-assign"),
+    ("Tunnel groups", "show running-config tunnel-group"),
+    ("Group policies", "show running-config group-policy"),
     ("VPN capacity & sessions", "show vpn-sessiondb summary"),
     ("VPN configured session limits", "show running-config all vpn-sessiondb"),
 ]
@@ -287,11 +290,32 @@ def integer_match(pattern: str, text: str) -> int | None:
     return int(value.replace(",", "")) if value is not None else None
 
 
+def sorted_ipv4_matches(pattern: str, text: str) -> list[str]:
+    """Return unique IPv4 matches in numeric order, ignoring malformed values."""
+    addresses: set[ipaddress.IPv4Address] = set()
+    for value in re.findall(pattern, text, re.IGNORECASE | re.MULTILINE):
+        try:
+            address = ipaddress.ip_address(value)
+        except ValueError:
+            continue
+        if isinstance(address, ipaddress.IPv4Address):
+            addresses.add(address)
+    return [str(address) for address in sorted(addresses)]
+
+
 def capacity_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     pool_text = result_output(results, "show running-config ip local pool")
+    assignment_text = result_output(results, "show running-config vpn-addr-assign")
+    tunnel_text = result_output(results, "show running-config tunnel-group")
+    group_text = result_output(results, "show running-config group-policy")
     session_text = result_output(results, "show vpn-sessiondb summary")
     limit_text = result_output(results, "show running-config all vpn-sessiondb")
     pools = parse_ip_local_pools(pool_text)
+    dhcp_servers = sorted_ipv4_matches(r"^\s*dhcp-server\s+(\d+(?:\.\d+){3})\b", tunnel_text)
+    dhcp_scopes = sorted_ipv4_matches(r"^\s*dhcp-network-scope\s+(\d+(?:\.\d+){3})\b", group_text)
+    dhcp_assignment = bool(re.search(r"(?im)^\s*vpn-addr-assign\s+dhcp\b", assignment_text))
+    uses_dhcp = bool(dhcp_servers or dhcp_scopes or dhcp_assignment)
+    address_source = "mixed" if pools and uses_dhcp else "local" if pools else "dhcp" if uses_dhcp else "unknown"
     raw_pool_addresses = sum(item["addresses"] for item in pools)
     pool_addresses = unique_pool_address_count(pools) if pools else None
     provisioned = integer_match(r"Device Total VPN Capacity\s*:\s*([\d,]+)", session_text)
@@ -300,19 +324,27 @@ def capacity_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
         r"^\s*vpn-sessiondb\s+(?:max-anyconnect-premium-or-essentials-limit|max-session-limit)\s+([\d,]+)",
         limit_text,
     )
+    # DHCP scope bounds live on the external DHCP service, not in ASA configuration.
+    # A DHCP or mixed headend therefore has no defensible complete address ceiling.
+    complete_address_capacity = pool_addresses if not uses_dhcp else None
     ceilings = {
-        "address pools": pool_addresses,
+        "address pools": complete_address_capacity,
         "provisioned capacity": provisioned,
         "configured limit": configured,
     }
     available = {name: value for name, value in ceilings.items() if value is not None}
     effective = min(available.values()) if len(available) == len(ceilings) else None
     limiting = [name for name, value in available.items() if effective is not None and value == effective]
-    missing = [name for name, value in ceilings.items() if value is None]
+    missing = [name for name, value in ceilings.items() if value is None and not (name == "address pools" and uses_dhcp)]
+    unquantified = ["external DHCP scope capacity"] if uses_dhcp else []
     return {
         "pools": pools,
         "pool_count": len(pools),
         "pool_addresses": pool_addresses,
+        "address_source": address_source,
+        "dhcp_servers": dhcp_servers,
+        "dhcp_scopes": dhcp_scopes,
+        "external_dhcp_capacity_unknown": uses_dhcp,
         "overlapping_addresses": raw_pool_addresses - pool_addresses if pool_addresses is not None else 0,
         "provisioned_capacity": provisioned,
         "configured_limit": configured,
@@ -320,6 +352,7 @@ def capacity_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
         "active_sessions": active,
         "limiting_factor": ", ".join(limiting) if limiting else None,
         "missing": missing,
+        "unquantified": unquantified,
     }
 
 
@@ -520,8 +553,14 @@ def default_group_policy_finding(results: list[dict[str, Any]]) -> dict[str, Any
 def pool_null_route_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
     pool_text = result_output(results, "show running-config ip local pool")
     route_text = result_output(results, "show running-config route")
-    if not pool_text or not route_text:
-        return finding("VPN pool Null0 routes", "warning", "IP local pool or route output was unavailable.")
+    pools = re.findall(r"(?im)^ip\s+local\s+pool\s+(\S+)\s+(\d+(?:\.\d+){3})-(\d+(?:\.\d+){3})", pool_text)
+    if not pools:
+        capacity = capacity_summary(results)
+        if capacity["address_source"] == "dhcp":
+            return finding("VPN pool Null0 routes", "ok", "Not applicable: address assignment is external DHCP and no ASA IP local pools are configured.")
+        return finding("VPN pool Null0 routes", "warning", "No IP local pool ranges could be parsed.")
+    if not route_text:
+        return finding("VPN pool Null0 routes", "warning", "Route output was unavailable.")
     null_networks: list[ipaddress.IPv4Network] = []
     for address, mask in re.findall(r"(?im)^route\s+Null0\s+(\d+(?:\.\d+){3})\s+(\d+(?:\.\d+){3})\b", route_text):
         try:
@@ -529,7 +568,6 @@ def pool_null_route_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
         except ValueError:
             pass
     missing: list[str] = []
-    pools = re.findall(r"(?im)^ip\s+local\s+pool\s+(\S+)\s+(\d+(?:\.\d+){3})-(\d+(?:\.\d+){3})", pool_text)
     for name, start, end in pools:
         try:
             first, last = ipaddress.ip_address(start), ipaddress.ip_address(end)
@@ -538,16 +576,21 @@ def pool_null_route_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
             covered = False
         if not covered:
             missing.append(f"{name}: {start}-{end}")
-    if not pools:
-        return finding("VPN pool Null0 routes", "warning", "No DHCP-style IP local pool ranges could be parsed.")
     return finding("VPN pool Null0 routes", "warning" if missing else "ok", "Pools without a covering Null0 route:\n" + "\n".join(missing) if missing else "Every parsed IP local pool is covered by a Null0 route.")
 
 
 def capacity_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
     capacity = capacity_summary(results)
-    lines = []
+    lines = [f"Address source: {capacity['address_source'].title()}"]
     if capacity["pool_addresses"] is not None:
-        lines.append(f"Address-pool capacity: {capacity['pool_addresses']:,} across {capacity['pool_count']} pool(s)")
+        qualifier = "known local subtotal" if capacity["external_dhcp_capacity_unknown"] else "capacity"
+        lines.append(f"Address-pool {qualifier}: {capacity['pool_addresses']:,} across {capacity['pool_count']} pool(s)")
+    if capacity["dhcp_servers"]:
+        lines.append("External DHCP servers: " + ", ".join(capacity["dhcp_servers"]))
+    if capacity["dhcp_scopes"]:
+        lines.append("DHCP network scopes: " + ", ".join(capacity["dhcp_scopes"]))
+    if capacity["external_dhcp_capacity_unknown"]:
+        lines.append("External DHCP scope capacity cannot be calculated from ASA configuration; query DHCP/IPAM for scope bounds and exclusions.")
     if capacity["provisioned_capacity"] is not None:
         lines.append(f"Provisioned VPN capacity: {capacity['provisioned_capacity']:,}")
     if capacity["configured_limit"] is not None:
@@ -562,7 +605,7 @@ def capacity_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
         lines.append("Unavailable: " + ", ".join(capacity["missing"]))
     return finding(
         "VPN session capacity",
-        "warning" if capacity["missing"] or capacity["overlapping_addresses"] else "ok",
+        "warning" if capacity["missing"] or capacity["unquantified"] or capacity["overlapping_addresses"] else "ok",
         "\n".join(lines) or "Capacity data was unavailable.",
     )
 
@@ -780,7 +823,7 @@ def run_capacity_device(device: str) -> dict[str, Any]:
     errors = [str(item.get("output", "Command failed.")) for item in command_results if item.get("status") == "error"]
     if len(errors) == len(CAPACITY_COMMANDS):
         status = "error"
-    elif errors or capacity["missing"] or capacity["overlapping_addresses"]:
+    elif errors or capacity["missing"] or capacity["unquantified"] or capacity["overlapping_addresses"]:
         status = "warning"
     else:
         status = "ok"
@@ -793,6 +836,10 @@ def capacity_totals(results: list[dict[str, Any]]) -> dict[str, Any]:
         "ok_devices": sum(item.get("status") == "ok" for item in results),
         "warning_devices": sum(item.get("status") == "warning" for item in results),
         "error_devices": sum(item.get("status") == "error" for item in results),
+        "local_devices": sum(item.get("address_source") == "local" for item in results),
+        "dhcp_devices": sum(item.get("address_source") == "dhcp" for item in results),
+        "mixed_devices": sum(item.get("address_source") == "mixed" for item in results),
+        "unknown_source_devices": sum(item.get("address_source") == "unknown" for item in results),
     }
     for key in ("pool_addresses", "provisioned_capacity", "configured_limit", "effective_capacity", "active_sessions"):
         values = [item.get(key) for item in results if isinstance(item.get(key), int)]

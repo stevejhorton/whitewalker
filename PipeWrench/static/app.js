@@ -254,7 +254,7 @@ function renderCapacity(report) {
   const metrics = $('#capacityMetrics'); metrics.replaceChildren(); metrics.hidden = false;
   const coverage = (key) => `${totals[`${key}_devices`] || 0}/${total} headends reported`;
   metrics.append(
-    capacityMetric('Address-pool capacity', totals.pool_addresses, coverage('pool_addresses')),
+    capacityMetric('Known local capacity', totals.pool_addresses, coverage('pool_addresses')),
     capacityMetric('Provisioned capacity', totals.provisioned_capacity, coverage('provisioned_capacity')),
     capacityMetric('Configured limit', totals.configured_limit, coverage('configured_limit')),
     capacityMetric('Effective ceiling', totals.effective_capacity, coverage('effective_capacity')),
@@ -263,11 +263,11 @@ function renderCapacity(report) {
 
   const container = $('#capacityReport'); container.hidden = false; container.replaceChildren();
   const note = document.createElement('p'); note.className = 'capacity-note';
-  note.textContent = `${report.status === 'completed' ? 'Completed' : 'Running'} report ${report.report_id} · ${report.completed}/${total} headends`;
+  note.textContent = `${report.status === 'completed' ? 'Completed' : 'Running'} report ${report.report_id} · ${report.completed}/${total} headends · ${totals.local_devices || 0} local · ${totals.dhcp_devices || 0} DHCP · ${totals.mixed_devices || 0} mixed`;
   const wrap = document.createElement('div'); wrap.className = 'capacity-table-wrap';
   const table = document.createElement('table'); table.className = 'capacity-table';
   const head = document.createElement('thead');
-  head.innerHTML = '<tr><th>Headend</th><th>Pool addresses</th><th>Provisioned</th><th>Configured</th><th>Effective</th><th>Active</th><th>Limiting factor / status</th></tr>';
+  head.innerHTML = '<tr><th>Headend</th><th>Address source</th><th>Known local addresses</th><th>Provisioned</th><th>Configured</th><th>Effective</th><th>Active</th><th>Limiting factor / status</th></tr>';
   const body = document.createElement('tbody');
   (report.results || []).forEach((item) => {
     const row = document.createElement('tr');
@@ -275,15 +275,22 @@ function renderCapacity(report) {
     const poolDetail = document.createElement('small');
     const poolBreakdown = (item.pools || []).map((pool) => `${pool.name} ${formatCount(pool.addresses)}`).join(' · ');
     poolDetail.textContent = poolBreakdown || `${item.pool_count || 0} pool(s)`; device.append(poolDetail);
+    const source = document.createElement('td'); source.textContent = (item.address_source || 'unknown').replace(/^./, (letter) => letter.toUpperCase());
+    const dhcpDetail = document.createElement('small');
+    const dhcpParts = [];
+    if (item.dhcp_servers?.length) dhcpParts.push(`servers ${item.dhcp_servers.join(', ')}`);
+    if (item.dhcp_scopes?.length) dhcpParts.push(`scopes ${item.dhcp_scopes.join(', ')}`);
+    dhcpDetail.textContent = dhcpParts.join(' · '); if (dhcpParts.length) source.append(dhcpDetail);
     [item.pool_addresses, item.provisioned_capacity, item.configured_limit, item.effective_capacity, item.active_sessions].forEach((value) => {
       const cell = document.createElement('td'); cell.textContent = formatCount(value); row.append(cell);
     });
     const status = document.createElement('td'); const statusText = document.createElement('span');
     statusText.className = `capacity-status ${item.status || 'warning'}`;
     const overlap = item.overlapping_addresses ? ` · ${formatCount(item.overlapping_addresses)} overlapping excluded` : '';
-    statusText.textContent = item.status === 'error' ? 'Collection failed' : `${item.limiting_factor || (item.missing?.length ? `Missing ${item.missing.join(', ')}` : 'Complete')}${overlap}`;
+    const completeness = item.external_dhcp_capacity_unknown ? 'External DHCP capacity unknown' : (item.limiting_factor || (item.missing?.length ? `Missing ${item.missing.join(', ')}` : 'Complete'));
+    statusText.textContent = item.status === 'error' ? 'Collection failed' : `${completeness}${overlap}`;
     if (item.errors?.length) statusText.title = item.errors.join('\n');
-    status.append(statusText); row.prepend(device); row.append(status); body.append(row);
+    status.append(statusText); row.prepend(device, source); row.append(status); body.append(row);
   });
   table.append(head, body); wrap.append(table); container.append(note, wrap);
 }

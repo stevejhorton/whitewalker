@@ -41,7 +41,7 @@ Expand **Multi-headend walk**, select headends, and optionally select a platform
 
 ## On-demand tools
 
-Open the **Tools** tab and run **Service-wide VPN capacity** when a fresh capacity inventory is needed. PipeWrench queries every configured headend for IP local pools, provisioned VPN capacity, the configured AnyConnect session limit, and current AnyConnect sessions. It shows per-headend values plus service-wide totals and saves reports under `capacity-reports/` so interrupted or previous runs can be reopened.
+Open the **Tools** tab and run **Service-wide VPN capacity** when a fresh capacity inventory is needed. PipeWrench queries every configured headend for IP local pools, external DHCP assignment, provisioned VPN capacity, the configured AnyConnect session limit, and current AnyConnect sessions. It classifies address assignment as Local, DHCP, Mixed, or Unknown. Local ranges are counted exactly (with overlaps removed); external DHCP servers and network scopes are called out, but their capacity remains unknown until an authoritative DHCP/IPAM source supplies scope bounds and exclusions. The report shows per-headend values plus service-wide totals and saves reports under `capacity-reports/` so interrupted or previous runs can be reopened.
 
 ## Built-in standards findings
 
