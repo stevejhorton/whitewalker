@@ -6,4 +6,4 @@ PipeWrench/tests/__pycache__/
 PipeWrench/archives/*.tmp
 PipeWrench/baselines/*.tmp
 PipeWrench/batches/*.tmp
-
+PipeWrench/capacity-reports/*.tmp

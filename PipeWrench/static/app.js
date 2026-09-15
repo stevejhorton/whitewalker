@@ -1,5 +1,5 @@
 const $ = (selector) => document.querySelector(selector);
-const state = { devices: [], running: false, current: null, snapshotId: '', historical: false, batchTimer: null };
+const state = { devices: [], running: false, current: null, snapshotId: '', historical: false, batchTimer: null, capacityTimer: null };
 const deviceSelect = $('#deviceSelect');
 const runButton = $('#runButton');
 const notice = $('#notice');
@@ -36,11 +36,15 @@ function fillSelect(select, items, placeholder, valueKey, labelFn) {
 }
 
 async function refreshSaved() {
-  const [snapshotData, baselineData, batchData] = await Promise.all([request('/api/snapshots'), request('/api/baselines'), request('/api/batches')]);
+  const [snapshotData, baselineData, batchData, capacityData] = await Promise.all([
+    request('/api/snapshots'), request('/api/baselines'), request('/api/batches'), request('/api/capacity-reports'),
+  ]);
   fillSelect($('#snapshotSelect'), snapshotData.snapshots, 'Open a saved snapshot…', 'snapshot_id', (item) => `${item.captured_at} · ${item.device} · ${item.action}`);
   [$('#baselineSelect'), $('#batchBaseline')].forEach((select) => fillSelect(select, baselineData.baselines,
     select.id === 'batchBaseline' ? 'Compliance rules only' : 'Choose gold profile…', 'baseline_id', (item) => `${item.name} · ${item.device}`));
   fillSelect($('#batchSelect'), batchData.batches, 'Open a prior walk…', 'batch_id',
+    (item) => `${item.created_at} · ${item.completed}/${item.total} · ${item.status}`);
+  fillSelect($('#capacitySelect'), capacityData.reports, 'Open a prior report…', 'report_id',
     (item) => `${item.created_at} · ${item.completed}/${item.total} · ${item.status}`);
 }
 
@@ -70,6 +74,16 @@ $('#saveDevice').addEventListener('click', async () => {
   } catch (error) { message(error.message, true); }
 });
 $('#newDevice').addEventListener('keydown', (event) => { if (event.key === 'Enter') $('#saveDevice').click(); });
+
+function showWorkspace(name) {
+  const inspections = name === 'inspections';
+  $('#inspectionPane').hidden = !inspections; $('#toolsPane').hidden = inspections;
+  $('#inspectionTab').classList.toggle('active', inspections); $('#toolsTab').classList.toggle('active', !inspections);
+  $('#inspectionTab').setAttribute('aria-selected', String(inspections)); $('#toolsTab').setAttribute('aria-selected', String(!inspections));
+}
+
+$('#inspectionTab').addEventListener('click', () => showWorkspace('inspections'));
+$('#toolsTab').addEventListener('click', () => showWorkspace('tools'));
 
 runButton.addEventListener('click', async () => {
   if (state.running) return;
@@ -222,6 +236,88 @@ function renderBatch(job) {
     row.append(target, summary, detail); report.append(row);
   });
 }
+
+function formatCount(value) {
+  return Number.isInteger(value) ? value.toLocaleString() : '—';
+}
+
+function capacityMetric(label, value, detail) {
+  const card = document.createElement('article'); card.className = 'metric-card';
+  const name = document.createElement('span'); name.textContent = label;
+  const count = document.createElement('strong'); count.textContent = formatCount(value);
+  const note = document.createElement('small'); note.textContent = detail;
+  card.append(name, count, note); return card;
+}
+
+function renderCapacity(report) {
+  const totals = report.totals || {}; const total = report.total || 0;
+  const metrics = $('#capacityMetrics'); metrics.replaceChildren(); metrics.hidden = false;
+  const coverage = (key) => `${totals[`${key}_devices`] || 0}/${total} headends reported`;
+  metrics.append(
+    capacityMetric('Address-pool capacity', totals.pool_addresses, coverage('pool_addresses')),
+    capacityMetric('Provisioned capacity', totals.provisioned_capacity, coverage('provisioned_capacity')),
+    capacityMetric('Configured limit', totals.configured_limit, coverage('configured_limit')),
+    capacityMetric('Effective ceiling', totals.effective_capacity, coverage('effective_capacity')),
+    capacityMetric('Active sessions', totals.active_sessions, coverage('active_sessions')),
+  );
+
+  const container = $('#capacityReport'); container.hidden = false; container.replaceChildren();
+  const note = document.createElement('p'); note.className = 'capacity-note';
+  note.textContent = `${report.status === 'completed' ? 'Completed' : 'Running'} report ${report.report_id} · ${report.completed}/${total} headends`;
+  const wrap = document.createElement('div'); wrap.className = 'capacity-table-wrap';
+  const table = document.createElement('table'); table.className = 'capacity-table';
+  const head = document.createElement('thead');
+  head.innerHTML = '<tr><th>Headend</th><th>Pool addresses</th><th>Provisioned</th><th>Configured</th><th>Effective</th><th>Active</th><th>Limiting factor / status</th></tr>';
+  const body = document.createElement('tbody');
+  (report.results || []).forEach((item) => {
+    const row = document.createElement('tr');
+    const device = document.createElement('td'); device.className = 'device-name'; device.textContent = item.device;
+    const poolDetail = document.createElement('small');
+    const poolBreakdown = (item.pools || []).map((pool) => `${pool.name} ${formatCount(pool.addresses)}`).join(' · ');
+    poolDetail.textContent = poolBreakdown || `${item.pool_count || 0} pool(s)`; device.append(poolDetail);
+    [item.pool_addresses, item.provisioned_capacity, item.configured_limit, item.effective_capacity, item.active_sessions].forEach((value) => {
+      const cell = document.createElement('td'); cell.textContent = formatCount(value); row.append(cell);
+    });
+    const status = document.createElement('td'); const statusText = document.createElement('span');
+    statusText.className = `capacity-status ${item.status || 'warning'}`;
+    const overlap = item.overlapping_addresses ? ` · ${formatCount(item.overlapping_addresses)} overlapping excluded` : '';
+    statusText.textContent = item.status === 'error' ? 'Collection failed' : `${item.limiting_factor || (item.missing?.length ? `Missing ${item.missing.join(', ')}` : 'Complete')}${overlap}`;
+    if (item.errors?.length) statusText.title = item.errors.join('\n');
+    status.append(statusText); row.prepend(device); row.append(status); body.append(row);
+  });
+  table.append(head, body); wrap.append(table); container.append(note, wrap);
+}
+
+async function pollCapacity(reportId) {
+  clearTimeout(state.capacityTimer);
+  try {
+    const report = await request(`/api/capacity-reports/${reportId}`);
+    const errors = report.totals?.error_devices || 0; const warnings = report.totals?.warning_devices || 0;
+    $('#capacityStatus').textContent = `${report.status === 'completed' ? 'Completed' : 'Collecting'}: ${report.completed}/${report.total} headends · ${warnings} partial · ${errors} failed`;
+    renderCapacity(report);
+    if (report.status === 'completed') { $('#capacityButton').disabled = false; $('#capacityButton span').textContent = 'Inventory all headends'; await refreshSaved(); return; }
+    state.capacityTimer = setTimeout(() => pollCapacity(reportId), 3000);
+  } catch (error) { $('#capacityStatus').textContent = error.message; $('#capacityStatus').classList.add('error'); $('#capacityButton').disabled = false; $('#capacityButton span').textContent = 'Inventory all headends'; }
+}
+
+$('#capacityButton').addEventListener('click', async () => {
+  try {
+    $('#capacityButton').disabled = true; $('#capacityButton span').textContent = 'Collecting…';
+    $('#capacityStatus').classList.remove('error'); $('#capacityStatus').textContent = 'Starting service-wide capacity inventory…';
+    const report = await request('/api/capacity-reports', { method: 'POST', body: '{}' });
+    pollCapacity(report.report_id);
+  } catch (error) {
+    $('#capacityStatus').textContent = error.message; $('#capacityStatus').classList.add('error'); $('#capacityButton').disabled = false;
+  } finally {
+    if (!$('#capacityButton').disabled) $('#capacityButton span').textContent = 'Inventory all headends';
+  }
+});
+
+$('#capacitySelect').addEventListener('change', async (event) => {
+  if (!event.target.value) return;
+  try { renderCapacity(await request(`/api/capacity-reports/${event.target.value}`)); }
+  catch (error) { $('#capacityStatus').textContent = error.message; $('#capacityStatus').classList.add('error'); }
+});
 
 function escapeHtml(value) {
   const node = document.createElement('span'); node.textContent = value == null ? '' : String(value); return node.innerHTML;

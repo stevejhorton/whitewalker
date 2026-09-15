@@ -54,6 +54,55 @@ class PipeWrenchTests(unittest.TestCase):
         self.assertEqual(metrics["Active VPN"], "2113")
         self.assertEqual(metrics["VPN capacity"], "20000")
 
+    def test_capacity_summary_tallies_pool_license_and_configured_limit(self):
+        results = [
+            {
+                "status": "ok",
+                "command": "show running-config ip local pool",
+                "output": "ip local pool EMP_1 10.0.0.1-10.0.0.10 mask 255.255.255.0\nip local pool EMP_2 10.0.0.20-10.0.0.30 mask 255.255.255.0",
+            },
+            {
+                "status": "ok",
+                "command": "show vpn-sessiondb summary",
+                "output": "AnyConnect Client : 12 : 100 : 18 : 0\nDevice Total VPN Capacity : 20,000",
+            },
+            {
+                "status": "ok",
+                "command": "show running-config all vpn-sessiondb",
+                "output": "vpn-sessiondb max-anyconnect-premium-or-essentials-limit 15000\nvpn-sessiondb max-other-vpn-limit 2000",
+            },
+        ]
+        capacity = server.capacity_summary(results)
+        self.assertEqual(capacity["pool_addresses"], 21)
+        self.assertEqual(capacity["provisioned_capacity"], 20000)
+        self.assertEqual(capacity["configured_limit"], 15000)
+        self.assertEqual(capacity["effective_capacity"], 21)
+        self.assertEqual(capacity["active_sessions"], 12)
+        self.assertEqual(capacity["limiting_factor"], "address pools")
+        self.assertFalse(capacity["missing"])
+
+    def test_capacity_summary_does_not_double_count_overlapping_pools(self):
+        results = [{
+            "status": "ok",
+            "command": "show running-config ip local pool",
+            "output": "ip local pool ONE 192.0.2.1-192.0.2.10\nip local pool TWO 192.0.2.5-192.0.2.15",
+        }]
+        capacity = server.capacity_summary(results)
+        self.assertEqual(capacity["pool_addresses"], 15)
+        self.assertEqual(capacity["overlapping_addresses"], 6)
+
+    def test_capacity_totals_track_partial_coverage(self):
+        totals = server.capacity_totals([
+            {"status": "ok", "pool_addresses": 100, "provisioned_capacity": 200, "configured_limit": 150, "effective_capacity": 100, "active_sessions": 50},
+            {"status": "warning", "pool_addresses": 75, "provisioned_capacity": 200, "configured_limit": None, "effective_capacity": None, "active_sessions": 25},
+            {"status": "error"},
+        ])
+        self.assertEqual(totals["pool_addresses"], 175)
+        self.assertEqual(totals["pool_addresses_devices"], 2)
+        self.assertEqual(totals["configured_limit"], 150)
+        self.assertEqual(totals["configured_limit_devices"], 1)
+        self.assertEqual(totals["error_devices"], 1)
+
     def test_config_secret_redaction(self):
         source = "username bob password abc123 encrypted\nsnmp-server community public\npre-shared-key local letmein\n key aaa-secret\nsnmp-server user bob group v3 auth sha auth-secret priv aes 128 priv-secret"
         redacted = server.redact_config_secrets(source)

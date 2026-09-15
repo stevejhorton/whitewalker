@@ -23,7 +23,9 @@ Credentials are read again for every ASA request. Update `~/creds/pw.txt` after 
 
 The health snapshot retrieves hostname, version and uptime, failover, interface, CPU, memory, VPN-session, and clock data. Common values such as uptime, ASA version, CPU, active VPN sessions, supported VPN capacity, and VPN load are extracted into metric cards while the complete command output remains available underneath.
 
-The standards review retrieves focused running-configuration sections for AAA, SNMP, group policies, SSL, SSH, WebVPN, IP, logging, banners, management access, ACLs, MTU, ASDM, crypto, names, address assignment, pools, DNS, usernames, domain name, HTTP, ICMP, and tunnel groups. It also retrieves detailed clock and VPN capacity/session information. Common password, secret, pre-shared-key, and SNMP community values are masked before output reaches the browser.
+The standards review retrieves focused running-configuration sections for AAA, SNMP, group policies, SSL, SSH, WebVPN, IP, logging, banners, management access, ACLs, MTU, ASDM, crypto, names, address assignment, pools, DNS, usernames, domain name, HTTP, ICMP, tunnel groups, and configured VPN session limits. It also retrieves detailed clock and VPN capacity/session information. Common password, secret, pre-shared-key, and SNMP community values are masked before output reaches the browser.
+
+Each standards result tallies the inclusive address ranges from every `ip local pool`, the provisioned `Device Total VPN Capacity`, and the configured `vpn-sessiondb max-anyconnect-premium-or-essentials-limit`. The effective session ceiling is the lowest of those three values. Overlapping pool ranges are counted once and reported for review.
 
 ## Snapshots and gold profiles
 
@@ -36,6 +38,10 @@ Gold comparison is section-aware. Device-specific addresses, SNMP engine IDs, tr
 ## Multi-headend walks
 
 Expand **Multi-headend walk**, select headends, and optionally select a platform/location gold profile. PipeWrench runs up to `batch_workers` headends concurrently, automatically archives each result, and writes progress under `batches/`. Leave the PipeWrench server running; the browser can be reopened after the work finishes and the saved results will still be available.
+
+## On-demand tools
+
+Open the **Tools** tab and run **Service-wide VPN capacity** when a fresh capacity inventory is needed. PipeWrench queries every configured headend for IP local pools, provisioned VPN capacity, the configured AnyConnect session limit, and current AnyConnect sessions. It shows per-headend values plus service-wide totals and saves reports under `capacity-reports/` so interrupted or previous runs can be reopened.
 
 ## Built-in standards findings
 

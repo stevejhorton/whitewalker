@@ -30,10 +30,12 @@ STATIC = ROOT / "static"
 ARCHIVES = ROOT / "archives"
 BASELINES = ROOT / "baselines"
 BATCHES = ROOT / "batches"
-APP_VERSION = "0.4.0"
+CAPACITY_REPORTS = ROOT / "capacity-reports"
+APP_VERSION = "0.5.0"
 SNAPSHOT_VERSION = 1
 SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 BATCH_LOCK = threading.Lock()
+CAPACITY_LOCK = threading.Lock()
 
 HEALTH_COMMANDS = [
     ("Hostname", "show running-config hostname"),
@@ -66,6 +68,7 @@ STANDARD_COMMANDS = [
     ("Crypto", "show running-config crypto"),
     ("Certificates", "show crypto ca certificates"),
     ("VPN capacity & sessions", "show vpn-sessiondb summary"),
+    ("VPN configured session limits", "show running-config all vpn-sessiondb"),
     ("VPN load-balancing", "show vpn load-balancing"),
     ("Names", "show running-config names"),
     ("VPN address assignment", "show running-config vpn-addr-assign"),
@@ -79,6 +82,12 @@ STANDARD_COMMANDS = [
     ("ICMP", "show running-config icmp"),
     ("Tunnel groups", "show running-config tunnel-group"),
     ("Group policies", "show running-config group-policy"),
+]
+
+CAPACITY_COMMANDS = [
+    ("IP local pools", "show running-config ip local pool"),
+    ("VPN capacity & sessions", "show vpn-sessiondb summary"),
+    ("VPN configured session limits", "show running-config all vpn-sessiondb"),
 ]
 
 COMMAND_ERROR = re.compile(
@@ -237,6 +246,83 @@ def hardware_model(version_output: str) -> str | None:
     return first_match(r"^\s*Hardware\s*:\s*([^,\r\n]+)", version_output)
 
 
+def parse_ip_local_pools(text: str) -> list[dict[str, Any]]:
+    """Parse inclusive IPv4 pool ranges and return their assignable address counts."""
+    pools: list[dict[str, Any]] = []
+    pattern = r"(?im)^\s*ip\s+local\s+pool\s+(\S+)\s+(\d+(?:\.\d+){3})\s*-\s*(\d+(?:\.\d+){3})(?:\s+mask\s+(\d+(?:\.\d+){3}))?"
+    for name, start, end, mask in re.findall(pattern, text):
+        try:
+            first = ipaddress.ip_address(start)
+            last = ipaddress.ip_address(end)
+        except ValueError:
+            continue
+        if not isinstance(first, ipaddress.IPv4Address) or not isinstance(last, ipaddress.IPv4Address) or last < first:
+            continue
+        pools.append({
+            "name": name,
+            "start": str(first),
+            "end": str(last),
+            "mask": mask or None,
+            "addresses": int(last) - int(first) + 1,
+        })
+    return pools
+
+
+def unique_pool_address_count(pools: list[dict[str, Any]]) -> int:
+    """Count unique addresses so overlapping configured ranges are not double-counted."""
+    ranges = sorted((int(ipaddress.ip_address(item["start"])), int(ipaddress.ip_address(item["end"]))) for item in pools)
+    if not ranges:
+        return 0
+    merged: list[list[int]] = []
+    for start, end in ranges:
+        if not merged or start > merged[-1][1] + 1:
+            merged.append([start, end])
+        else:
+            merged[-1][1] = max(merged[-1][1], end)
+    return sum(end - start + 1 for start, end in merged)
+
+
+def integer_match(pattern: str, text: str) -> int | None:
+    value = first_match(pattern, text)
+    return int(value.replace(",", "")) if value is not None else None
+
+
+def capacity_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
+    pool_text = result_output(results, "show running-config ip local pool")
+    session_text = result_output(results, "show vpn-sessiondb summary")
+    limit_text = result_output(results, "show running-config all vpn-sessiondb")
+    pools = parse_ip_local_pools(pool_text)
+    raw_pool_addresses = sum(item["addresses"] for item in pools)
+    pool_addresses = unique_pool_address_count(pools) if pools else None
+    provisioned = integer_match(r"Device Total VPN Capacity\s*:\s*([\d,]+)", session_text)
+    active = integer_match(r"^AnyConnect Client\s*:\s*([\d,]+)\s*:", session_text)
+    configured = integer_match(
+        r"^\s*vpn-sessiondb\s+(?:max-anyconnect-premium-or-essentials-limit|max-session-limit)\s+([\d,]+)",
+        limit_text,
+    )
+    ceilings = {
+        "address pools": pool_addresses,
+        "provisioned capacity": provisioned,
+        "configured limit": configured,
+    }
+    available = {name: value for name, value in ceilings.items() if value is not None}
+    effective = min(available.values()) if len(available) == len(ceilings) else None
+    limiting = [name for name, value in available.items() if effective is not None and value == effective]
+    missing = [name for name, value in ceilings.items() if value is None]
+    return {
+        "pools": pools,
+        "pool_count": len(pools),
+        "pool_addresses": pool_addresses,
+        "overlapping_addresses": raw_pool_addresses - pool_addresses if pool_addresses is not None else 0,
+        "provisioned_capacity": provisioned,
+        "configured_limit": configured,
+        "effective_capacity": effective,
+        "active_sessions": active,
+        "limiting_factor": ", ".join(limiting) if limiting else None,
+        "missing": missing,
+    }
+
+
 def health_metrics(results: list[dict[str, Any]]) -> list[dict[str, str]]:
     hostname_output = result_output(results, "show running-config hostname")
     version_output = result_output(results, "show version")
@@ -244,6 +330,7 @@ def health_metrics(results: list[dict[str, Any]]) -> list[dict[str, str]]:
     cpu_output = result_output(results, "show cpu usage")
     memory_output = result_output(results, "show memory")
     vpn_output = result_output(results, "show vpn-sessiondb summary")
+    capacity = capacity_summary(results)
 
     candidates = [
         ("Hostname", first_match(r"^hostname\s+(\S+)", hostname_output), "ASA identity"),
@@ -269,6 +356,12 @@ def health_metrics(results: list[dict[str, Any]]) -> list[dict[str, str]]:
         ("VPN capacity", first_match(r"Device Total VPN Capacity\s*:\s*(\d+)", vpn_output), "Maximum supported"),
         ("VPN load", first_match(r"Device Load\s*:\s*(\d+%)", vpn_output), "Current utilization"),
     ]
+    if capacity["pool_addresses"] is not None:
+        candidates.append(("Pool capacity", f"{capacity['pool_addresses']:,}", f"{capacity['pool_count']} configured IP pool(s)"))
+    if capacity["configured_limit"] is not None:
+        candidates.append(("Configured VPN limit", f"{capacity['configured_limit']:,}", "AnyConnect session limit"))
+    if capacity["effective_capacity"] is not None:
+        candidates.append(("Effective VPN ceiling", f"{capacity['effective_capacity']:,}", f"Limited by {capacity['limiting_factor']}"))
     return [
         {"label": label, "value": value, "detail": detail}
         for label, value, detail in candidates
@@ -450,6 +543,30 @@ def pool_null_route_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
     return finding("VPN pool Null0 routes", "warning" if missing else "ok", "Pools without a covering Null0 route:\n" + "\n".join(missing) if missing else "Every parsed IP local pool is covered by a Null0 route.")
 
 
+def capacity_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
+    capacity = capacity_summary(results)
+    lines = []
+    if capacity["pool_addresses"] is not None:
+        lines.append(f"Address-pool capacity: {capacity['pool_addresses']:,} across {capacity['pool_count']} pool(s)")
+    if capacity["provisioned_capacity"] is not None:
+        lines.append(f"Provisioned VPN capacity: {capacity['provisioned_capacity']:,}")
+    if capacity["configured_limit"] is not None:
+        lines.append(f"Configured AnyConnect limit: {capacity['configured_limit']:,}")
+    if capacity["effective_capacity"] is not None:
+        lines.append(f"Effective session ceiling: {capacity['effective_capacity']:,} (limited by {capacity['limiting_factor']})")
+    if capacity["active_sessions"] is not None:
+        lines.append(f"Current AnyConnect sessions: {capacity['active_sessions']:,}")
+    if capacity["overlapping_addresses"]:
+        lines.append(f"Overlapping pool addresses excluded from the tally: {capacity['overlapping_addresses']:,}")
+    if capacity["missing"]:
+        lines.append("Unavailable: " + ", ".join(capacity["missing"]))
+    return finding(
+        "VPN session capacity",
+        "warning" if capacity["missing"] or capacity["overlapping_addresses"] else "ok",
+        "\n".join(lines) or "Capacity data was unavailable.",
+    )
+
+
 def time_sync_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
     family = platform_family(results)
     if family == "41xx":
@@ -464,11 +581,11 @@ def time_sync_finding(results: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def compliance_findings(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [time_sync_finding(results), default_group_policy_finding(results), pool_null_route_finding(results), *certificate_findings(results)]
+    return [time_sync_finding(results), default_group_policy_finding(results), pool_null_route_finding(results), capacity_finding(results), *certificate_findings(results)]
 
 
 def ensure_data_dirs() -> None:
-    for directory in (ARCHIVES, BASELINES, BATCHES):
+    for directory in (ARCHIVES, BASELINES, BATCHES, CAPACITY_REPORTS):
         directory.mkdir(exist_ok=True)
 
 
@@ -655,6 +772,92 @@ def list_batches() -> list[dict[str, Any]]:
     return sorted((job for job in jobs if job.get("batch_id")), key=lambda job: str(job.get("created_at", "")), reverse=True)
 
 
+def run_capacity_device(device: str) -> dict[str, Any]:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(CAPACITY_COMMANDS)) as pool:
+        futures = [pool.submit(execute_command, device, label, command) for label, command in CAPACITY_COMMANDS]
+        command_results = [future.result() for future in futures]
+    capacity = capacity_summary(command_results)
+    errors = [str(item.get("output", "Command failed.")) for item in command_results if item.get("status") == "error"]
+    if len(errors) == len(CAPACITY_COMMANDS):
+        status = "error"
+    elif errors or capacity["missing"] or capacity["overlapping_addresses"]:
+        status = "warning"
+    else:
+        status = "ok"
+    return {"device": device, "status": status, "errors": errors, **capacity}
+
+
+def capacity_totals(results: list[dict[str, Any]]) -> dict[str, Any]:
+    totals: dict[str, Any] = {
+        "devices": len(results),
+        "ok_devices": sum(item.get("status") == "ok" for item in results),
+        "warning_devices": sum(item.get("status") == "warning" for item in results),
+        "error_devices": sum(item.get("status") == "error" for item in results),
+    }
+    for key in ("pool_addresses", "provisioned_capacity", "configured_limit", "effective_capacity", "active_sessions"):
+        values = [item.get(key) for item in results if isinstance(item.get(key), int)]
+        totals[key] = sum(values)
+        totals[f"{key}_devices"] = len(values)
+    return totals
+
+
+def run_capacity_report(report_id: str, selected_devices: list[str]) -> None:
+    path = CAPACITY_REPORTS / f"{report_id}.json"
+    with concurrent.futures.ThreadPoolExecutor(max_workers=config()["batch_workers"]) as pool:
+        futures = {pool.submit(run_capacity_device, device): device for device in selected_devices}
+        for future in concurrent.futures.as_completed(futures):
+            device = futures[future]
+            try:
+                result = future.result()
+            except Exception as exc:
+                result = {"device": device, "status": "error", "errors": [str(exc)], "missing": ["capacity data"]}
+            with CAPACITY_LOCK:
+                report = read_json(path, {})
+                report.setdefault("results", []).append(result)
+                report["results"].sort(key=lambda item: str(item.get("device", "")).lower())
+                report["completed"] = len(report["results"])
+                report["totals"] = capacity_totals(report["results"])
+                if report["completed"] == report["total"]:
+                    report["status"] = "completed"
+                    report["completed_at"] = utc_now()
+                write_json(path, report)
+
+
+def create_capacity_report() -> dict[str, Any]:
+    selected_devices = devices()
+    if not selected_devices:
+        raise ValueError("Add at least one configured headend before running capacity inventory.")
+    ensure_data_dirs()
+    report_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S") + "_" + uuid.uuid4().hex[:8]
+    report = {
+        "report_id": report_id,
+        "created_at": utc_now(),
+        "status": "running",
+        "total": len(selected_devices),
+        "completed": 0,
+        "devices": selected_devices,
+        "results": [],
+        "totals": capacity_totals([]),
+    }
+    write_json(CAPACITY_REPORTS / f"{report_id}.json", report)
+    threading.Thread(target=run_capacity_report, args=(report_id, selected_devices), daemon=True).start()
+    return report
+
+
+def capacity_report_metadata(report: dict[str, Any]) -> dict[str, Any]:
+    return {key: report.get(key) for key in ("report_id", "created_at", "completed_at", "status", "total", "completed", "totals")}
+
+
+def list_capacity_reports() -> list[dict[str, Any]]:
+    ensure_data_dirs()
+    reports = [read_json(path, {}) for path in CAPACITY_REPORTS.glob("*.json")]
+    return sorted(
+        (capacity_report_metadata(report) for report in reports if report.get("report_id")),
+        key=lambda report: str(report.get("created_at", "")),
+        reverse=True,
+    )
+
+
 class PipeWrenchHandler(BaseHTTPRequestHandler):
     server_version = f"PipeWrench/{APP_VERSION}"
 
@@ -700,6 +903,12 @@ class PipeWrenchHandler(BaseHTTPRequestHandler):
         if path.startswith("/api/batches/"):
             self.send_json(load_named_json(BATCHES, path.rsplit("/", 1)[-1]))
             return
+        if path == "/api/capacity-reports":
+            self.send_json({"reports": list_capacity_reports()})
+            return
+        if path.startswith("/api/capacity-reports/"):
+            self.send_json(load_named_json(CAPACITY_REPORTS, path.rsplit("/", 1)[-1]))
+            return
         self.serve_static(path)
 
     def do_POST(self) -> None:
@@ -734,6 +943,8 @@ class PipeWrenchHandler(BaseHTTPRequestHandler):
                     ),
                     HTTPStatus.ACCEPTED,
                 )
+            elif path == "/api/capacity-reports":
+                self.send_json(create_capacity_report(), HTTPStatus.ACCEPTED)
             else:
                 self.send_json({"error": "Not found."}, HTTPStatus.NOT_FOUND)
         except (ValueError, RuntimeError, json.JSONDecodeError) as exc:

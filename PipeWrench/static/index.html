@@ -24,6 +24,12 @@
   </header>
 
   <main>
+    <nav class="workspace-tabs" role="tablist" aria-label="PipeWrench workspace">
+      <button id="inspectionTab" class="workspace-tab active" type="button" role="tab" aria-selected="true" aria-controls="inspectionPane">Inspections</button>
+      <button id="toolsTab" class="workspace-tab" type="button" role="tab" aria-selected="false" aria-controls="toolsPane">Tools</button>
+    </nav>
+
+    <div id="inspectionPane" role="tabpanel" aria-labelledby="inspectionTab">
     <section class="control-deck" aria-labelledby="workspaceTitle">
       <div class="deck-heading">
         <div>
@@ -116,6 +122,31 @@
         <p>Select a headend and choose an inspection above.</p>
       </div>
       <div id="resultGrid" class="result-grid" hidden></div>
+    </section>
+    </div>
+
+    <section id="toolsPane" class="tools-pane" role="tabpanel" aria-labelledby="toolsTab" hidden>
+      <div class="control-deck">
+        <div class="deck-heading">
+          <div>
+            <p class="eyebrow">ON-DEMAND OPERATIONS</p>
+            <h1>Tools</h1>
+          </div>
+        </div>
+
+        <article class="tool-card" aria-labelledby="capacityTitle">
+          <div>
+            <h2 id="capacityTitle">Service-wide VPN capacity</h2>
+            <p>Collect address-pool capacity, provisioned VPN capacity, configured AnyConnect limits, and current sessions from every configured headend.</p>
+          </div>
+          <button id="capacityButton" class="run-button" type="button"><span>Inventory all headends</span></button>
+        </article>
+        <div id="capacityStatus" class="notice" role="status" aria-live="polite"></div>
+        <label class="history-picker capacity-history">Past capacity reports<select id="capacitySelect"><option value="">Open a prior report…</option></select></label>
+      </div>
+
+      <div id="capacityMetrics" class="metric-grid" hidden></div>
+      <div id="capacityReport" class="capacity-report" hidden></div>
     </section>
   </main>
 
