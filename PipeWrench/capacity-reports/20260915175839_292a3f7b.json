@@ -1,0 +1,1409 @@
+{
+  "report_id": "20260915175839_292a3f7b",
+  "created_at": "2026-09-15T17:58:39Z",
+  "status": "completed",
+  "total": 44,
+  "completed": 44,
+  "devices": [
+    "asaatc01vpn21",
+    "asaatc01vpn22",
+    "asaatc01vpn23",
+    "asaatc01vpn24",
+    "asaatc01vpn25",
+    "asaatc01vpn26",
+    "asactc01merg01",
+    "asactc01vpn21",
+    "asactc01vpn22",
+    "asactc01vpn23",
+    "asactc01vpn24",
+    "asactc01vpn25",
+    "asactc01vpn26",
+    "asactc01vpn27",
+    "asactc01vpn28",
+    "asactc01vpn29",
+    "asactc01vpn30",
+    "asaelr01vpn22",
+    "asaelr01vpn23",
+    "asaelr01vpn24",
+    "asaelr01vpn25",
+    "asaelr01vpn26",
+    "asaelr01vpn27",
+    "asaelr01vpn28",
+    "asaelr01vpn29",
+    "asaelr10vpn21",
+    "asaii550vpn01",
+    "asaii550vpn02",
+    "asaii554vpn01",
+    "asaii554vpn02",
+    "asaii747vpn01",
+    "asaii747vpn02",
+    "asaii757vpn01",
+    "asaii757vpn02",
+    "asaii771vpn01",
+    "asaii771vpn02",
+    "asair777vpn01",
+    "asair777vpn02",
+    "asaph518vpn01",
+    "asaph518vpn02",
+    "asaph550vpn01",
+    "asaph550vpn02",
+    "asatx777vpn01",
+    "asatx777vpn02"
+  ],
+  "results": [
+    {
+      "device": "asaatc01vpn21",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.6.0.1",
+          "end": "10.6.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6801,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaatc01vpn22",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.6.64.1",
+          "end": "10.6.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6834,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaatc01vpn23",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.6.128.1",
+          "end": "10.6.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6807,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaatc01vpn24",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.6.192.1",
+          "end": "10.6.255.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6826,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaatc01vpn25",
+      "status": "warning",
+      "errors": [
+        "Could not reach asaatc01vpn25:2002 \u2014 [Errno 8] nodename nor servname provided, or not known"
+      ],
+      "pools": [],
+      "pool_count": 0,
+      "pool_addresses": null,
+      "address_source": "unknown",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": null,
+      "active_sessions": 6826,
+      "limiting_factor": null,
+      "missing": [
+        "address pools"
+      ],
+      "unquantified": []
+    },
+    {
+      "device": "asaatc01vpn26",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.21.64.1",
+          "end": "10.21.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6822,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01merg01",
+      "status": "warning",
+      "errors": [],
+      "pools": [
+        {
+          "name": "NSZ_IGS_M",
+          "start": "10.96.135.1",
+          "end": "10.96.135.254",
+          "mask": "255.255.255.0",
+          "addresses": 254
+        },
+        {
+          "name": "NSZ_LYNX",
+          "start": "10.96.132.1",
+          "end": "10.96.132.254",
+          "mask": "255.255.255.0",
+          "addresses": 254
+        },
+        {
+          "name": "NSZ_CareMedic",
+          "start": "10.96.133.1",
+          "end": "10.96.133.254",
+          "mask": "255.255.255.0",
+          "addresses": 254
+        },
+        {
+          "name": "NSZ_ProceedFinance",
+          "start": "10.96.134.1",
+          "end": "10.96.134.254",
+          "mask": "255.255.255.0",
+          "addresses": 254
+        },
+        {
+          "name": "NSZ_FlexCare",
+          "start": "10.96.128.1",
+          "end": "10.96.131.254",
+          "mask": "255.255.252.0",
+          "addresses": 1022
+        },
+        {
+          "name": "NSZ_Workers_Comp",
+          "start": "10.96.136.1",
+          "end": "10.96.139.254",
+          "mask": "255.255.252.0",
+          "addresses": 1022
+        }
+      ],
+      "pool_count": 6,
+      "pool_addresses": 3060,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": null,
+      "effective_capacity": null,
+      "active_sessions": 0,
+      "limiting_factor": null,
+      "missing": [
+        "configured limit"
+      ],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn21",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.99.0.1",
+          "end": "10.99.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7008,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn22",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.99.64.1",
+          "end": "10.99.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6987,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn23",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.99.128.1",
+          "end": "10.99.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6960,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn24",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.99.192.1",
+          "end": "10.99.255.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6993,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn25",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.97.0.1",
+          "end": "10.97.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7002,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn26",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.97.64.1",
+          "end": "10.97.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 6989,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn27",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.97.128.1",
+          "end": "10.97.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7006,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn28",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.97.192.1",
+          "end": "10.97.223.254",
+          "mask": "255.255.224.0",
+          "addresses": 8190
+        },
+        {
+          "name": "POOL_UHGVPNEMP_2",
+          "start": "10.97.224.1",
+          "end": "10.97.239.254",
+          "mask": "255.255.240.0",
+          "addresses": 4094
+        },
+        {
+          "name": "POOL_UHGVPNEMP_3",
+          "start": "10.97.240.1",
+          "end": "10.97.247.254",
+          "mask": "255.255.248.0",
+          "addresses": 2046
+        },
+        {
+          "name": "POOL_UHGVPNEMP_GTP",
+          "start": "10.97.248.1",
+          "end": "10.97.251.254",
+          "mask": "255.255.252.0",
+          "addresses": 1022
+        }
+      ],
+      "pool_count": 4,
+      "pool_addresses": 15352,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 15352,
+      "active_sessions": 2109,
+      "limiting_factor": "address pools",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn29",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.96.192.1",
+          "end": "10.96.255.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        },
+        {
+          "name": "POOL_UHGVPNEMP_GTP",
+          "start": "10.96.68.1",
+          "end": "10.96.68.254",
+          "mask": "255.255.255.0",
+          "addresses": 254
+        }
+      ],
+      "pool_count": 2,
+      "pool_addresses": 16636,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 2007,
+      "limiting_factor": "configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asactc01vpn30",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.96.64.1",
+          "end": "10.96.67.254",
+          "mask": "255.255.248.0",
+          "addresses": 1022
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 1022,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 15000,
+      "configured_limit": 1024,
+      "effective_capacity": 1022,
+      "active_sessions": 5,
+      "limiting_factor": "address pools",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr01vpn22",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.129.0.1",
+          "end": "10.129.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7089,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr01vpn23",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.129.64.1",
+          "end": "10.129.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7083,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr01vpn24",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.129.128.1",
+          "end": "10.129.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7075,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr01vpn25",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.129.192.1",
+          "end": "10.129.255.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7095,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr01vpn26",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.94.0.1",
+          "end": "10.94.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7099,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr01vpn27",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.94.64.1",
+          "end": "10.94.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7072,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr01vpn28",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP_GTP",
+          "start": "10.189.129.1",
+          "end": "10.189.129.254",
+          "mask": "255.255.255.0",
+          "addresses": 254
+        },
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.189.64.1",
+          "end": "10.189.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 2,
+      "pool_addresses": 16636,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 2031,
+      "limiting_factor": "configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr01vpn29",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.94.128.1",
+          "end": "10.94.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        },
+        {
+          "name": "POOL_UHGVPNEMP_GTP",
+          "start": "10.189.148.1",
+          "end": "10.189.148.254",
+          "mask": "255.255.255.0",
+          "addresses": 254
+        }
+      ],
+      "pool_count": 2,
+      "pool_addresses": 16636,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1947,
+      "limiting_factor": "configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaelr10vpn21",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.95.0.1",
+          "end": "10.95.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 7072,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii550vpn01",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.133.128.1",
+          "end": "10.133.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1669,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii550vpn02",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.133.192.1",
+          "end": "10.133.255.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1664,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii554vpn01",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.133.0.1",
+          "end": "10.133.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1501,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii554vpn02",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.133.64.1",
+          "end": "10.133.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1528,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii747vpn01",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.43.0.1",
+          "end": "10.43.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1440,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii747vpn02",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.43.64.1",
+          "end": "10.43.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1432,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii757vpn01",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.127.128.1",
+          "end": "10.127.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1529,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii757vpn02",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.127.192.1",
+          "end": "10.127.255.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1520,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii771vpn01",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.2.128.1",
+          "end": "10.2.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 3,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaii771vpn02",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.2.192.1",
+          "end": "10.2.255.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 0,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asair777vpn01",
+      "status": "warning",
+      "errors": [],
+      "pools": [],
+      "pool_count": 0,
+      "pool_addresses": null,
+      "address_source": "dhcp",
+      "dhcp_servers": [
+        "10.106.147.102",
+        "10.204.67.162"
+      ],
+      "dhcp_scopes": [
+        "10.73.32.0"
+      ],
+      "external_dhcp_capacity_unknown": true,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 2046,
+      "effective_capacity": null,
+      "active_sessions": 381,
+      "limiting_factor": null,
+      "missing": [],
+      "unquantified": [
+        "external DHCP scope capacity"
+      ]
+    },
+    {
+      "device": "asair777vpn02",
+      "status": "warning",
+      "errors": [],
+      "pools": [],
+      "pool_count": 0,
+      "pool_addresses": null,
+      "address_source": "dhcp",
+      "dhcp_servers": [
+        "10.106.147.102",
+        "10.204.67.162"
+      ],
+      "dhcp_scopes": [
+        "10.73.40.0"
+      ],
+      "external_dhcp_capacity_unknown": true,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 2046,
+      "effective_capacity": null,
+      "active_sessions": 378,
+      "limiting_factor": null,
+      "missing": [],
+      "unquantified": [
+        "external DHCP scope capacity"
+      ]
+    },
+    {
+      "device": "asaph518vpn01",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.134.128.1",
+          "end": "10.134.191.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 2914,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaph518vpn02",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.134.192.1",
+          "end": "10.134.255.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 2945,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaph550vpn01",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.134.0.1",
+          "end": "10.134.63.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1430,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asaph550vpn02",
+      "status": "ok",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP",
+          "start": "10.134.64.1",
+          "end": "10.134.127.254",
+          "mask": "255.255.192.0",
+          "addresses": 16382
+        }
+      ],
+      "pool_count": 1,
+      "pool_addresses": 16382,
+      "address_source": "local",
+      "dhcp_servers": [],
+      "dhcp_scopes": [],
+      "external_dhcp_capacity_unknown": false,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 20000,
+      "configured_limit": 16382,
+      "effective_capacity": 16382,
+      "active_sessions": 1422,
+      "limiting_factor": "address pools, configured limit",
+      "missing": [],
+      "unquantified": []
+    },
+    {
+      "device": "asatx777vpn01",
+      "status": "warning",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP_3",
+          "start": "10.54.216.1",
+          "end": "10.54.223.254",
+          "mask": "255.255.248.0",
+          "addresses": 2046
+        },
+        {
+          "name": "POOL_UHGVPNEMP_4",
+          "start": "10.54.224.1",
+          "end": "10.54.231.254",
+          "mask": "255.255.248.0",
+          "addresses": 2046
+        }
+      ],
+      "pool_count": 2,
+      "pool_addresses": 4092,
+      "address_source": "mixed",
+      "dhcp_servers": [
+        "10.106.147.102",
+        "10.204.67.162"
+      ],
+      "dhcp_scopes": [
+        "10.37.32.0"
+      ],
+      "external_dhcp_capacity_unknown": true,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 15000,
+      "configured_limit": 8190,
+      "effective_capacity": null,
+      "active_sessions": 137,
+      "limiting_factor": null,
+      "missing": [],
+      "unquantified": [
+        "external DHCP scope capacity"
+      ]
+    },
+    {
+      "device": "asatx777vpn02",
+      "status": "warning",
+      "errors": [],
+      "pools": [
+        {
+          "name": "POOL_UHGVPNEMP_1",
+          "start": "10.54.160.1",
+          "end": "10.54.167.254",
+          "mask": "255.255.248.0",
+          "addresses": 2046
+        },
+        {
+          "name": "POOL_UHGVPNEMP_2",
+          "start": "10.54.200.1",
+          "end": "10.54.207.254",
+          "mask": "255.255.248.0",
+          "addresses": 2046
+        }
+      ],
+      "pool_count": 2,
+      "pool_addresses": 4092,
+      "address_source": "mixed",
+      "dhcp_servers": [
+        "10.106.147.102",
+        "10.204.67.162"
+      ],
+      "dhcp_scopes": [
+        "10.37.48.0"
+      ],
+      "external_dhcp_capacity_unknown": true,
+      "overlapping_addresses": 0,
+      "provisioned_capacity": 15000,
+      "configured_limit": 8190,
+      "effective_capacity": null,
+      "active_sessions": 132,
+      "limiting_factor": null,
+      "missing": [],
+      "unquantified": [
+        "external DHCP scope capacity"
+      ]
+    }
+  ],
+  "totals": {
+    "devices": 44,
+    "ok_devices": 38,
+    "warning_devices": 6,
+    "error_devices": 0,
+    "local_devices": 39,
+    "dhcp_devices": 2,
+    "mixed_devices": 2,
+    "unknown_source_devices": 1,
+    "pool_addresses": 618132,
+    "pool_addresses_devices": 41,
+    "provisioned_capacity": 865000,
+    "provisioned_capacity_devices": 44,
+    "configured_limit": 644012,
+    "configured_limit_devices": 43,
+    "effective_capacity": 606126,
+    "effective_capacity_devices": 38,
+    "active_sessions": 169570,
+    "active_sessions_devices": 44
+  },
+  "completed_at": "2026-09-15T17:59:22Z"
+}
