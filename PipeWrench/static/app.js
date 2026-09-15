@@ -300,7 +300,8 @@ async function pollCapacity(reportId) {
   try {
     const report = await request(`/api/capacity-reports/${reportId}`);
     const errors = report.totals?.error_devices || 0; const warnings = report.totals?.warning_devices || 0;
-    $('#capacityStatus').textContent = `${report.status === 'completed' ? 'Completed' : 'Collecting'}: ${report.completed}/${report.total} headends · ${warnings} partial · ${errors} failed`;
+    const phase = report.status === 'completed' ? 'Completed' : report.status === 'retrying' ? `Retrying incomplete headends (pass ${report.retry_pass}/2)` : 'Collecting';
+    $('#capacityStatus').textContent = `${phase}: ${report.completed}/${report.total} headends · ${warnings} partial · ${errors} failed`;
     renderCapacity(report);
     if (report.status === 'completed') { $('#capacityButton').disabled = false; $('#capacityButton span').textContent = 'Inventory all headends'; await refreshSaved(); return; }
     state.capacityTimer = setTimeout(() => pollCapacity(reportId), 3000);

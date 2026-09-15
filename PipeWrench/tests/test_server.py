@@ -140,30 +140,39 @@ class PipeWrenchTests(unittest.TestCase):
         self.assertEqual(totals["configured_limit_devices"], 1)
         self.assertEqual(totals["error_devices"], 1)
 
-    def test_capacity_collection_retries_a_transient_missing_pool(self):
-        calls: dict[str, int] = {}
+    def test_capacity_report_retries_incomplete_devices_after_fast_pass(self):
+        incomplete = {
+            "device": "asaatc01vpn25", "status": "warning", "errors": ["temporary DNS failure"],
+            "pool_addresses": None, "address_source": "unknown", "provisioned_capacity": 20000,
+            "configured_limit": 16382, "effective_capacity": None, "active_sessions": 6826,
+            "missing": ["address pools"], "unquantified": [], "overlapping_addresses": 0,
+        }
+        recovered = {
+            "device": "asaatc01vpn25", "status": "ok", "errors": [], "pool_addresses": 16382,
+            "address_source": "local", "provisioned_capacity": 20000, "configured_limit": 16382,
+            "effective_capacity": 16382, "active_sessions": 6826, "missing": [],
+            "unquantified": [], "overlapping_addresses": 0,
+        }
+        with tempfile.TemporaryDirectory() as directory, patch.object(server, "CAPACITY_REPORTS", Path(directory)):
+            path = Path(directory) / "test-report.json"
+            server.write_json(path, {
+                "report_id": "test-report", "status": "running", "total": 1, "completed": 0,
+                "devices": ["asaatc01vpn25"], "results": [], "totals": server.capacity_totals([]),
+            })
+            with patch.object(server, "run_capacity_device", side_effect=[incomplete, recovered]) as run_device:
+                server.run_capacity_report("test-report", ["asaatc01vpn25"])
+            report = server.read_json(path, {})
 
-        def fake_execute(_device, label, command):
-            calls[command] = calls.get(command, 0) + 1
-            outputs = {
-                "show running-config ip local pool": "" if calls[command] == 1 else "ip local pool POOL_UHGVPNEMP 10.21.0.1-10.21.63.254 mask 255.255.192.0",
-                "show running-config vpn-addr-assign": "no vpn-addr-assign dhcp",
-                "show running-config tunnel-group": "tunnel-group DefaultWEBVPNGroup general-attributes\n address-pool POOL_UHGVPNEMP",
-                "show running-config group-policy": "group-policy DfltGrpPolicy attributes",
-                "show vpn-sessiondb summary": "AnyConnect Client : 6826 : 10000 : 7000 : 0\nDevice Total VPN Capacity : 20000",
-                "show running-config all vpn-sessiondb": "vpn-sessiondb max-anyconnect-premium-or-essentials-limit 16382",
-            }
-            output = outputs[command]
-            return {"label": label, "command": command, "status": "ok", "output": output or "Command completed with no output."}
+        self.assertEqual(run_device.call_count, 2)
+        self.assertEqual(report["status"], "completed")
+        self.assertEqual(report["results"][0]["pool_addresses"], 16382)
+        self.assertEqual(report["results"][0]["attempts"], 2)
 
-        with patch.object(server, "execute_command", side_effect=fake_execute):
-            result = server.run_capacity_device("asaatc01vpn25")
-
-        self.assertEqual(result["pool_addresses"], 16382)
-        self.assertEqual(result["effective_capacity"], 16382)
-        self.assertEqual(result["status"], "ok")
-        self.assertEqual(calls["show running-config ip local pool"], 2)
-        self.assertIn("show running-config ip local pool", result["retried_commands"])
+    def test_capacity_retry_skips_known_external_dhcp_limit(self):
+        self.assertFalse(server.capacity_retry_needed({
+            "address_source": "dhcp", "provisioned_capacity": 20000,
+            "configured_limit": 16382, "active_sessions": 100,
+        }))
 
     def test_config_secret_redaction(self):
         source = "username bob password abc123 encrypted\nsnmp-server community public\npre-shared-key local letmein\n key aaa-secret\nsnmp-server user bob group v3 auth sha auth-secret priv aes 128 priv-secret"

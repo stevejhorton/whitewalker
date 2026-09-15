@@ -31,7 +31,7 @@ ARCHIVES = ROOT / "archives"
 BASELINES = ROOT / "baselines"
 BATCHES = ROOT / "batches"
 CAPACITY_REPORTS = ROOT / "capacity-reports"
-APP_VERSION = "0.5.2"
+APP_VERSION = "0.5.3"
 SNAPSHOT_VERSION = 1
 SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 BATCH_LOCK = threading.Lock()
@@ -816,33 +816,10 @@ def list_batches() -> list[dict[str, Any]]:
 
 
 def run_capacity_device(device: str) -> dict[str, Any]:
-    # The outer report already walks multiple headends concurrently. Serializing
-    # commands per ASA avoids bursts of ASDM requests that can return an empty
-    # running-config section even though the section exists.
-    command_results = [execute_command(device, label, command) for label, command in CAPACITY_COMMANDS]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(CAPACITY_COMMANDS)) as pool:
+        futures = [pool.submit(execute_command, device, label, command) for label, command in CAPACITY_COMMANDS]
+        command_results = [future.result() for future in futures]
     capacity = capacity_summary(command_results)
-
-    retry_commands: set[str] = set()
-    if capacity["address_source"] == "unknown":
-        retry_commands.update({
-            "show running-config ip local pool",
-            "show running-config vpn-addr-assign",
-            "show running-config tunnel-group",
-            "show running-config group-policy",
-        })
-    if capacity["provisioned_capacity"] is None or capacity["active_sessions"] is None:
-        retry_commands.add("show vpn-sessiondb summary")
-    if capacity["configured_limit"] is None:
-        retry_commands.add("show running-config all vpn-sessiondb")
-
-    retried: list[str] = []
-    for index, (label, command) in enumerate(CAPACITY_COMMANDS):
-        if command in retry_commands:
-            command_results[index] = execute_command(device, label, command)
-            retried.append(command)
-    if retried:
-        capacity = capacity_summary(command_results)
-
     errors = [str(item.get("output", "Command failed.")) for item in command_results if item.get("status") == "error"]
     if len(errors) == len(CAPACITY_COMMANDS):
         status = "error"
@@ -850,7 +827,17 @@ def run_capacity_device(device: str) -> dict[str, Any]:
         status = "warning"
     else:
         status = "ok"
-    return {"device": device, "status": status, "errors": errors, "retried_commands": retried, **capacity}
+    return {"device": device, "status": status, "errors": errors, **capacity}
+
+
+def capacity_retry_needed(result: dict[str, Any]) -> bool:
+    """Retry incomplete ASA-derived values, but not intentionally unknown DHCP capacity."""
+    return (
+        result.get("address_source") == "unknown"
+        or result.get("provisioned_capacity") is None
+        or result.get("configured_limit") is None
+        or result.get("active_sessions") is None
+    )
 
 
 def capacity_totals(results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -887,10 +874,43 @@ def run_capacity_report(report_id: str, selected_devices: list[str]) -> None:
                 report["results"].sort(key=lambda item: str(item.get("device", "")).lower())
                 report["completed"] = len(report["results"])
                 report["totals"] = capacity_totals(report["results"])
-                if report["completed"] == report["total"]:
-                    report["status"] = "completed"
-                    report["completed_at"] = utc_now()
                 write_json(path, report)
+
+    # Preserve the fast first pass, then revisit only incomplete headends. Most
+    # reports need no cleanup; transient DNS/ASDM gaps get two more chances.
+    for retry_pass in range(1, 3):
+        report = read_json(path, {})
+        retry_devices = [str(item.get("device")) for item in report.get("results", []) if capacity_retry_needed(item)]
+        if not retry_devices:
+            break
+        report["status"] = "retrying"
+        report["retry_pass"] = retry_pass
+        report["retry_devices"] = retry_devices
+        write_json(path, report)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=config()["batch_workers"]) as pool:
+            futures = {pool.submit(run_capacity_device, device): device for device in retry_devices}
+            for future in concurrent.futures.as_completed(futures):
+                device = futures[future]
+                try:
+                    replacement = future.result()
+                except Exception as exc:
+                    replacement = {"device": device, "status": "error", "errors": [str(exc)], "missing": ["capacity data"]}
+                with CAPACITY_LOCK:
+                    report = read_json(path, {})
+                    prior = next((item for item in report.get("results", []) if item.get("device") == device), {})
+                    replacement["attempts"] = int(prior.get("attempts", 1)) + 1
+                    report["results"] = [item for item in report.get("results", []) if item.get("device") != device]
+                    report["results"].append(replacement)
+                    report["results"].sort(key=lambda item: str(item.get("device", "")).lower())
+                    report["totals"] = capacity_totals(report["results"])
+                    write_json(path, report)
+
+    with CAPACITY_LOCK:
+        report = read_json(path, {})
+        report["status"] = "completed"
+        report["completed_at"] = utc_now()
+        report.pop("retry_devices", None)
+        write_json(path, report)
 
 
 def create_capacity_report() -> dict[str, Any]:
