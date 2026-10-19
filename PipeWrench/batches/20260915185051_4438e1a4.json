@@ -1,0 +1,498 @@
+{
+  "batch_id": "20260915185051_4438e1a4",
+  "created_at": "2026-09-15T18:50:51Z",
+  "status": "completed",
+  "action": "standards",
+  "baseline_id": null,
+  "devices": [
+    "asaatc01vpn21",
+    "asaatc01vpn22",
+    "asaatc01vpn23",
+    "asaatc01vpn24",
+    "asaatc01vpn25",
+    "asaatc01vpn26",
+    "asactc01merg01",
+    "asactc01vpn21",
+    "asactc01vpn22",
+    "asactc01vpn23",
+    "asactc01vpn24",
+    "asactc01vpn25",
+    "asactc01vpn26",
+    "asactc01vpn27",
+    "asactc01vpn28",
+    "asactc01vpn29",
+    "asactc01vpn30",
+    "asaelr01vpn22",
+    "asaelr01vpn23",
+    "asaelr01vpn24",
+    "asaelr01vpn25",
+    "asaelr01vpn26",
+    "asaelr01vpn27",
+    "asaelr01vpn28",
+    "asaelr01vpn29",
+    "asaelr10vpn21",
+    "asaii550vpn01",
+    "asaii550vpn02",
+    "asaii554vpn01",
+    "asaii554vpn02",
+    "asaii747vpn01",
+    "asaii747vpn02",
+    "asaii757vpn01",
+    "asaii757vpn02",
+    "asaii771vpn01",
+    "asaii771vpn02",
+    "asair777vpn01",
+    "asair777vpn02",
+    "asaph518vpn01",
+    "asaph518vpn02",
+    "asaph550vpn01",
+    "asaph550vpn02",
+    "asatx777vpn01",
+    "asatx777vpn02"
+  ],
+  "total": 44,
+  "completed": 44,
+  "results": [
+    {
+      "device": "asaatc01vpn21",
+      "snapshot_id": "20260915185101_asaatc01vpn21_standards_30263121",
+      "summary": {
+        "ok": 44,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaatc01vpn22",
+      "snapshot_id": "20260915185101_asaatc01vpn22_standards_0d475af5",
+      "summary": {
+        "ok": 44,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaatc01vpn23",
+      "snapshot_id": "20260915185111_asaatc01vpn23_standards_4babfb9c",
+      "summary": {
+        "ok": 44,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaatc01vpn24",
+      "snapshot_id": "20260915185111_asaatc01vpn24_standards_9d8f54ef",
+      "summary": {
+        "ok": 44,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaatc01vpn26",
+      "snapshot_id": "20260915185120_asaatc01vpn26_standards_29e24d7b",
+      "summary": {
+        "ok": 44,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaatc01vpn25",
+      "snapshot_id": "20260915185120_asaatc01vpn25_standards_b001c803",
+      "summary": {
+        "ok": 44,
+        "warning": 1,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01merg01",
+      "snapshot_id": "20260915185126_asactc01merg01_standards_9676699b",
+      "summary": {
+        "ok": 39,
+        "warning": 6,
+        "error": 1
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn21",
+      "snapshot_id": "20260915185126_asactc01vpn21_standards_04a73106",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn22",
+      "snapshot_id": "20260915185131_asactc01vpn22_standards_290a584f",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn23",
+      "snapshot_id": "20260915185132_asactc01vpn23_standards_0fae5ce3",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn24",
+      "snapshot_id": "20260915185137_asactc01vpn24_standards_e21fb9b7",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn25",
+      "snapshot_id": "20260915185138_asactc01vpn25_standards_280dcea2",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn26",
+      "snapshot_id": "20260915185143_asactc01vpn26_standards_d14d0d60",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn27",
+      "snapshot_id": "20260915185144_asactc01vpn27_standards_4911e8fd",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn28",
+      "snapshot_id": "20260915185150_asactc01vpn28_standards_351b0e7f",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn29",
+      "snapshot_id": "20260915185151_asactc01vpn29_standards_5ae33938",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asactc01vpn30",
+      "snapshot_id": "20260915185158_asactc01vpn30_standards_e6d87301",
+      "summary": {
+        "ok": 43,
+        "warning": 3,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr01vpn22",
+      "snapshot_id": "20260915185159_asaelr01vpn22_standards_538ec0c9",
+      "summary": {
+        "ok": 41,
+        "warning": 5,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr01vpn23",
+      "snapshot_id": "20260915185206_asaelr01vpn23_standards_0dbf6f2c",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr01vpn24",
+      "snapshot_id": "20260915185207_asaelr01vpn24_standards_cfea3c58",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr01vpn25",
+      "snapshot_id": "20260915185211_asaelr01vpn25_standards_7ed328b6",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr01vpn26",
+      "snapshot_id": "20260915185213_asaelr01vpn26_standards_4185e6ae",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr01vpn27",
+      "snapshot_id": "20260915185217_asaelr01vpn27_standards_f2c26516",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr01vpn28",
+      "snapshot_id": "20260915185219_asaelr01vpn28_standards_0f7ed5d7",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr01vpn29",
+      "snapshot_id": "20260915185223_asaelr01vpn29_standards_a2fe42af",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaelr10vpn21",
+      "snapshot_id": "20260915185225_asaelr10vpn21_standards_35a32d9e",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii550vpn01",
+      "snapshot_id": "20260915185303_asaii550vpn01_standards_266269cf",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii550vpn02",
+      "snapshot_id": "20260915185303_asaii550vpn02_standards_e44a600b",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii554vpn01",
+      "snapshot_id": "20260915185342_asaii554vpn01_standards_ff390037",
+      "summary": {
+        "ok": 42,
+        "warning": 3,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii554vpn02",
+      "snapshot_id": "20260915185343_asaii554vpn02_standards_60fdff7c",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii747vpn01",
+      "snapshot_id": "20260915185416_asaii747vpn01_standards_513aa70e",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii747vpn02",
+      "snapshot_id": "20260915185417_asaii747vpn02_standards_b9a9dbd6",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii757vpn02",
+      "snapshot_id": "20260915185456_asaii757vpn02_standards_c524b7d4",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii757vpn01",
+      "snapshot_id": "20260915185456_asaii757vpn01_standards_020da761",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii771vpn02",
+      "snapshot_id": "20260915185535_asaii771vpn02_standards_1b7f3498",
+      "summary": {
+        "ok": 42,
+        "warning": 6,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaii771vpn01",
+      "snapshot_id": "20260915185538_asaii771vpn01_standards_a7c30b68",
+      "summary": {
+        "ok": 42,
+        "warning": 4,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asair777vpn01",
+      "snapshot_id": "20260915185556_asair777vpn01_standards_5d81d444",
+      "summary": {
+        "ok": 42,
+        "warning": 5,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asair777vpn02",
+      "snapshot_id": "20260915185558_asair777vpn02_standards_d21c3562",
+      "summary": {
+        "ok": 42,
+        "warning": 5,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaph518vpn01",
+      "snapshot_id": "20260915185628_asaph518vpn01_standards_8afcebd3",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaph518vpn02",
+      "snapshot_id": "20260915185630_asaph518vpn02_standards_57fe9ca2",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaph550vpn01",
+      "snapshot_id": "20260915185659_asaph550vpn01_standards_435a981f",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asaph550vpn02",
+      "snapshot_id": "20260915185701_asaph550vpn02_standards_070bb5f4",
+      "summary": {
+        "ok": 43,
+        "warning": 2,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asatx777vpn01",
+      "snapshot_id": "20260915185709_asatx777vpn01_standards_1dd8d300",
+      "summary": {
+        "ok": 41,
+        "warning": 5,
+        "error": 0
+      },
+      "comparison": null
+    },
+    {
+      "device": "asatx777vpn02",
+      "snapshot_id": "20260915185711_asatx777vpn02_standards_cbd4983b",
+      "summary": {
+        "ok": 41,
+        "warning": 5,
+        "error": 0
+      },
+      "comparison": null
+    }
+  ],
+  "completed_at": "2026-09-15T18:57:11Z"
+}
