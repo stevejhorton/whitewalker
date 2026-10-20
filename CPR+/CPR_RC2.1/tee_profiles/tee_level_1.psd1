@@ -132,6 +132,12 @@
             # expired, wake-from-sleep intermediate-state timeout, etc.)
         }
 
+        vpn_connected_triage = @{
+            action = 'vpn_connected_triage'
+            fields = @('outcome','dc_reachable','preflight','vpn_state','waited_ms','wake','jump')
+            # Fires when: VPN reports Connected but the gateway preflight failed (RC2.1 triage).
+        }
+
         haystack_reroll_result = @{
             action = 'haystack_reroll_result'
             fields = @('result','needle_count','reason')

@@ -4,7 +4,7 @@
 Describe 'CPR RC2.1 early VPN gate' {
     BeforeAll {
         $root = Split-Path -Parent $PSScriptRoot
-        $want = 'Test-AnyUsableIp', 'Test-SsidJump', 'Invoke-EarlyVpnGate', 'Invoke-GatedNwCheck', 'Test-XmlVaultSyncAllowed'
+        $want = 'Test-AnyUsableIp', 'Test-SsidJump', 'Invoke-EarlyVpnGate', 'Invoke-GatedNwCheck', 'Test-XmlVaultSyncAllowed', 'Test-DcPing', 'Invoke-ConnectedUnreachableTriage', 'Test-DcPing', 'Invoke-ConnectedUnreachableTriage'
         foreach ($f in 'Main.VpnState.ps1', 'Main.SsidChange.ps1') {
             $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root "main\$f"), [ref]$null, [ref]$null)
             $defs = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in $want }, $true)
@@ -18,6 +18,9 @@ Describe 'CPR RC2.1 early VPN gate' {
         function Test-RecentWakeFromSleep { param($TimeWindowSeconds) $false }
         function Invoke-EarlyVpnDisconnect { param($Reason, $VpnStateWas) $true }
         function Get-NwCheckResult { param($Url) [pscustomobject]@{ Status = 'online' } }
+        function Start-Sleep { param($Seconds) }
+        $script:StaleConnectedMaxWaitSec = 8
+        $script:StaleConnectedPollSec = 2
         $script:EarlyVpnGateEnabled = $true
         $script:VpnWakeDetection = $true
         $script:VpnWakeTimeWindow = 120
@@ -149,6 +152,44 @@ Describe 'CPR RC2.1 early VPN gate' {
             Invoke-MaintenanceStage -ExitReason 'on_prem'
             Invoke-MaintenanceStage -ExitReason 'on_prem'
             Should -Invoke Invoke-SelfUpdate -Times 1 -Exactly
+        }
+    }
+
+    Context 'Connected-but-unreachable triage' {
+        It 'dc_reachable: DC answers, preflight retried once, no polling' {
+            Mock Test-DcPing { $true }
+            Mock Get-VpnState { 'Connected' }
+            Mock Invoke-GatedNwCheck { [pscustomobject]@{ Status = 'online' } }
+            $r = Invoke-ConnectedUnreachableTriage
+            $r.Outcome | Should -Be 'dc_reachable'
+            $r.Preflight | Should -Be 'online'
+            Should -Invoke Get-VpnState -Times 0 -Exactly
+        }
+        It 'state_left_connected: stale Connected flips to Reconnecting while polling' {
+            Mock Test-DcPing { $false }
+            Mock Get-VpnState { 'Reconnecting' }
+            Mock Invoke-GatedNwCheck { [pscustomobject]@{ Status = 'online' } }
+            $r = Invoke-ConnectedUnreachableTriage
+            $r.Outcome | Should -Be 'state_left_connected'
+            $r.VpnState | Should -Be 'Reconnecting'
+            Should -Invoke Invoke-GatedNwCheck -Times 0 -Exactly
+        }
+        It 'dc_recovered: DC starts answering during the poll' {
+            $script:pings = 0
+            Mock Test-DcPing { $script:pings++; $script:pings -ge 3 }
+            Mock Get-VpnState { 'Connected' }
+            Mock Invoke-GatedNwCheck { [pscustomobject]@{ Status = 'unreachable' } }
+            $r = Invoke-ConnectedUnreachableTriage
+            $r.Outcome | Should -Be 'dc_recovered'
+            $r.DcReachable | Should -BeTrue
+        }
+        It 'timeout: nothing changes inside the window (bounded)' {
+            $script:StaleConnectedMaxWaitSec = 0
+            Mock Test-DcPing { $false }
+            Mock Get-VpnState { 'Connected' }
+            $r = Invoke-ConnectedUnreachableTriage
+            $r.Outcome | Should -Be 'timeout'
+            $script:StaleConnectedMaxWaitSec = 8
         }
     }
 }

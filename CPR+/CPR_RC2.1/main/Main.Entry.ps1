@@ -647,13 +647,27 @@ function Invoke-WhiteWalkerMain {
                         # event starts a fresh run that handles it. Saves ~12s of timeouts per hop.
                         $vpnBeforeEnroll = Get-VpnState
                         if ($vpnBeforeEnroll -eq "Connected") {
-                            $flavor = Get-VpnTunnelFlavor
-                            $staleNote = if ($earlyGate.Wake -or $earlyGate.Jump) { " (just after a wake/SSID jump - Secure Client's state may be stale; its next state change starts a new run)" } else { "" }
-                            Write-Log "VPN Connected (flavor=$flavor) and gateway preflight unreachable - skipping enroll.cisco.com and captive-portal checks$staleNote" "INFO"
-                            Send-FlareEvent $flavor
-                            $script:exitReason = "vpn_connected_nwcheck_unreachable:$flavor"
-                            Invoke-BlackholeAction -Tag $flavor
-                            return
+                            $triage = Invoke-ConnectedUnreachableTriage
+                            Write-Log ("connected_triage outcome='{0}' dc_reachable={1} preflight='{2}' vpn_state='{3}' waited_ms={4} wake={5} jump={6}" -f `
+                                $triage.Outcome, $triage.DcReachable, $triage.Preflight, $triage.VpnState, $triage.WaitedMs, $earlyGate.Wake, $earlyGate.Jump) "INFO"
+                            Write-TeeLog 'vpn_connected_triage' @{
+                                outcome = $triage.Outcome; dc_reachable = [string]$triage.DcReachable; preflight = $triage.Preflight
+                                vpn_state = $triage.VpnState; waited_ms = [string]$triage.WaitedMs
+                                wake = [string][bool]$earlyGate.Wake; jump = [string][bool]$earlyGate.Jump }
+                            if ($triage.Outcome -eq 'state_left_connected') {
+                                # The stale Connected resolved: treat it like any not-Connected VPN and
+                                # carry on into the normal enroll / captive-portal checks below.
+                                if ($triage.VpnState -ne 'Disconnected') {
+                                    $null = Invoke-EarlyVpnDisconnect -Reason 'stale_connected_blocking' -VpnStateWas $triage.VpnState
+                                }
+                                Write-Log "Stale Connected resolved to '$($triage.VpnState)' - continuing with normal checks" "INFO"
+                            } else {
+                                $flavor = Get-VpnTunnelFlavor
+                                Send-FlareEvent $flavor
+                                $script:exitReason = if ($triage.Preflight -eq 'online') { "vpn_connected:$flavor" } else { "vpn_connected_nwcheck_unreachable:$flavor" }
+                                Invoke-BlackholeAction -Tag $flavor
+                                return
+                            }
                         }
 
                         Write-Log "nwcheck: UNREACHABLE - immediately testing enroll.cisco.com before network drops" "WARN"

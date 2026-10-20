@@ -570,3 +570,39 @@ function Test-XmlVaultSyncAllowed {
     }
     return ($state -eq 'Connected')
 }
+
+# RC2.1: raw reachability of the DC FQDN (NOT Test-DC, which answers "on-prem?" using DNS
+# suffixes and says False on a healthy home VPN). Quiet and fast-failing.
+function Test-DcPing {
+    try { return [bool](Test-Connection -ComputerName $DC_FQDN -Count 1 -Quiet -ErrorAction Stop) } catch { return $false }
+}
+
+function Invoke-ConnectedUnreachableTriage {
+    # VPN reports Connected but the gateway preflight failed. Decide quickly whether the tunnel
+    # is real, using a cheap DC ping and, when that fails, a bounded poll of the VPN state
+    # (stale Connected after a hop usually flips to Reconnecting within seconds).
+    #   Outcome: dc_reachable | dc_recovered | state_left_connected | timeout
+    param([string]$Url = $NewPreflightURL)
+    $started = Get-Date
+    $r = [pscustomobject]@{ Outcome = 'timeout'; DcReachable = $false; Preflight = 'not_run'; VpnState = 'Connected'; WaitedMs = 0 }
+
+    if (Test-DcPing) {
+        $r.DcReachable = $true; $r.Outcome = 'dc_reachable'
+        $r.Preflight = [string](Invoke-GatedNwCheck -Url $Url -KnownVpnState 'Connected').Status
+    } else {
+        $deadline = $started.AddSeconds($StaleConnectedMaxWaitSec)
+        while ((Get-Date) -lt $deadline) {
+            Start-Sleep -Seconds $StaleConnectedPollSec
+            if (Test-DcPing) {
+                $r.DcReachable = $true; $r.Outcome = 'dc_recovered'
+                $r.Preflight = [string](Invoke-GatedNwCheck -Url $Url -KnownVpnState 'Connected').Status
+                break
+            }
+            $st = Get-VpnState
+            $r.VpnState = $st
+            if ($st -ne 'Connected') { $r.Outcome = 'state_left_connected'; break }
+        }
+    }
+    $r.WaitedMs = [int]((Get-Date) - $started).TotalMilliseconds
+    return $r
+}
