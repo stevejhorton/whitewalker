@@ -455,7 +455,9 @@ function Invoke-WhiteWalkerMain {
                 # Cisco tunnel was holding the stack when it fired. SSID-change
                 # handling above may have cleared that, so re-probe once - a
                 # usable (online/redirect) early result is kept as-is.
-                if ($nwCheck.Status -eq 'unreachable' -and -not $reprobedOnNetworkChange) {
+                # RC2.1: nothing was done to a VPN that stayed Connected, so a second probe cannot differ.
+                $vpnStayedConnected = ($earlyGate.VpnState -eq 'Connected' -and -not $earlyGate.Acted)
+                if ($nwCheck.Status -eq 'unreachable' -and -not $reprobedOnNetworkChange -and -not $vpnStayedConnected) {
                     Write-Log "Early preflight was inconclusive - re-probing once after VPN/SSID handling settled" "INFO"
                     $nwCheck = Invoke-GatedNwCheck
                     Write-Log "Re-probe result after settling: $($nwCheck.Status)" "INFO"
@@ -638,6 +640,22 @@ function Invoke-WhiteWalkerMain {
                         #   A) Genuine network problem (no connectivity)
                         #   B) On-prem unpostured: ISE BLOCKS nwcheck but only REDIRECTS enroll.cisco.com
                         # CRITICAL: Test enroll.cisco.com IMMEDIATELY before DHCP lease expires
+                        # RC2.1: a Connected VPN settles it. enroll.cisco.com only means something when
+                        # there is no VPN (it redirects to an ISE PSN only for an unpostured endpoint), so
+                        # with the VPN up there is nothing to learn from it or from any captive-portal
+                        # test. A stale Connected after a hop turns into Reconnecting by itself, and that
+                        # event starts a fresh run that handles it. Saves ~12s of timeouts per hop.
+                        $vpnBeforeEnroll = Get-VpnState
+                        if ($vpnBeforeEnroll -eq "Connected") {
+                            $flavor = Get-VpnTunnelFlavor
+                            $staleNote = if ($earlyGate.Wake -or $earlyGate.Jump) { " (just after a wake/SSID jump - Secure Client's state may be stale; its next state change starts a new run)" } else { "" }
+                            Write-Log "VPN Connected (flavor=$flavor) and gateway preflight unreachable - skipping enroll.cisco.com and captive-portal checks$staleNote" "INFO"
+                            Send-FlareEvent $flavor
+                            $script:exitReason = "vpn_connected_nwcheck_unreachable:$flavor"
+                            Invoke-BlackholeAction -Tag $flavor
+                            return
+                        }
+
                         Write-Log "nwcheck: UNREACHABLE - immediately testing enroll.cisco.com before network drops" "WARN"
                         
                         $enrollResult = Test-Redirect -Url $ISERedirectTestURL

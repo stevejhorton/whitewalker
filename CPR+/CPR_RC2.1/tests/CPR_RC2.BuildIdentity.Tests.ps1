@@ -54,3 +54,17 @@ Describe 'Uninstall removes everything' {
         $src | Should -Match 'Remove-CprTaskFolder'
     }
 }
+
+Describe 'Connected VPN short-circuits the unreachable branch' {
+    BeforeAll { $script:entry = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.Entry.ps1') -Raw }
+    It 'exits on a Connected VPN before testing enroll.cisco.com' {
+        $exit = $entry.IndexOf('skipping enroll.cisco.com and captive-portal checks')
+        $test = $entry.IndexOf('$enrollResult = Test-Redirect -Url $ISERedirectTestURL')
+        $exit | Should -BeGreaterThan 0
+        $exit | Should -BeLessThan $test
+    }
+    It 'does not re-probe a VPN that stayed Connected' {
+        $entry | Should -Match 'not \$reprobedOnNetworkChange -and -not \$vpnStayedConnected'
+    }
+}
+
