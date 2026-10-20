@@ -109,10 +109,10 @@ function Stop-CiscoBrowserKiller {
 
 function Test-TaskRegistered {
     # File test on the task store. Get-ScheduledTask goes through CIM / the Task
-    # Scheduler service and was seen blocking 141s during a network hop. Our
-    # tasks live at the root folder, so the task file name is the task name.
-    param([string]$Name)
-    Test-Path -LiteralPath (Join-Path $env:windir "System32\Tasks\$Name")
+    # Scheduler service and was seen blocking 141s during a network hop. 
+    param([string]$Name, [string]$TaskPath = $CprTaskFolder)
+    $rel = (($TaskPath.Trim('\')), $Name | Where-Object { $_ }) -join '\'
+    Test-Path -LiteralPath (Join-Path $env:windir "System32\Tasks\$rel")
 }
 
 function Sync-BlackholeShutdownTask {
@@ -139,7 +139,7 @@ function Sync-BlackholeShutdownTask {
         }
         try {
             $xml = Get-Content $taskXml -Raw -ErrorAction Stop
-            Register-ScheduledTask -TaskName $taskName -Xml $xml -Force -ErrorAction Stop | Out-Null
+            Register-ScheduledTask -TaskName $taskName -TaskPath $CprTaskFolder -Xml $xml -Force -ErrorAction Stop | Out-Null
             Write-Log "BlackholeShutdown: task registered" "INFO"
         } catch {
             Write-Log "BlackholeShutdown: failed to register task: $_" "WARN"
@@ -151,7 +151,7 @@ function Sync-BlackholeShutdownTask {
             return
         }
         try {
-            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction Stop
+            Unregister-ScheduledTask -TaskName $taskName -TaskPath $CprTaskFolder -Confirm:$false -ErrorAction Stop
             Write-Log "BlackholeShutdown: task unregistered (BlackholeEnabled=false)" "INFO"
         } catch {
             Write-Log "BlackholeShutdown: failed to unregister task: $_" "WARN"
@@ -184,7 +184,7 @@ function Sync-XmlVaultTask {
         }
         try {
             $xml = Get-Content $taskXml -Raw -ErrorAction Stop
-            Register-ScheduledTask -TaskName $taskName -Xml $xml -Force -ErrorAction Stop | Out-Null
+            Register-ScheduledTask -TaskName $taskName -TaskPath $CprTaskFolder -Xml $xml -Force -ErrorAction Stop | Out-Null
             Write-Log "XmlVault: task registered" "INFO"
         } catch {
             Write-Log "XmlVault: failed to register task: $_" "WARN"
@@ -196,7 +196,7 @@ function Sync-XmlVaultTask {
             return
         }
         try {
-            Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction Stop
+            Unregister-ScheduledTask -TaskName $taskName -TaskPath $CprTaskFolder -Confirm:$false -ErrorAction Stop
             Write-Log "XmlVault: task unregistered (XmlVaultEnabled=false)" "INFO"
         } catch {
             Write-Log "XmlVault: failed to unregister task: $_" "WARN"

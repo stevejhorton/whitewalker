@@ -107,6 +107,10 @@ param(
 # =============================================================================
 $WW_Version = "RC2.0.1"
 
+# Task Scheduler folder for ALL CPR jobs. KEEP IN SYNC with $CprTaskFolder in
+# main\Main.Configuration.ps1 and $TsTaskPath in haystack.ps1 (a Pester test enforces it).
+$CprTaskFolder = "\CPR\"
+
 # Installer exit codes
 $ExitCodeSuccess            = 0
 $ExitCodeGenericFailure     = 1
@@ -196,6 +200,11 @@ $ScriptFiles = @(
     @{ Name = "WW_syslog.ps1";            Source = "$ScriptRoot\WW_syslog.ps1";            Dest = $MainScriptDeployDir }
     @{ Name = "WW_haystack_schema.ps1";   Source = "$ScriptRoot\WW_haystack_schema.ps1";   Dest = $MainScriptDeployDir }
 
+    # === LEGACY-TASK-MIGRATION (TEMPORARY - remove with the migration; see script header) ===
+    # One-shot: moves CPR jobs from root / \HayStack\ into \CPR\. Pivot:
+    # $LegacyTaskMigrationEnabled in main\Main.Configuration.ps1. Delete this line when retiring it.
+    @{ Name = "WW_migrate_legacy_tasks.ps1"; Source = "$ScriptRoot\WW_migrate_legacy_tasks.ps1"; Dest = $MainScriptDeployDir }
+
     # === HayStack diagnostics (operator-run, read-only) ===
     @{ Name = "New-NeedlePreview.ps1";    Source = "$ScriptRoot\diagnostics\New-NeedlePreview.ps1"; Dest = $DiagDir }
     @{ Name = "New-DefenderNeedlePreview.ps1"; Source = "$ScriptRoot\diagnostics\New-DefenderNeedlePreview.ps1"; Dest = $DiagDir }
@@ -278,14 +287,14 @@ $RequiredRuntimeHelpers = @(
 
 # Task Scheduler XMLs to register (merged - includes WW_notify from v4.0.1)
 $TaskXMLs = @(
-    @{ Name = "WW_main";              TaskPath = "\"; Path = "$ScriptRoot\triggers\WW_main.xml" }
-    @{ Name = "WW_cap_portal_runner"; TaskPath = "\"; Path = "$ScriptRoot\triggers\WW_cap_portal_runner.xml" }
-    @{ Name = "WW_cap_portal_runner_base"; TaskPath = "\"; Path = "$ScriptRoot\triggers\WW_cap_portal_runner_base.xml" }
-    @{ Name = "WW_flaregun_user";     TaskPath = "\"; Path = "$ScriptRoot\triggers\WW_flaregun_user.xml" }
-    @{ Name = "WW_flaregun_system";   TaskPath = "\"; Path = "$ScriptRoot\triggers\WW_flaregun_system.xml" }
-    @{ Name = "WW_notify";            TaskPath = "\"; Path = "$ScriptRoot\triggers\WW_notify.xml" }
-    @{ Name = "WW_blackhole_shutdown"; TaskPath = "\"; Path = "$ScriptRoot\triggers\WW_blackhole_shutdown.xml" }
-    @{ Name = "WW_xml_vault";         TaskPath = "\"; Path = "$ScriptRoot\triggers\WW_xml_vault.xml" }
+    @{ Name = "WW_main";              TaskPath = $CprTaskFolder; Path = "$ScriptRoot\triggers\WW_main.xml" }
+    @{ Name = "WW_cap_portal_runner"; TaskPath = $CprTaskFolder; Path = "$ScriptRoot\triggers\WW_cap_portal_runner.xml" }
+    @{ Name = "WW_cap_portal_runner_base"; TaskPath = $CprTaskFolder; Path = "$ScriptRoot\triggers\WW_cap_portal_runner_base.xml" }
+    @{ Name = "WW_flaregun_user";     TaskPath = $CprTaskFolder; Path = "$ScriptRoot\triggers\WW_flaregun_user.xml" }
+    @{ Name = "WW_flaregun_system";   TaskPath = $CprTaskFolder; Path = "$ScriptRoot\triggers\WW_flaregun_system.xml" }
+    @{ Name = "WW_notify";            TaskPath = $CprTaskFolder; Path = "$ScriptRoot\triggers\WW_notify.xml" }
+    @{ Name = "WW_blackhole_shutdown"; TaskPath = $CprTaskFolder; Path = "$ScriptRoot\triggers\WW_blackhole_shutdown.xml" }
+    @{ Name = "WW_xml_vault";         TaskPath = $CprTaskFolder; Path = "$ScriptRoot\triggers\WW_xml_vault.xml" }
 )
 
 # Known WhiteWalker task names (for clean uninstall - merged, includes WW_notify)
@@ -305,7 +314,7 @@ $KnownTaskNames = @(
 $KnownTasks = @(
     $TaskXMLs | ForEach-Object { @{ Name = $_.Name; TaskPath = $_.TaskPath } }
 ) + @(
-    @{ Name = "HayStack_Monitor"; TaskPath = "\HayStack\" }
+    @{ Name = "HayStack_Monitor"; TaskPath = $CprTaskFolder }
     @{ Name = "WhiteWalker_Main"; TaskPath = "\" }
     @{ Name = "WhiteWalker_CapPortal"; TaskPath = "\" }
 )
@@ -360,6 +369,25 @@ function Get-InstallerTaskSnapshot {
     # by exact name/path avoids the observed 3-7 second repeated lookup cost and
     # prevents same-named tasks in unrelated folders from being touched.
     return @(Get-ScheduledTask -ErrorAction SilentlyContinue)
+}
+
+# LEGACY-TASK-MIGRATION (TEMPORARY - remove with WW_migrate_legacy_tasks.ps1; block 1 of 2)
+# Runs the one-shot migration of CPR jobs into \CPR\. Never fails the install: an
+# incomplete migration is logged, left unflagged, and retried on the next install.
+function Invoke-LegacyTaskMigrationStep {
+    $script = Join-Path $ScriptRoot "WW_migrate_legacy_tasks.ps1"
+    if (-not (Test-Path $script)) { Write-InstallLog "Legacy task migration: script not found ($script) - skipped" "WARN"; return }
+    try {
+        $res = & $script -ConfigPath (Join-Path $ScriptRoot "main\Main.Configuration.ps1")
+        if ($res.Ran) {
+            $lvl = if ($res.Failed.Count -gt 0) { "WARN" } else { "SUCCESS" }
+            Write-InstallLog ("Legacy task migration RAN: reason={0} removed={1} failed={2} (log: logs\legacy_task_migration.log)" -f $res.Reason, $res.Removed.Count, $res.Failed.Count) $lvl
+        } else {
+            Write-InstallLog "Legacy task migration skipped: $($res.Reason)" "INFO"
+        }
+    } catch {
+        Write-InstallLog "Legacy task migration error (non-fatal): $_" "WARN"
+    }
 }
 
 function Remove-OldTasks {
@@ -1069,6 +1097,7 @@ function Uninstall-WhiteWalker {
     Write-InstallLog "WhiteWalker Uninstaller $WW_Version" "INFO"
     Write-InstallLog "========================================" "INFO"
 
+    Invoke-LegacyTaskMigrationStep   # LEGACY-TASK-MIGRATION (TEMPORARY, block 2 of 2)
     Remove-OldTasks
     Remove-OldScripts
     Remove-StaleFlagFiles
@@ -1141,6 +1170,7 @@ if ($Uninstall) {
 try {
     # Step 1: Clean uninstall
     Write-InstallLog "" "INFO"
+    Invoke-LegacyTaskMigrationStep   # LEGACY-TASK-MIGRATION (TEMPORARY, block 2 of 2)
     Remove-OldTasks
     Remove-OldScripts
     Remove-StaleFlagFiles

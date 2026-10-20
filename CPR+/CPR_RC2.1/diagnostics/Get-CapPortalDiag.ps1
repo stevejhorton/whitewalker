@@ -189,7 +189,7 @@ if (Test-Path $HaystackLog) {
 #    when the task is present, enabled, and firing normally.
 # =============================================================================
 Write-Section "8. HayStack_Monitor scheduled task (via schtasks.exe)"
-$schtasksOut = schtasks /query /tn "\HayStack\HayStack_Monitor" /v /fo list 2>&1
+$schtasksOut = schtasks /query /tn "\CPR\HayStack_Monitor" /v /fo list 2>&1
 if ($LASTEXITCODE -eq 0) {
     ($schtasksOut | Select-String "TaskName|Status|Last Run Time|Last Result|Next Run Time|Scheduled Task State|Schedule Type") |
         ForEach-Object { Write-Line $_.Line }

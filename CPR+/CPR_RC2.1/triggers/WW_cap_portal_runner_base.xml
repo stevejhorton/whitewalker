@@ -4,7 +4,7 @@
     <Date>2026-07-16T00:00:00.0000000</Date>
     <Author>MS\shorto39</Author>
     <Description>WhiteWalker Base Captive Portal Observer - Event 778 trigger - AlwaysOn-native mode</Description>
-    <URI>\WW_cap_portal_runner_base</URI>
+    <URI>\CPR\WW_cap_portal_runner_base</URI>
   </RegistrationInfo>
   <Triggers>
     <EventTrigger>

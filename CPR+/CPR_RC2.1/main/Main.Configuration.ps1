@@ -322,6 +322,16 @@ $SelfUpdateRemoteBase        = "\\ms.ds.uhc.com\netlogon\UHG\Scripts\AOVPN\CPR\b
 $SelfUpdateZipName           = "cpr_current.zip"
 $SelfUpdateInstallScript     = "install.ps1"
 
+# Task Scheduler folder that holds ALL CPR jobs (WW_* and HayStack_Monitor).
+# KEEP IN SYNC with $CprTaskFolder in install.ps1 and $TsTaskPath in haystack.ps1
+# (a Pester test enforces it). Existence checks read System32\Tasks\CPR directly.
+$CprTaskFolder = "\CPR\"
+
+# TEMPORARY pivot for WW_migrate_legacy_tasks.ps1 (run by install.ps1): removes CPR
+# jobs from their old root / \HayStack\ locations. Set $false to turn it off.
+# Retire the whole thing once no endpoint runs a pre-RC2.1 build (see that script's header).
+$LegacyTaskMigrationEnabled = $true
+
 # Blackhole Shutdown Task (register/unregister WW_blackhole_shutdown TS task)
 # Task fires Set-VpnHostsEntry.ps1 -rm on system shutdown (Event ID 1074)
 # Lifecycle managed by WW_main on each run - mirrors BlackholeEnabled state.

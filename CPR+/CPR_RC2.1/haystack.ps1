@@ -82,7 +82,7 @@ $ActionScriptPath           = Join-Path $LocalCacheDir "haystack_action.ps1"
 
 # Task Scheduler registration
 $TsTaskName                 = "HayStack_Monitor"
-$TsTaskPath                 = "\HayStack\"
+$TsTaskPath                 = "\CPR\"   # keep in sync with $CprTaskFolder (Main.Configuration.ps1, install.ps1)
 
 # Heartbeat trigger - guarantees a periodic opportunity to drain the syslog
 # queue even when no needle event fires (e.g. quiet box sitting on VPN).
