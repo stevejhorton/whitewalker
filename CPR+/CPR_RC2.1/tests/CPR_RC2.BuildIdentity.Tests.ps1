@@ -120,3 +120,11 @@ Describe 'End-of-run network re-check' {
         $e | Should -BeGreaterThan $c
     }
 }
+
+Describe 'Connected VPN is trusted on wake/jump' {
+    It 'stale-guard is behind a pivot that defaults to trusting Connected' {
+        $root = Split-Path -Parent $PSScriptRoot
+        (Get-Content (Join-Path $root 'main\Main.Configuration.ps1') -Raw) | Should -Match '\$VpnConnectedTrustOnWakeJump\s*=\s*\$true'
+        (Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw) | Should -Match '\(\$earlyGate\.Wake -or \$earlyGate\.Jump\) -and -not \$VpnConnectedTrustOnWakeJump'
+    }
+}

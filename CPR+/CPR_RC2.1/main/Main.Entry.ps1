@@ -259,14 +259,15 @@ function Invoke-WhiteWalkerMain {
                 # VPN Disconnected always takes the normal path.
                 # =====================================================================
                 if ($VpnConnectedShortCircuit -and $earlyGate.VpnState -eq 'Connected' -and -not $earlyGate.Acted) {
-                    if ($earlyGate.Wake -or $earlyGate.Jump) {
-                        # Secure Client can still report Connected for seconds after a wake or
-                        # network hop, before it notices the tunnel is dead. Do not trust it.
-                        Write-Log "VPN reports Connected but a wake/SSID jump just happened (wake=$($earlyGate.Wake) jump=$($earlyGate.Jump)) - state may be stale, not short-circuiting" "WARN"
+                    if (($earlyGate.Wake -or $earlyGate.Jump) -and -not $VpnConnectedTrustOnWakeJump) {
+                        # Optional paranoia (pivot off by default): Secure Client can report Connected for
+                        # seconds after a hop. Default is to trust Connected - when it goes stale it flips to
+                        # Reconnecting and its 2072/2037/2044 events start a new run.
+                        Write-Log "VPN reports Connected but a wake/SSID jump just happened (wake=$($earlyGate.Wake) jump=$($earlyGate.Jump)) - not short-circuiting" "WARN"
                     } else {
                         $scFlavor = Get-VpnTunnelFlavor
                         if ($scFlavor -eq 'mgmt_tun' -or $scFlavor -eq 'user_tun') {
-                            Write-Log "VPN Connected at run start (flavor=$scFlavor) - skipping preflight and captive-portal checks" "INFO"
+                            Write-Log "VPN Connected at run start (flavor=$scFlavor wake=$($earlyGate.Wake) jump=$($earlyGate.Jump)) - skipping preflight and captive-portal checks" "INFO"
                             Invoke-WhiteWalkerStartupSubsystems
                             $scTelemetry = Get-CprConnectionTelemetry -NetworkInfo $networkInfo
                             Write-TeeLog 'network_state' @{
