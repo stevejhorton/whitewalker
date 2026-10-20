@@ -83,6 +83,8 @@ Describe 'End-of-run network re-check' {
         function Write-Log { param($m,$l) }
         function Write-TeeLog { param($a,$f) $script:teeSeen = @{ a = $a; f = $f } }
         Mock Request-CprRerun { $true }
+        $script:runAdapterSet = 'a'
+        Mock Get-CprActivePhysicalSet { 'a' }
     }
     It 'no change: no re-run' {
         Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$true; State='Up'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; SSID='SNAFU' } }
@@ -94,6 +96,12 @@ Describe 'End-of-run network re-check' {
         $r = Invoke-EndRunNetworkRecheck -Baseline $base
         $r.Changed | Should -BeTrue; $r.Rerun | Should -BeTrue
         $script:teeSeen.a | Should -Be 'network_changed_during_run'
+    }
+    It 'a different set of active physical adapters (dock/undock) triggers a re-run' {
+        Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$true; State='Up'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; SSID='SNAFU' } }
+        Mock Get-CprActivePhysicalSet { 'a,b' }
+        $r = Invoke-EndRunNetworkRecheck -Baseline $base
+        $r.Changed | Should -BeTrue; $r.Rerun | Should -BeTrue
     }
     It 'adapter gone or down counts as changed' {
         Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$false; State='missing'; IPAddress='N/A'; DefaultGateway='N/A'; SSID='N/A' } }

@@ -1741,6 +1741,20 @@ function Request-CprRerun {
     } catch { Write-Log "Re-run starter failed: $_" "WARN"; return $false }
 }
 
+function Get-CprActivePhysicalSet {
+    # Sorted, comma-joined GUIDs of physical adapters that are Up and hold an IPv4 default gateway.
+    # In-process .NET only. Same physical/non-VPN filter as Get-NetworkInfo. $null on failure.
+    try {
+        $ids = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() | Where-Object {
+            $_.OperationalStatus -eq 'Up' -and
+            $_.NetworkInterfaceType -notin 'Loopback','Tunnel' -and
+            $_.Description -notmatch 'Cisco|VPN|TAP|Virtual|Tunnel|WAN Miniport|AnyConnect' -and
+            @($_.GetIPProperties().GatewayAddresses | Where-Object { $_.Address.AddressFamily -eq 'InterNetwork' -and $_.Address.ToString() -ne '0.0.0.0' }).Count -gt 0
+        } | ForEach-Object { $_.Id.ToLowerInvariant() } | Sort-Object
+        return (@($ids) -join ',')
+    } catch { return $null }
+}
+
 function Get-CprQuickNetworkProbe {
     # Lightest possible read of the handled adapter: in-process .NET only (no CIM, no new process),
     # except one netsh call for the SSID when the adapter is Wi-Fi.
@@ -1777,6 +1791,8 @@ function Invoke-EndRunNetworkRecheck {
         if ("$($Baseline.IPAddress)" -ne $now.IPAddress) { $diff += 'ip' }
         if ("$($Baseline.DefaultGateway)" -ne $now.DefaultGateway) { $diff += 'gw' }
         if ($Baseline.AdapterClass -eq 'wifi' -and "$($Baseline.SSID)" -ne $now.SSID) { $diff += 'ssid' }
+        $setNow = Get-CprActivePhysicalSet
+        if ($null -ne $script:runAdapterSet -and $null -ne $setNow -and $setNow -ne $script:runAdapterSet) { $diff += 'adapters' }
         Write-Log ("end_run_network_recheck changed={0} elapsed_ms={1}" -f ($diff.Count -gt 0), $sw.ElapsedMilliseconds) "DEBUG"
         if ($diff.Count -eq 0) { return $result }
         $result.Changed = $true

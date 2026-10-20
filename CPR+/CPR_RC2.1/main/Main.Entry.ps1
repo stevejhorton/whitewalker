@@ -158,6 +158,7 @@ function Invoke-WhiteWalkerMain {
                 # Handles "Connect Automatically" unchecked scenario where adapter exists but not connected
                 $networkInfo = Get-NetworkInfo
                 $script:currentSsid = $networkInfo.SSID  # captured for Write-RunEnd SSID cache update
+                $script:runAdapterSet = Get-CprActivePhysicalSet
 
                 # RC2.1 early VPN gate: FIRST decision of every run, ahead of every
                 # wait, sleep and probe. Secure Client fires a reconnect on any network
@@ -197,6 +198,7 @@ function Invoke-WhiteWalkerMain {
 
                 # Cache current SSID for Write-RunEnd to persist at run completion
                 $script:currentSsid = $networkInfo.SSID
+                $script:runAdapterSet = Get-CprActivePhysicalSet
 
                 # WLANi03 awareness: always on-prem corp wireless, ISE likely mid-posture scan.
                 # If we have no valid IP yet, wait longer than normal before proceeding.
@@ -408,6 +410,7 @@ function Invoke-WhiteWalkerMain {
                     -Force:([bool]$script:NetworkSnapshotInvalidated)
                 $script:NetworkSnapshotInvalidated = $false
                 $script:currentSsid = $networkInfo.SSID
+                $script:runAdapterSet = Get-CprActivePhysicalSet
                 $connectionTelemetry = Get-CprConnectionTelemetry -NetworkInfo $networkInfo
 
                 Write-TeeLog 'network_state' @{
