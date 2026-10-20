@@ -1,0 +1,642 @@
+PS C:\ProgramData\WhiteWalker\admin> .\doit.ps1
+
+TaskPath State Trig
+-------- ----- ----
+\CPR\    Ready    5
+
+
+
+LastRunTime            LastTaskResult
+-----------            --------------
+10/20/2026 12:44:44 PM              0
+
+
+TimeCreated : 10/20/2026 12:45:05 PM
+Id          : 102
+Message     : Task Scheduler successfully finished "{93c9c3a1-6a01-4147-9513-0eb689bae495}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:45:05 PM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 12:44:40 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:44:40 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:44:40 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:44:40 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:44:37 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:44:37 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:44:37 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:44:37 PM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{93c9c3a1-6a01-4147-9513-0eb689bae495}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 12:44:37 PM
+Id          : 100
+Message     : Task Scheduler started "{93c9c3a1-6a01-4147-9513-0eb689bae495}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:44:37 PM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 24744.
+
+TimeCreated : 10/20/2026 12:44:37 PM
+Id          : 108
+Message     : Task Scheduler launched "{93c9c3a1-6a01-4147-9513-0eb689bae495}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+TimeCreated : 10/20/2026 12:42:56 PM
+Id          : 102
+Message     : Task Scheduler successfully finished "{14747087-03e7-4551-a297-721426f28a41}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:42:56 PM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{14747087-03e7-4551-a297-721426f28a41}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 12:42:42 PM
+Id          : 140
+Message     : User "MS\LHTU05CD1503KF5$"  updated Task Scheduler task "\CPR\WW_main"
+
+TimeCreated : 10/20/2026 12:42:42 PM
+Id          : 106
+Message     : User "MS\LHTU05CD1503KF5$"  registered Task Scheduler task "\CPR\WW_main"
+
+TimeCreated : 10/20/2026 12:42:39 PM
+Id          : 111
+Message     : Task Scheduler terminated "{14747087-03e7-4551-a297-721426f28a41}"  instance of the "\CPR\WW_main"  task.
+
+TimeCreated : 10/20/2026 12:42:39 PM
+Id          : 141
+Message     : User "NT AUTHORITY\System"  deleted Task Scheduler task "\CPR\WW_main"
+
+TimeCreated : 10/20/2026 12:41:55 PM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{14747087-03e7-4551-a297-721426f28a41}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 12:41:55 PM
+Id          : 100
+Message     : Task Scheduler started "{14747087-03e7-4551-a297-721426f28a41}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:41:55 PM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 30212.
+
+TimeCreated : 10/20/2026 12:41:04 PM
+Id          : 102
+Message     : Task Scheduler successfully finished "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:41:04 PM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 12:40:32 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:40:32 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:40:32 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:40:32 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:40:27 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:40:27 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:40:27 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:40:27 PM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 12:40:27 PM
+Id          : 100
+Message     : Task Scheduler started "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:40:27 PM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 21312.
+
+TimeCreated : 10/20/2026 12:40:27 PM
+Id          : 108
+Message     : Task Scheduler launched "{7ec1b3fd-60e2-44e9-8d7c-c69030aeffdf}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+TimeCreated : 10/20/2026 12:38:06 PM
+Id          : 102
+Message     : Task Scheduler successfully finished "{26f8bc6b-fa56-453d-8266-dbbb072237ca}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:38:06 PM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 12:37:27 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:37:27 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:37:27 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:37:27 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:37:25 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:37:25 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:37:25 PM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 12:37:25 PM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{26f8bc6b-fa56-453d-8266-dbbb072237ca}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 12:37:25 PM
+Id          : 100
+Message     : Task Scheduler started "{26f8bc6b-fa56-453d-8266-dbbb072237ca}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:37:25 PM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 13976.
+
+TimeCreated : 10/20/2026 12:37:25 PM
+Id          : 108
+Message     : Task Scheduler launched "{26f8bc6b-fa56-453d-8266-dbbb072237ca}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+TimeCreated : 10/20/2026 12:35:21 PM
+Id          : 111
+Message     : Task Scheduler terminated "{c96ddd4f-1a69-47e4-8b91-b838482f043a}"  instance of the "\CPR\WW_main"  task.
+
+TimeCreated : 10/20/2026 12:35:19 PM
+Id          : 102
+Message     : Task Scheduler successfully finished "{c96ddd4f-1a69-47e4-8b91-b838482f043a}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:35:19 PM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{c96ddd4f-1a69-47e4-8b91-b838482f043a}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 12:34:42 PM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{c96ddd4f-1a69-47e4-8b91-b838482f043a}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 12:34:42 PM
+Id          : 100
+Message     : Task Scheduler started "{c96ddd4f-1a69-47e4-8b91-b838482f043a}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 12:34:42 PM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 18740.
+
+TimeCreated : 10/20/2026 11:36:31 AM
+Id          : 102
+Message     : Task Scheduler successfully finished "{b3468b53-f759-4185-ab28-be29755ddc68}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 11:36:31 AM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{b3468b53-f759-4185-ab28-be29755ddc68}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 11:35:51 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:51 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:51 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:51 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:46 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:46 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:46 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:45 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:06 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:06 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:06 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:06 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:35:02 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:34:57 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:34:57 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:34:57 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:34:57 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:34:54 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:34:54 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:34:54 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{b3468b53-f759-4185-ab28-be29755ddc68}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 11:34:54 AM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{b3468b53-f759-4185-ab28-be29755ddc68}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 11:34:54 AM
+Id          : 100
+Message     : Task Scheduler started "{b3468b53-f759-4185-ab28-be29755ddc68}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 11:34:54 AM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 27760.
+
+TimeCreated : 10/20/2026 11:34:54 AM
+Id          : 108
+Message     : Task Scheduler launched "{b3468b53-f759-4185-ab28-be29755ddc68}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+TimeCreated : 10/20/2026 10:38:12 AM
+Id          : 102
+Message     : Task Scheduler successfully finished "{445a55f9-9bb3-43bb-8da0-a886fe157bfd}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 10:38:12 AM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{445a55f9-9bb3-43bb-8da0-a886fe157bfd}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 10:37:13 AM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{445a55f9-9bb3-43bb-8da0-a886fe157bfd}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 10:37:13 AM
+Id          : 100
+Message     : Task Scheduler started "{445a55f9-9bb3-43bb-8da0-a886fe157bfd}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 10:37:13 AM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 9148.
+
+TimeCreated : 10/20/2026 10:30:28 AM
+Id          : 102
+Message     : Task Scheduler successfully finished "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 10:30:28 AM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 10:29:19 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:19 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:19 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:19 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 100
+Message     : Task Scheduler started "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 6968.
+
+TimeCreated : 10/20/2026 10:29:15 AM
+Id          : 108
+Message     : Task Scheduler launched "{7b0dab9c-05d9-44ec-9c4b-c9f3cfb03835}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+TimeCreated : 10/20/2026 10:28:23 AM
+Id          : 102
+Message     : Task Scheduler successfully finished "{12b60db4-5bfb-449f-bcab-3cc4004534b8}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 10:28:23 AM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 10:28:02 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:28:02 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:28:02 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:28:02 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:28:00 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:28:00 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:28:00 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 10:28:00 AM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{12b60db4-5bfb-449f-bcab-3cc4004534b8}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 10:28:00 AM
+Id          : 100
+Message     : Task Scheduler started "{12b60db4-5bfb-449f-bcab-3cc4004534b8}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 10:28:00 AM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 17456.
+
+TimeCreated : 10/20/2026 10:28:00 AM
+Id          : 108
+Message     : Task Scheduler launched "{12b60db4-5bfb-449f-bcab-3cc4004534b8}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+TimeCreated : 10/20/2026 9:08:59 AM
+Id          : 102
+Message     : Task Scheduler successfully finished "{ebf366b0-907c-404c-9431-aad357083843}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 9:08:59 AM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{ebf366b0-907c-404c-9431-aad357083843}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 9:08:39 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{ebf366b0-907c-404c-9431-aad357083843}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 9:08:39 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{ebf366b0-907c-404c-9431-aad357083843}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 9:08:39 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{ebf366b0-907c-404c-9431-aad357083843}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 9:08:39 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{ebf366b0-907c-404c-9431-aad357083843}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 9:08:37 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{ebf366b0-907c-404c-9431-aad357083843}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 9:08:37 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{ebf366b0-907c-404c-9431-aad357083843}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 9:08:37 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{ebf366b0-907c-404c-9431-aad357083843}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 9:08:37 AM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{ebf366b0-907c-404c-9431-aad357083843}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 9:08:37 AM
+Id          : 100
+Message     : Task Scheduler started "{ebf366b0-907c-404c-9431-aad357083843}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 9:08:37 AM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 11352.
+
+TimeCreated : 10/20/2026 9:08:37 AM
+Id          : 108
+Message     : Task Scheduler launched "{ebf366b0-907c-404c-9431-aad357083843}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+TimeCreated : 10/20/2026 8:20:08 AM
+Id          : 102
+Message     : Task Scheduler successfully finished "{14219a55-6af2-45f7-876a-5f33f368c384}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 8:20:08 AM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{14219a55-6af2-45f7-876a-5f33f368c384}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 8:19:50 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{14219a55-6af2-45f7-876a-5f33f368c384}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 8:19:50 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{14219a55-6af2-45f7-876a-5f33f368c384}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 8:19:50 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{14219a55-6af2-45f7-876a-5f33f368c384}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 8:19:50 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{14219a55-6af2-45f7-876a-5f33f368c384}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 8:19:48 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{14219a55-6af2-45f7-876a-5f33f368c384}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 8:19:48 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{14219a55-6af2-45f7-876a-5f33f368c384}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 8:19:48 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{14219a55-6af2-45f7-876a-5f33f368c384}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 8:19:48 AM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{14219a55-6af2-45f7-876a-5f33f368c384}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 8:19:48 AM
+Id          : 100
+Message     : Task Scheduler started "{14219a55-6af2-45f7-876a-5f33f368c384}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 8:19:48 AM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 26364.
+
+TimeCreated : 10/20/2026 8:19:48 AM
+Id          : 108
+Message     : Task Scheduler launched "{14219a55-6af2-45f7-876a-5f33f368c384}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+TimeCreated : 10/20/2026 8:00:03 AM
+Id          : 102
+Message     : Task Scheduler successfully finished "{0540efaa-2322-4748-a339-edb2c3c98bbe}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 8:00:03 AM
+Id          : 201
+Message     : Task Scheduler successfully completed task "\CPR\WW_main" , instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}" , action "conhost.exe" with return
+              code 0.
+
+TimeCreated : 10/20/2026 7:59:40 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 7:59:40 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 7:59:40 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 7:59:40 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 7:59:39 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 7:59:39 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 7:59:39 AM
+Id          : 322
+Message     : Task Scheduler did not launch task "\CPR\WW_main"  because instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}"  of the same task is already running.
+
+TimeCreated : 10/20/2026 7:59:39 AM
+Id          : 200
+Message     : Task Scheduler launched action "conhost.exe" in instance "{0540efaa-2322-4748-a339-edb2c3c98bbe}" of task "\CPR\WW_main".
+
+TimeCreated : 10/20/2026 7:59:39 AM
+Id          : 100
+Message     : Task Scheduler started "{0540efaa-2322-4748-a339-edb2c3c98bbe}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+
+TimeCreated : 10/20/2026 7:59:39 AM
+Id          : 129
+Message     : Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe"  with process ID 33140.
+
+TimeCreated : 10/20/2026 7:59:39 AM
+Id          : 108
+Message     : Task Scheduler launched "{0540efaa-2322-4748-a339-edb2c3c98bbe}"  instance of task "\CPR\WW_main"  according to an event trigger.
+
+
