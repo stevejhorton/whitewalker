@@ -254,9 +254,9 @@ Describe 'Required C - preflight fires immediately after network-ready' {
         $subsystemIdx | Should -BeGreaterThan $probeIndex
     }
 
-    It 'Main defers self-update / blackhole / HayStack reroll / XmlVault into one deferred function' {
+    It 'Main defers self-update / blackhole task sync / HayStack reroll / XmlVault into the Maintenance stage' {
         $deferred = [regex]::Match($script:entrySource,
-            'function Invoke-WhiteWalkerStartupSubsystems \{[\s\S]*?\n\}').Value
+            'function Invoke-MaintenanceStage \{[\s\S]*?\n\}').Value
         $deferred | Should -Match 'Invoke-SelfUpdate'
         $deferred | Should -Match 'Sync-BlackholeShutdownTask'
         $deferred | Should -Match 'HaystackScriptPath'

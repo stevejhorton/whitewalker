@@ -2,12 +2,10 @@
 # Depends on: every preceding Main.* library in the documented dot-sourcing order.
 
 
-# RC2.1 (Required C): these subsystems are NOT routing-critical and are the bulk
-# of the "minutes before useful probing" the owner observed. They are deferred
-# until AFTER the authoritative gateway.optum.com preflight has been fired, so a
-# usable IP/default gateway is probed immediately instead of behind NETLOGON
-# self-update, HayStack reroll and XmlVault sync work. They still run on every
-# path that previously ran them, including the early no-network return.
+# RC2.1 stages: (1) critical path = classify network, flare, remediate;
+# (2) Maintenance stage (Invoke-MaintenanceStage) = task sync, HayStack reroll,
+# self-update, XmlVault sync. Maintenance runs once, last, after the flare, and
+# skips share-dependent work when offline / not on-prem / VPN not Connected.
 function Write-MaintStep {
     # Timing marker between startup-maintenance steps. If a run stalls, the last
     # marker in the log names the step that finished; the stall is in the next one.
@@ -20,41 +18,44 @@ function Write-MaintStep {
 }
 
 function Invoke-WhiteWalkerStartupSubsystems {
-    param([bool]$RunMaintenance = $true)
+    # Cheap local essentials only: drain the cap-portal handback and clear stale
+    # blackhole hosts entries. Everything else is the Maintenance stage below.
     if ($script:startupSubsystemsRan) { return }
     $script:startupSubsystemsRan = $true
-    $maintenanceStartedAt = Get-Date
-    $script:maintStepAt = $maintenanceStartedAt
-    Write-Log "maintenance_step name='begin' elapsed_ms=0" "DEBUG"
+    $script:maintStepAt = Get-Date
 
-    # Required G: drain any USER-context Base handback into Main's log/evidence
-    # trail before the rest of startup. SYSTEM stays the owner of control state.
     $null = Import-CapPortalUserHandback
     Write-MaintStep 'handback'
 
-    # Blackhole shutdown task - sync lifecycle with $BlackholeEnabled
+    # Safety: run blackhole -rm at every startup regardless of state, so hosts
+    # entries are never left in place after a prior state snafu.
+    Invoke-BlackholeAction -Tag 'startup'
+    Write-MaintStep 'blackhole_startup'
+}
+
+function Invoke-MaintenanceStage {
+    # RC2.1 Maintenance stage: everything that is not on the critical path
+    # (classify network -> flare -> remediate). Runs ONCE at the very end of the
+    # run, after the exit reason and flare are settled, so a slow or hung step
+    # can never delay a VPN disconnect, a rescan or a portal browser.
+    # Steps that need the corp share are skipped when it is unreachable.
+    param([string]$ExitReason = '', [bool]$Skip = $false)
+    if ($script:maintenanceRan) { return }
+    $script:maintenanceRan = $true
+
+    if ($Skip) {
+        Write-Log "maintenance_stage skipped reason='online_fast_path_policy'" "INFO"
+        return
+    }
+    $offline = @('no_network_connection', 'no_net_transient', 'network_changed_no_ip', 'unknown', 'error_exception') -contains $ExitReason
+    $maintStartedAt = Get-Date
+    $script:maintStepAt = $maintStartedAt
+    Write-Log "maintenance_stage begin exit_reason='$ExitReason' offline=$offline" "DEBUG"
+
+    # Local-only work: runs even when offline.
     Sync-BlackholeShutdownTask
     Write-MaintStep 'blackhole_task_sync'
 
-    # Safety: run blackhole -rm at every startup regardless of state.
-    # Ensures hosts entries are never left in place due to a prior state snafu.
-    # When $BlackholeEnabled = $false, still fires -rm to clear any stale entries.
-    Invoke-BlackholeAction -Tag 'startup'
-    Write-MaintStep 'blackhole_startup'
-
-    if (-not $RunMaintenance) {
-        Write-Log "maintenance_phase mode='deferred' reason='online_fast_path_policy' preserved='handback,blackhole_sync,blackhole_cleanup'" "INFO"
-        Write-Log ("phase_timing phase='startup_maintenance' elapsed_ms={0} mode='deferred'" -f `
-            [math]::Round(((Get-Date) - $maintenanceStartedAt).TotalMilliseconds)) "INFO"
-        return
-    }
-
-    # Self-update remains synchronous by default so download/extract/install exit
-    # status and flag handoff are reliable and concurrent installs are impossible.
-    Invoke-SelfUpdate
-    Write-MaintStep 'self_update'
-
-    # HayStack - event monitor subsystem reroll check
     if ($HaystackEnabled) {
         if (Test-Path $HaystackScriptPath) {
             Write-Log "HayStack: enabled - invoking reroll check" "INFO"
@@ -71,33 +72,41 @@ function Invoke-WhiteWalkerStartupSubsystems {
     } else {
         Write-Log "HayStack: disabled - skipping" "DEBUG"
     }
-
     Write-MaintStep 'haystack'
 
-    # XmlVault - task lifecycle sync + startup sync trigger
     Sync-XmlVaultTask
     Write-MaintStep 'xmlvault_task_sync'
-    if ($XmlVaultEnabled) {
-        if (-not (Test-XmlVaultSyncAllowed)) {
-            Write-Log "XmlVault: startup sync skipped - not on-prem and VPN not Connected (share unreachable)" "INFO"
-        } elseif (Test-Path $XmlVaultScriptPath) {
-            Write-Log "XmlVault: enabled - invoking startup sync" "INFO"
-            if (-not $WhatIf) {
-                Start-Process "powershell.exe" `
-                    -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$XmlVaultScriptPath`"" `
-                    -WindowStyle Hidden
+
+    # Share-dependent work: needs on-prem or a Connected VPN, and a live network.
+    $shareOk = (-not $offline) -and (Test-XmlVaultSyncAllowed)
+    if (-not $shareOk) {
+        Write-Log "maintenance_stage: self-update and XmlVault sync skipped - share unreachable (offline=$offline, not on-prem and VPN not Connected)" "INFO"
+    } else {
+        # Synchronous so download/extract/install status is reliable and concurrent
+        # installs are impossible. Last thing in the run, so replacing files is safe.
+        Invoke-SelfUpdate
+        Write-MaintStep 'self_update'
+
+        if ($XmlVaultEnabled) {
+            if (Test-Path $XmlVaultScriptPath) {
+                Write-Log "XmlVault: enabled - invoking startup sync" "INFO"
+                if (-not $WhatIf) {
+                    Start-Process "powershell.exe" `
+                        -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$XmlVaultScriptPath`"" `
+                        -WindowStyle Hidden
+                } else {
+                    Write-Log "WHATIF: Would invoke WW_xml_vault.ps1 (sync mode)" "INFO"
+                }
             } else {
-                Write-Log "WHATIF: Would invoke WW_xml_vault.ps1 (sync mode)" "INFO"
+                Write-Log "XmlVault: enabled but script not found: $XmlVaultScriptPath" "WARN"
             }
         } else {
-            Write-Log "XmlVault: enabled but script not found: $XmlVaultScriptPath" "WARN"
+            Write-Log "XmlVault: disabled - skipping" "DEBUG"
         }
-    } else {
-        Write-Log "XmlVault: disabled - skipping" "DEBUG"
+        Write-MaintStep 'xmlvault'
     }
-    Write-MaintStep 'xmlvault'
-    Write-Log ("phase_timing phase='startup_maintenance' elapsed_ms={0} mode='synchronous'" -f `
-        [math]::Round(((Get-Date) - $maintenanceStartedAt).TotalMilliseconds)) "INFO"
+    Write-Log ("phase_timing phase='maintenance_stage' elapsed_ms={0}" -f `
+        [math]::Round(((Get-Date) - $maintStartedAt).TotalMilliseconds)) "INFO"
 }
 
 function Invoke-WhiteWalkerMain {
@@ -256,7 +265,7 @@ function Invoke-WhiteWalkerMain {
                         $scFlavor = Get-VpnTunnelFlavor
                         if ($scFlavor -eq 'mgmt_tun' -or $scFlavor -eq 'user_tun') {
                             Write-Log "VPN Connected at run start (flavor=$scFlavor) - skipping preflight and captive-portal checks" "INFO"
-                            Invoke-WhiteWalkerStartupSubsystems -RunMaintenance:$OnlineFastPathRunMaintenance
+                            Invoke-WhiteWalkerStartupSubsystems
                             $scTelemetry = Get-CprConnectionTelemetry -NetworkInfo $networkInfo
                             Write-TeeLog 'network_state' @{
                                 ip        = $networkInfo.IPAddress
@@ -390,7 +399,7 @@ function Invoke-WhiteWalkerMain {
 
                 # Deferred, non-routing-critical subsystem work now that the
                 # authoritative probe is already in hand.
-                Invoke-WhiteWalkerStartupSubsystems -RunMaintenance:(!$onlineFastPathSelected -or $OnlineFastPathRunMaintenance)
+                Invoke-WhiteWalkerStartupSubsystems
 
                 # A synchronous self-update is a long blocking operation and may
                 # replace network cmdlets or span DHCP/reconnect transitions. Never
@@ -1086,6 +1095,12 @@ function Invoke-WhiteWalkerMain {
                     Stop-CiscoBrowserKiller -Job $ciscoBrowserKillerJob
                 }
                 
+                # Maintenance stage: last, after the flare and any remediation.
+                $maintSkip = (-not $OnlineFastPathRunMaintenance) -and `
+                    (((Test-Path variable:onlineFastPathSelected) -and $onlineFastPathSelected) -or "$($script:exitReason)" -like 'vpn_connected:*')
+                try { Invoke-MaintenanceStage -ExitReason "$($script:exitReason)" -Skip $maintSkip }
+                catch { Write-Log "Maintenance stage error: $_" "WARN" }
+
                 Write-RunEnd $script:exitReason
             }
         }

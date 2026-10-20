@@ -6,7 +6,7 @@ Describe 'WW_main telemetry wiring' {
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$errors)
         if ($errors) { throw "Failed to parse WW_main.ps1" }
 
-        $wanted = @('Write-RunHeader','Sync-BlackholeShutdownTask','Sync-XmlVaultTask')
+        $wanted = @('Write-RunHeader','Sync-BlackholeShutdownTask','Sync-XmlVaultTask','Test-TaskRegistered')
         $functionAsts = $ast.FindAll({
             param($node)
             $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
@@ -73,7 +73,7 @@ Describe 'WW_main telemetry wiring' {
         $script:BlackholeShutdownTaskName = 'WW_blackhole_shutdown_test'
         $script:BlackholeShutdownTaskXml = 'C:\\missing\\WW_blackhole_shutdown.xml'
 
-        Mock Get-ScheduledTask { $null }
+        Mock Test-TaskRegistered { $false }
         Mock Test-Path { $false }
 
         Sync-BlackholeShutdownTask
@@ -90,7 +90,7 @@ Describe 'WW_main telemetry wiring' {
         $script:XmlVaultEnabled = $false
         $script:XmlVaultTaskName = 'WW_xml_vault_test'
 
-        Mock Get-ScheduledTask { [pscustomobject]@{ TaskName = 'WW_xml_vault_test' } }
+        Mock Test-TaskRegistered { $true }
         Mock Unregister-ScheduledTask { throw 'boom' }
 
         Sync-XmlVaultTask

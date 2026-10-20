@@ -113,4 +113,42 @@ Describe 'CPR RC2.1 early VPN gate' {
         Test-XmlVaultSyncAllowed | Should -BeTrue
         Should -Invoke Get-VpnState -Times 0 -Exactly
     }
+
+    Context 'Maintenance stage' {
+        BeforeAll {
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.Entry.ps1'), [ref]$null, [ref]$null)
+            $d = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in 'Invoke-MaintenanceStage', 'Write-MaintStep' }, $true)
+            foreach ($f in $d) { . ([scriptblock]::Create($f.Extent.Text)) }
+            function Sync-BlackholeShutdownTask { }
+            function Sync-XmlVaultTask { }
+            function Invoke-SelfUpdate { }
+            $script:HaystackEnabled = $false
+            $script:XmlVaultEnabled = $false
+            $script:WhatIf = $false
+        }
+        BeforeEach { $script:maintenanceRan = $false }
+
+        It 'runs local task syncs but skips self-update when offline' {
+            Mock Sync-BlackholeShutdownTask { }
+            Mock Sync-XmlVaultTask { }
+            Mock Invoke-SelfUpdate { }
+            Mock Test-XmlVaultSyncAllowed { $true }
+            Invoke-MaintenanceStage -ExitReason 'no_net_transient'
+            Should -Invoke Sync-BlackholeShutdownTask -Times 1 -Exactly
+            Should -Invoke Invoke-SelfUpdate -Times 0 -Exactly
+        }
+        It 'skips self-update when the share is unreachable' {
+            Mock Invoke-SelfUpdate { }
+            Mock Test-XmlVaultSyncAllowed { $false }
+            Invoke-MaintenanceStage -ExitReason 'off_prem_no_vpn'
+            Should -Invoke Invoke-SelfUpdate -Times 0 -Exactly
+        }
+        It 'runs self-update when online and the share is reachable, once per run' {
+            Mock Invoke-SelfUpdate { }
+            Mock Test-XmlVaultSyncAllowed { $true }
+            Invoke-MaintenanceStage -ExitReason 'on_prem'
+            Invoke-MaintenanceStage -ExitReason 'on_prem'
+            Should -Invoke Invoke-SelfUpdate -Times 1 -Exactly
+        }
+    }
 }

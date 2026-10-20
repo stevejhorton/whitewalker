@@ -107,6 +107,14 @@ function Stop-CiscoBrowserKiller {
     }
 }
 
+function Test-TaskRegistered {
+    # File test on the task store. Get-ScheduledTask goes through CIM / the Task
+    # Scheduler service and was seen blocking 141s during a network hop. Our
+    # tasks live at the root folder, so the task file name is the task name.
+    param([string]$Name)
+    Test-Path -LiteralPath (Join-Path $env:windir "System32\Tasks\$Name")
+}
+
 function Sync-BlackholeShutdownTask {
     <#
     .SYNOPSIS
@@ -117,7 +125,7 @@ function Sync-BlackholeShutdownTask {
     #>
     $taskName = $BlackholeShutdownTaskName
     $taskXml  = $BlackholeShutdownTaskXml
-    $exists   = $null -ne (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue)
+    $exists   = Test-TaskRegistered $taskName
 
     if ($BlackholeEnabled) {
         if ($exists) {
@@ -162,7 +170,7 @@ function Sync-XmlVaultTask {
     #>
     $taskName = $XmlVaultTaskName
     $taskXml  = $XmlVaultTaskXml
-    $exists   = $null -ne (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue)
+    $exists   = Test-TaskRegistered $taskName
 
     if ($XmlVaultEnabled) {
         if ($exists) {
