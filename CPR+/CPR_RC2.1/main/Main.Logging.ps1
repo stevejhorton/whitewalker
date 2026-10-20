@@ -301,6 +301,28 @@ function Update-HeaderCacheFields {
     }
 }
 
+function Get-CprBuildFingerprint {
+    # Short hash over WW_main.ps1 + every main\*.ps1, so the log states exactly which
+    # code ran (a leftover or mixed file set changes the hash). Computed once per run.
+    param([string]$MainDir = $PSScriptRoot)
+    if ($script:CprBuildFingerprint) { return $script:CprBuildFingerprint }
+    try {
+        $files = @(Get-ChildItem -LiteralPath $MainDir -Filter '*.ps1' -File | Sort-Object Name)
+        $top = Join-Path (Split-Path -Parent $MainDir) 'WW_main.ps1'
+        if (Test-Path -LiteralPath $top) { $files = @(Get-Item -LiteralPath $top) + $files }
+        $ms = New-Object System.IO.MemoryStream
+        foreach ($f in $files) {
+            $n = [System.Text.Encoding]::ASCII.GetBytes($f.Name)
+            $b = [System.IO.File]::ReadAllBytes($f.FullName)
+            $ms.Write($n, 0, $n.Length); $ms.Write($b, 0, $b.Length)
+        }
+        $ms.Position = 0
+        $hash = (([System.Security.Cryptography.SHA256]::Create()).ComputeHash($ms) | ForEach-Object { $_.ToString('x2') }) -join ''
+        $script:CprBuildFingerprint = ('{0} files={1}' -f $hash.Substring(0, 12), $files.Count)
+    } catch { $script:CprBuildFingerprint = 'unknown' }
+    return $script:CprBuildFingerprint
+}
+
 function Write-RunHeader {
   $utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss.fff 'UTC'")
   $loc = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss.fff zzz")
@@ -308,6 +330,8 @@ function Write-RunHeader {
   Add-LogLine $bar
   Add-LogLine ("RUN START  White Walker v{0}" -f $ver)
   Add-LogLine ("run_id={0} host={1} user={2}" -f $RunId, $HostNm, $UserNm)
+  $buildFp = try { Get-CprBuildFingerprint } catch { 'unknown' }
+  Add-LogLine ("build={0}" -f $buildFp)
   Add-LogLine ("ts_local={0}  ts_utc={1}" -f $loc, $utc)
   Add-LogLine ("log_path={0}" -f $LogPath)
   

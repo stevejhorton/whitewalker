@@ -592,7 +592,10 @@ function Copy-DirectoryContents {
         [string]$SourceDir,
         [string]$DestDir,
         [string]$Label,
-        [switch]$Recurse
+        [switch]$Recurse,
+        # RC2.1: after a clean copy, delete files in DestDir that are NOT in the source
+        # (leftovers from older builds). Use only for pure-code dirs (main, triggers).
+        [switch]$Mirror
     )
 
     Write-InstallLog "=== Copying $Label ===" "INFO"
@@ -642,6 +645,29 @@ function Copy-DirectoryContents {
     }
 
     Write-InstallLog "Copied $copiedCount file(s) from $Label, $errors error(s)" "INFO"
+
+    if ($Mirror -and $errors -eq 0 -and (Test-Path -LiteralPath $DestDir)) {
+        $keep = @{}
+        foreach ($file in $files) {
+            $keep[$file.FullName.Substring($SourceDir.Length).TrimStart("\/").ToLowerInvariant()] = $true
+        }
+        $pruned = 0
+        $destFiles = if ($Recurse) { Get-ChildItem -LiteralPath $DestDir -File -Recurse -ErrorAction SilentlyContinue } `
+                     else { Get-ChildItem -LiteralPath $DestDir -File -ErrorAction SilentlyContinue }
+        foreach ($df in $destFiles) {
+            $rel = $df.FullName.Substring($DestDir.Length).TrimStart("\/").ToLowerInvariant()
+            if (-not $keep.ContainsKey($rel)) {
+                try {
+                    Remove-Item -LiteralPath $df.FullName -Force -ErrorAction Stop
+                    Write-InstallLog "Pruned stale file from ${Label}: $rel" "SUCCESS"
+                    $pruned++
+                } catch {
+                    Write-InstallLog "Could not prune stale file ${rel}: $_" "WARN"
+                }
+            }
+        }
+        if ($pruned -gt 0) { Write-InstallLog "Pruned $pruned stale file(s) from $Label" "INFO" }
+    }
     return ($errors -eq 0)
 }
 
@@ -1194,7 +1220,9 @@ try {
     # Mirror all subdirectories from repo into deploy dir
     $dirsOK = $true
     foreach ($dir in $SubDirsToMirror) {
-        $ok = Copy-DirectoryContents -SourceDir $dir.Source -DestDir $dir.Dest -Label $dir.Label
+        # RC2.1: main\ (code) and triggers\ (task XML) must match the build exactly.
+        $ok = Copy-DirectoryContents -SourceDir $dir.Source -DestDir $dir.Dest -Label $dir.Label `
+                  -Mirror:($dir.Label -eq 'main' -or $dir.Label -eq 'triggers')
         if (-not $ok) { $dirsOK = $false }
     }
 
