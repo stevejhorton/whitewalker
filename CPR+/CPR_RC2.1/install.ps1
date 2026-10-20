@@ -119,6 +119,7 @@ $ExitCodeDirectorySetupFail = 3
 $ExitCodeFileCopyFail       = 4
 $ExitCodeTaskRegisterFail   = 5
 $ExitCodeValidationFail     = 6
+$ExitCodeUninstallIncomplete = 7   # -Uninstall could not remove everything (see C:\Windows\Temp\white_walker_uninstall.log)
 $ExitCodeUnexpectedError    = 9
 
 # Script self-location (works from any directory)
@@ -375,10 +376,11 @@ function Get-InstallerTaskSnapshot {
 # Runs the one-shot migration of CPR jobs into \CPR\. Never fails the install: an
 # incomplete migration is logged, left unflagged, and retried on the next install.
 function Invoke-LegacyTaskMigrationStep {
+    param([switch]$ForUninstall)   # uninstall removes legacy tasks regardless of the pivot or done-flag
     $script = Join-Path $ScriptRoot "WW_migrate_legacy_tasks.ps1"
     if (-not (Test-Path $script)) { Write-InstallLog "Legacy task migration: script not found ($script) - skipped" "WARN"; return }
     try {
-        $res = & $script -ConfigPath (Join-Path $ScriptRoot "main\Main.Configuration.ps1")
+        $res = if ($ForUninstall) { & $script -Force -IgnorePivot } else { & $script -ConfigPath (Join-Path $ScriptRoot "main\Main.Configuration.ps1") }
         if ($res.Ran) {
             $lvl = if ($res.Failed.Count -gt 0) { "WARN" } else { "SUCCESS" }
             Write-InstallLog ("Legacy task migration RAN: reason={0} removed={1} failed={2} (log: logs\legacy_task_migration.log)" -f $res.Reason, $res.Removed.Count, $res.Failed.Count) $lvl
@@ -1053,6 +1055,10 @@ function Write-InstallResultEvent {
             }
         }
 
+        if ($Action -eq 'uninstall') {
+            Write-InstallLog "Uninstall result not queued for telemetry (the telemetry subsystem is gone); see this log" "INFO"
+            return
+        }
         try {
             if (-not (Test-Path $PendingInstallEventDir)) {
                 New-Item -Path $PendingInstallEventDir -ItemType Directory -Force -ErrorAction Stop | Out-Null
@@ -1117,48 +1123,114 @@ function Drain-PendingInstallEvents {
     }
 }
 
+function Stop-WhiteWalkerProcesses {
+    # Stop anything running out of the install dir (WW_main runs, HayStack, tail windows)
+    # so files and the directory are not held open. Never touches this installer or its parents.
+    $keep = @{ ([int]$PID) = $true }
+    try {
+        $p = $PID
+        for ($i = 0; $i -lt 6; $i++) {
+            $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$p" -ErrorAction Stop
+            if (-not $proc -or -not $proc.ParentProcessId) { break }
+            $p = [int]$proc.ParentProcessId; $keep[$p] = $true
+        }
+    } catch { }
+    $stopped = 0
+    try {
+        Get-CimInstance Win32_Process -ErrorAction Stop |
+            Where-Object { $_.CommandLine -and $_.CommandLine -like "*$MainScriptDeployDir*" -and -not $keep.ContainsKey([int]$_.ProcessId) } |
+            ForEach-Object {
+                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop; $stopped++
+                      Write-InstallLog "Stopped process $($_.ProcessId) ($($_.Name))" "SUCCESS" } catch { }
+            }
+    } catch { Write-InstallLog "Could not enumerate processes: $_" "WARN" }
+    Write-InstallLog "Stopped $stopped WhiteWalker process(es)" "INFO"
+}
+
+function Remove-CprTaskFolder {
+    # Everything inside the CPR task folder is ours by definition: unregister it all,
+    # then drop the folder itself (best effort).
+    $dir = Join-Path $env:windir ("System32\Tasks\" + $CprTaskFolder.Trim('\'))
+    $removed = 0
+    if (Test-Path -LiteralPath $dir) {
+        foreach ($f in @(Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue)) {
+            try {
+                Unregister-ScheduledTask -TaskName $f.Name -TaskPath $CprTaskFolder -Confirm:$false -ErrorAction Stop
+                Write-InstallLog "Removed task: $CprTaskFolder$($f.Name)" "SUCCESS"; $removed++
+            } catch { Write-InstallLog "Could not remove task $CprTaskFolder$($f.Name): $_" "WARN" }
+        }
+        try {
+            $svc = New-Object -ComObject 'Schedule.Service'; $svc.Connect()
+            $svc.GetFolder('\').DeleteFolder($CprTaskFolder.Trim('\'), 0)
+            Write-InstallLog "Removed task folder $CprTaskFolder" "SUCCESS"
+        } catch { Write-InstallLog "Could not remove task folder ${CprTaskFolder}: $_" "WARN" }
+    }
+    return (-not (Test-Path -LiteralPath $dir) -or @(Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue).Count -eq 0)
+}
+
+function Remove-InstallDirectory {
+    # Delete the whole deploy dir, logs included. Retries for transient locks.
+    for ($try = 1; $try -le 4; $try++) {
+        if (-not (Test-Path -LiteralPath $MainScriptDeployDir)) { return $true }
+        try { Remove-Item -LiteralPath $MainScriptDeployDir -Recurse -Force -ErrorAction Stop } catch { }
+        if (-not (Test-Path -LiteralPath $MainScriptDeployDir)) { break }
+        & cmd.exe /c "rd /s /q `"$MainScriptDeployDir`"" 2>$null | Out-Null
+        if (-not (Test-Path -LiteralPath $MainScriptDeployDir)) { break }
+        Start-Sleep -Seconds 2
+    }
+    if (Test-Path -LiteralPath $MainScriptDeployDir) {
+        $left = @(Get-ChildItem -LiteralPath $MainScriptDeployDir -Recurse -Force -ErrorAction SilentlyContinue | Select-Object -First 10 -ExpandProperty FullName)
+        Write-InstallLog ("Could not fully remove $MainScriptDeployDir; remaining (first 10): " + ($left -join '; ')) "ERROR"
+        return $false
+    }
+    Write-InstallLog "Removed directory: $MainScriptDeployDir" "SUCCESS"
+    return $true
+}
+
 function Uninstall-WhiteWalker {
+    # -Uninstall means UNINSTALLED: stop everything, undo system changes, unregister
+    # every task, delete the whole install dir (logs too), return an exit code.
+    # The uninstall log is kept OUTSIDE the install dir so the evidence survives.
+    $script:InstallLog = Join-Path $env:windir 'Temp\white_walker_uninstall.log'
     Write-InstallLog "" "INFO"
     Write-InstallLog "========================================" "INFO"
     Write-InstallLog "WhiteWalker Uninstaller $WW_Version" "INFO"
     Write-InstallLog "========================================" "INFO"
 
-    Invoke-LegacyTaskMigrationStep   # LEGACY-TASK-MIGRATION (TEMPORARY, block 2 of 2)
+    # Release our current directory so the install dir can be deleted.
+    try { Set-Location -LiteralPath $env:windir } catch { }
+
+    $ok = $true
+    Stop-WhiteWalkerProcesses
+
+    # Undo hosts-file blackhole entries while the script still exists.
+    $hostsScript = Join-Path $MainScriptDeployDir 'Set-VpnHostsEntry.ps1'
+    if (Test-Path -LiteralPath $hostsScript) {
+        try {
+            Start-Process "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$hostsScript`" -rm" -WindowStyle Hidden -Wait
+            Write-InstallLog "Blackhole hosts entries cleared (-rm)" "SUCCESS"
+        } catch { Write-InstallLog "Could not run blackhole -rm: $_" "WARN" }
+    }
+
+    # Tasks: legacy locations, known tasks, then anything left in the CPR folder.
+    Invoke-LegacyTaskMigrationStep -ForUninstall
     Remove-OldTasks
-    Remove-OldScripts
-    Remove-StaleFlagFiles
+    if (-not (Remove-CprTaskFolder)) { $ok = $false }
 
-    # Config/schema files aren't covered by Remove-OldScripts' wildcard patterns
-    foreach ($file in ($ConfigFiles + $SchemaFiles)) {
-        $path = Join-Path $file.Dest $file.Name
-        if (Test-Path $path) {
-            try {
-                Remove-Item -Path $path -Force -ErrorAction Stop
-                Write-InstallLog "Removed: $path" "SUCCESS"
-            } catch {
-                Write-InstallLog "ERROR removing $path : $_" "WARN"
-            }
-        }
+    # Self-update flags and the pending install-event dir are ours too.
+    foreach ($f in @("C:\Windows\Temp\cpr_update_dev.flag", "C:\Windows\Temp\cpr_update_prod.flag")) {
+        if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue }
     }
 
-    # Remove mirrored subdirs (docs, tests, triggers, tee_profiles) - preserve diagnostics
-    foreach ($dir in $SubDirsToMirror) {
-        if ($dir.Label -eq "diagnostics") { continue }
-        if (Test-Path $dir.Dest) {
-            try {
-                Remove-Item -Path $dir.Dest -Recurse -Force -ErrorAction Stop
-                Write-InstallLog "Removed directory: $($dir.Dest)" "SUCCESS"
-            } catch {
-                Write-InstallLog "ERROR removing directory $($dir.Dest) : $_" "WARN"
-            }
-        }
-    }
+    if (-not (Remove-InstallDirectory)) { $ok = $false }
 
     Write-InstallLog "" "INFO"
-    Write-InstallLog "========================================" "SUCCESS"
-    Write-InstallLog "WhiteWalker uninstall completed." "SUCCESS"
-    Write-InstallLog "Logs and diagnostics preserved at: $LogDir" "INFO"
-    Write-InstallLog "========================================" "SUCCESS"
+    if ($ok) {
+        Write-InstallLog "WhiteWalker uninstall completed. Nothing left in $MainScriptDeployDir. Log: $InstallLog" "SUCCESS"
+    } else {
+        Write-InstallLog "WhiteWalker uninstall INCOMPLETE - see messages above. Log: $InstallLog" "ERROR"
+    }
+    return $ok
 }
 
 # ================================== MAIN ======================================
@@ -1185,8 +1257,8 @@ Drain-PendingInstallEvents
 
 if ($Uninstall) {
     try {
-        Uninstall-WhiteWalker
-        Exit-Installer -Code $ExitCodeSuccess
+        if (Uninstall-WhiteWalker) { Exit-Installer -Code $ExitCodeSuccess }
+        else { Exit-Installer -Code $ExitCodeUninstallIncomplete -Reason "uninstall incomplete" }
     } catch {
         Write-InstallLog "FATAL: Unexpected error during uninstall: $_" "ERROR"
         Exit-Installer -Code $ExitCodeUnexpectedError -Reason "unexpected uninstall error"

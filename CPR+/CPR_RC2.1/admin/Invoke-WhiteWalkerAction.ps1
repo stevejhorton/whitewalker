@@ -2,7 +2,8 @@
 <#
 .SYNOPSIS
     Menu-driven tech action console for CPR RC2 (WhiteWalker).
-    Version: 1.0.0
+    CPR version: 3.14.0_RC2.1.0 (keep in sync with $ver in main\Main.Configuration.ps1; a test enforces it)
+    Console version: 1.0.0
     Author: steve.horton@optum.com (with AI assist)
 
 .DESCRIPTION
@@ -1093,8 +1094,18 @@ function Invoke-WWWatchLog {
 # =============================================================================
 # Main menu
 # =============================================================================
+function Get-WWCprVersion {
+    # The deployed CPR build version, read from the deployed config ($ver there is authoritative).
+    try {
+        $cfg = Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.Configuration.ps1'
+        $m = Select-String -LiteralPath $cfg -Pattern '^\$ver\s*=\s*"([^"]+)"' -ErrorAction Stop | Select-Object -First 1
+        if ($m) { return $m.Matches[0].Groups[1].Value }
+    } catch { }
+    return 'unknown'
+}
+
 function Show-WWMainMenu {
-    Write-Host "`nWhiteWalker tech action console" -ForegroundColor Cyan
+    Write-Host ("`nWhiteWalker tech action console - CPR v{0}" -f (Get-WWCprVersion)) -ForegroundColor Cyan
     Write-Host "  1. VPN Profile Restore"
     Write-Host "  2. Force XmlVault Sync (bypass cooldown)"
     Write-Host "  3. Self-Update Trigger"

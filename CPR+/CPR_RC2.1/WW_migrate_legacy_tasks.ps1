@@ -28,7 +28,8 @@ actually runs). Emits one result object; the installer logs a summary line.
 [CmdletBinding()]
 param(
     [string]$ConfigPath = '',      # Main.Configuration.ps1 holding the pivot
-    [switch]$Force                 # ignore the done-flag (not the pivot)
+    [switch]$Force,                # ignore the done-flag
+    [switch]$IgnorePivot           # run even if $LegacyTaskMigrationEnabled is $false (uninstall)
 )
 
 $script:MigLogPath  = 'C:\ProgramData\WhiteWalker\logs\legacy_task_migration.log'
@@ -139,6 +140,6 @@ function Invoke-LegacyTaskMigration {
 
 # ---- entry (skipped when dot-sourced by tests: they call the functions directly) ----
 if ($MyInvocation.InvocationName -ne '.') {
-    $enabled = Get-MigrationPivot -ConfigPath $ConfigPath
+    $enabled = if ($IgnorePivot) { $true } else { Get-MigrationPivot -ConfigPath $ConfigPath }
     Invoke-LegacyTaskMigration -Enabled $enabled -Force:$Force
 }
