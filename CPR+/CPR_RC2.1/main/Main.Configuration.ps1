@@ -53,6 +53,7 @@ $VpnWakeTimeWindow = 120         # seconds - if wake event within this window, c
 $EarlyVpnGateEnabled        = $true  # disconnect blocking VPN on wake / SSID jump / no-IP before anything else
 $EarlyGateDisconnectWaitSec = 6      # max seconds to wait for vpncli to report Disconnected after an early disconnect
 $PreflightRequiresSettledVpn = $true # skip gateway preflight unless VPN is Disconnected or Connected (it always fails otherwise)
+$VpnConnectedShortCircuit   = $true  # VPN already Connected at the gate: skip preflight + cap-portal checks, flare tunnel flavor, exit
 
 # Rescan & flare behavior
 $RescanOnlyOnRedirect   = $true

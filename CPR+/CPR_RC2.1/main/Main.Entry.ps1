@@ -220,6 +220,44 @@ function Invoke-WhiteWalkerMain {
                 }
 
                 # =====================================================================
+                # RC2.1 Connected short-circuit: the early gate left VPN Connected, so the
+                # network is demonstrably up and there is no portal or ISE redirect to
+                # find - skip the gateway preflight and every cap-portal branch. On a
+                # network hop the SSID/on-prem check runs first (it disconnects a
+                # Connected VPN that is on-prem); if that disconnects, fall through to
+                # the normal preflight. VPN Disconnected always takes the normal path.
+                # =====================================================================
+                if ($VpnConnectedShortCircuit -and $earlyGate.VpnState -eq 'Connected' -and -not $earlyGate.Acted) {
+                    $stillConnected = $true
+                    if (Test-SsidJump -CurrentSsid $networkInfo.SSID) {
+                        Invoke-SsidChangeCheck -CurrentSsid $networkInfo.SSID
+                        $stillConnected = ((Get-VpnState) -eq 'Connected')
+                    }
+                    if ($stillConnected) {
+                        $scFlavor = Get-VpnTunnelFlavor
+                        if ($scFlavor -eq 'mgmt_tun' -or $scFlavor -eq 'user_tun') {
+                            Write-Log "VPN Connected at run start (flavor=$scFlavor) - skipping preflight and captive-portal checks" "INFO"
+                            Invoke-WhiteWalkerStartupSubsystems -RunMaintenance:$OnlineFastPathRunMaintenance
+                            $scTelemetry = Get-CprConnectionTelemetry -NetworkInfo $networkInfo
+                            Write-TeeLog 'network_state' @{
+                                ip        = $networkInfo.IPAddress
+                                gw        = $networkInfo.DefaultGateway
+                                dns       = ($networkInfo.DNSServers -join ',')
+                                ssid      = $scTelemetry.ssid
+                                connection_type = $scTelemetry.connection_type
+                                vpn_state = 'Connected'
+                                lease_sec = $(if ($null -ne $networkInfo.LeaseDurationSeconds) { $networkInfo.LeaseDurationSeconds } else { -1 })
+                            }
+                            Send-FlareEvent $scFlavor
+                            Clear-CaptiveEventHistory "VPN connected"
+                            $script:exitReason = "vpn_connected:$scFlavor"
+                            return
+                        }
+                        Write-Log "VPN reported Connected but tunnel flavor is '$scFlavor' - continuing with normal preflight" "WARN"
+                    }
+                }
+
+                # =====================================================================
                 # RC2.3 evidence precedence: a fresh direct EventID 301
                 # navigated_url wins only while Cisco WebHelper actively owns the
                 # captive-portal path. Otherwise nwcheck remains the authoritative
