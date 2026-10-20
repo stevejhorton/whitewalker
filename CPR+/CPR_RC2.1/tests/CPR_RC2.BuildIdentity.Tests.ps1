@@ -77,33 +77,38 @@ Describe 'End-of-run network re-check' {
     }
     BeforeEach {
         $script:EndRunRecheckEnabled = $true; $script:EndRunRerunMax = 2; $script:EndRunRerunWindowSec = 60
-        $script:EndRunRerunDelaySec = 3; $script:CprTaskFolder = '\CPR\'; $script:WhatIf = $false
+        $script:EndRunRerunDelaySec = 5; $script:CprTaskFolder = '\CPR\'; $script:WhatIf = $false
         $script:EndRunRerunStateFile = Join-Path $TestDrive 'rerun.txt'
+        $script:base = [pscustomobject]@{ SSID='SNAFU'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; InterfaceGuid='{g}'; AdapterClass='wifi' }
         function Write-Log { param($m,$l) }
         function Write-TeeLog { param($a,$f) $script:teeSeen = @{ a = $a; f = $f } }
         Mock Request-CprRerun { $true }
     }
-    It 'reports no change and does not re-run when the fingerprint matches' {
-        $ni = [pscustomobject]@{ SSID='A'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; InterfaceIndex=1; InterfaceGuid='g'; OperationalState='Up' }
-        Mock Get-NetworkInfo { $ni }
-        (Invoke-EndRunNetworkRecheck -Baseline $ni).Changed | Should -BeFalse
+    It 'no change: no re-run' {
+        Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$true; State='Up'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; SSID='SNAFU' } }
+        (Invoke-EndRunNetworkRecheck -Baseline $base).Changed | Should -BeFalse
         Should -Invoke Request-CprRerun -Times 0
     }
-    It 'detects a flip, tees it and requests one re-run' {
-        $old = [pscustomobject]@{ SSID='SNAFU'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; InterfaceIndex=1; InterfaceGuid='g'; OperationalState='Up' }
-        $new = [pscustomobject]@{ SSID='cia_van'; IPAddress='2.2.2.2'; DefaultGateway='2.2.2.254'; InterfaceIndex=1; InterfaceGuid='g'; OperationalState='Up' }
-        Mock Get-NetworkInfo { $new }
-        $r = Invoke-EndRunNetworkRecheck -Baseline $old
-        $r.Changed | Should -BeTrue
-        $r.Rerun | Should -BeTrue
+    It 'SSID flip alone triggers one re-run and a tee event' {
+        Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$true; State='Up'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; SSID='cia_van' } }
+        $r = Invoke-EndRunNetworkRecheck -Baseline $base
+        $r.Changed | Should -BeTrue; $r.Rerun | Should -BeTrue
         $script:teeSeen.a | Should -Be 'network_changed_during_run'
+    }
+    It 'adapter gone or down counts as changed' {
+        Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$false; State='missing'; IPAddress='N/A'; DefaultGateway='N/A'; SSID='N/A' } }
+        (Invoke-EndRunNetworkRecheck -Baseline $base).Changed | Should -BeTrue
     }
     It 'caps chained re-runs' {
         (Test-RerunAllowed) | Should -BeTrue
         (Test-RerunAllowed) | Should -BeTrue
         (Test-RerunAllowed) | Should -BeFalse
     }
-    It 'runs before the maintenance stage' {
-        $entry.IndexOf('Invoke-EndRunNetworkRecheck') | Should -BeLessThan $entry.IndexOf('Invoke-MaintenanceStage -ExitReason')
+    It 'is the last step: after the maintenance stage, before Write-RunEnd' {
+        $m = $entry.IndexOf('Invoke-MaintenanceStage -ExitReason')
+        $c = $entry.IndexOf('Invoke-EndRunNetworkRecheck')
+        $e = $entry.IndexOf('Write-RunEnd $script:exitReason', $c)
+        $c | Should -BeGreaterThan $m
+        $e | Should -BeGreaterThan $c
     }
 }

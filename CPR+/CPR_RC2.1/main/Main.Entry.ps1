@@ -1127,7 +1127,13 @@ function Invoke-WhiteWalkerMain {
                     Stop-CiscoBrowserKiller -Job $ciscoBrowserKillerJob
                 }
                 
-                # End-of-run network re-check: did the network flip while we worked?
+                # Maintenance stage: last, after the flare and any remediation.
+                $maintSkip = (-not $OnlineFastPathRunMaintenance) -and `
+                    (((Test-Path variable:onlineFastPathSelected) -and $onlineFastPathSelected) -or "$($script:exitReason)" -like 'vpn_connected:*')
+                try { Invoke-MaintenanceStage -ExitReason "$($script:exitReason)" -Skip $maintSkip }
+                catch { Write-Log "Maintenance stage error: $_" "WARN" }
+
+                # End-of-run network re-check: last step before exit - did the network flip while we worked?
                 $recheck = $null
                 if (Test-Path variable:networkInfo) {
                     try { $recheck = Invoke-EndRunNetworkRecheck -Baseline $networkInfo }
@@ -1136,12 +1142,6 @@ function Invoke-WhiteWalkerMain {
                 if ($recheck -and $recheck.Now -and $recheck.Changed) {
                     $script:endNetworkSsid = $recheck.Now.SSID
                 }
-
-                # Maintenance stage: last, after the flare and any remediation.
-                $maintSkip = (-not $OnlineFastPathRunMaintenance) -and `
-                    (((Test-Path variable:onlineFastPathSelected) -and $onlineFastPathSelected) -or "$($script:exitReason)" -like 'vpn_connected:*')
-                try { Invoke-MaintenanceStage -ExitReason "$($script:exitReason)" -Skip $maintSkip }
-                catch { Write-Log "Maintenance stage error: $_" "WARN" }
 
                 Write-RunEnd $script:exitReason
             }
