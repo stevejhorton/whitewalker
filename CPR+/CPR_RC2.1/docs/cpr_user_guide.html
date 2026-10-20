@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CPR+ User Guide</title>
+  <style>
+    :root {
+      --navy: #002677;
+      --orange: #FF612B;
+      --white: #ffffff;
+      --grey: #F4F4F4;
+      --text: #1f2a37;
+      --border: #d7dde7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--grey);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 860px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 24px;
+      border-bottom: 4px solid var(--orange);
+      text-align: center;
+    }
+    header img {
+      max-width: 200px;
+      width: 100%;
+      height: auto;
+      margin-bottom: 12px;
+      background: var(--white);
+      border-radius: 6px;
+      padding: 6px;
+    }
+    h1 { margin: 0; font-size: 1.8rem; }
+    .subtitle { margin: 8px 0 0; color: #e9efff; }
+    main { padding: 24px; }
+    section { margin-bottom: 24px; }
+    h2 {
+      margin: 0 0 10px;
+      color: var(--navy);
+      font-size: 1.25rem;
+      border-left: 4px solid var(--orange);
+      padding-left: 10px;
+    }
+    .scenario-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .scenario-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fbfcff;
+      padding: 12px;
+    }
+    .scenario-card h3 {
+      margin: 0 0 6px;
+      color: var(--navy);
+      font-size: 1rem;
+    }
+    details {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcff;
+      margin-bottom: 10px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--navy);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eef3ff;
+      color: var(--navy);
+    }
+    ul { padding-left: 20px; }
+    footer {
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      padding: 16px 24px 24px;
+      font-size: 0.92rem;
+      color: #445;
+    }
+    @media (max-width: 640px) {
+      h1 { font-size: 1.45rem; }
+      header, main, footer { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <header>
+        <img src="CPR_Logo.png" alt="CPR+ logo" />
+        <h1>CPR+ — Captive Portal Remediation</h1>
+        <p class="subtitle">Your laptop's automatic WiFi authentication assistant</p>
+      </header>
+
+      <main>
+        <section>
+          <h2>What is CPR+?</h2>
+          <p>
+            CPR+ (Captive Portal Remediation) is a background tool that runs automatically on your Optum-managed laptop.
+            Its job is to detect when your WiFi connection requires authentication — like at a hotel, airport, conference centre, or guest network — and handle the process as automatically as possible.
+          </p>
+          <p>
+            You may never notice it working. That is intentional. The goal is for your laptop to “just connect.”
+          </p>
+        </section>
+
+        <section>
+          <h2>When does CPR+ activate?</h2>
+          <p>
+            CPR+ wakes up automatically when your laptop connects to a new network (DHCP event). It checks the network silently and only takes action if it detects a problem.
+            Common situations include:
+          </p>
+          <div class="scenario-grid">
+            <article class="scenario-card">
+              <h3>1) Hotel / Conference WiFi</h3>
+              <p>Detects the login page and opens your browser automatically.</p>
+            </article>
+            <article class="scenario-card">
+              <h3>2) Corporate Office WiFi (ISE)</h3>
+              <p>Detects whether your device needs a security posture check and triggers it.</p>
+            </article>
+            <article class="scenario-card">
+              <h3>3) Guest Network</h3>
+              <p>Handles guest portal authentication workflows.</p>
+            </article>
+            <article class="scenario-card">
+              <h3>4) VPN on Corporate Network</h3>
+              <p>Protects connection speed by managing VPN behavior on-premises (see VPN Blackhole).</p>
+            </article>
+            <article class="scenario-card">
+              <h3>5) Network Change (SSID switch)</h3>
+              <p>Detects transitions between networks and cleans up VPN state automatically.</p>
+            </article>
+          </div>
+        </section>
+
+        <section>
+          <h2>What will I see?</h2>
+
+          <h3>A browser opens automatically</h3>
+          <p>
+            This is normal. CPR+ opened a browser to help you complete the WiFi login. Complete the login on the page shown, then close the browser.
+            Your VPN should reconnect automatically within about 30 seconds.
+          </p>
+
+          <h3>A notification popup appears</h3>
+          <p>
+            If CPR+ cannot complete authentication automatically, you will see a popup with two options:
+          </p>
+          <ul>
+            <li><strong>RETRY</strong>: Disconnect and reconnect to the WiFi network and try again.</li>
+            <li><strong>EXIT</strong>: Close the dialog and handle the connection manually.</li>
+          </ul>
+
+          <h3>"Hotel WiFi Login Required" dialog</h3>
+          <p>
+            This appears when your laptop detects a walled-garden network (like Wyndham, Marriott, or similar hotel WiFi) where the login page cannot be reached by normal means.
+            The dialog shows the exact URL to navigate to. Your browser opens automatically — if it shows an error, copy the URL shown in the dialog and paste it into any browser.
+          </p>
+
+          <h3>Nothing visible at all</h3>
+          <p>
+            Most of the time CPR+ works completely silently. If your network connects normally, you will see nothing.
+          </p>
+        </section>
+
+        <section>
+          <h2>Common questions</h2>
+
+          <details>
+            <summary>Why did my browser open by itself?</summary>
+            <p>CPR+ detected a captive portal and is trying to help you authenticate.</p>
+          </details>
+
+          <details>
+            <summary>Why is my VPN not connecting at the office?</summary>
+            <p>
+              The VPN Blackhole feature is protecting your connection speed. It disables automatically when you leave the office.
+              <a href="vpn_blackhole_info.html">Learn more about VPN Blackhole.</a>
+            </p>
+          </details>
+
+          <details>
+            <summary>I completed the hotel login but VPN still isn't connecting</summary>
+            <p>Wait up to 60 seconds. VPN reconnects automatically after portal authentication. If it still fails, try toggling WiFi off and on.</p>
+          </details>
+
+          <details>
+            <summary>A browser opened but showed an error page</summary>
+            <p>This can happen on hotel networks that block browser navigation to IP addresses. Use the URL shown in the "Hotel WiFi Login Required" dialog and paste it into a different browser.</p>
+          </details>
+
+          <details>
+            <summary>CPR+ keeps popping up at home</summary>
+            <p>This should not happen on home networks. If it does, contact the IT Service Desk — your home router may be responding in an unexpected way.</p>
+          </details>
+
+          <details>
+            <summary>How do I know if CPR+ is installed?</summary>
+            <p>Check Start Menu for "CPR+" or look for <code>C:\ProgramData\CPR\\</code> on your laptop. If it is there, CPR+ is installed.</p>
+          </details>
+
+          <details>
+            <summary>Can I disable CPR+?</summary>
+            <p>CPR+ is a managed service and cannot be disabled by end users. Contact your IT administrator if you have a specific conflict.</p>
+          </details>
+        </section>
+
+        <section>
+          <h2>What CPR+ does NOT do</h2>
+          <ul>
+            <li>CPR+ does not store your WiFi passwords.</li>
+            <li>CPR+ does not access your personal browsing history.</li>
+            <li>CPR+ does not modify your VPN profile or credentials.</li>
+            <li>CPR+ does not work on cellular (mobile hotspot) connections — connect to WiFi first.</li>
+            <li>CPR+ cannot bypass networks that require paid access (it can open the payment page, but cannot pay for you).</li>
+            <li>CPR+ does not work if your laptop's WiFi adapter is disabled.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Assumptions and known limitations</h2>
+          <ul>
+            <li>Works best on standard hotel/venue WiFi that uses a browser-based login page.</li>
+            <li>Some networks use non-standard authentication (app-based, SMS code, etc.) — CPR+ opens a browser but cannot complete app-based logins.</li>
+            <li>On very slow networks, the authentication timeout (2.5 minutes) may expire before the portal page loads — use the RETRY option.</li>
+            <li>VPN reconnection after portal auth can take up to 60 seconds on some networks — this is normal.</li>
+            <li>If you switch WiFi networks rapidly, CPR+ may briefly show a stale portal page — closing and reopening the browser resolves this.</li>
+            <li>Corporate IT policies (like certain browser security settings) may prevent the browser from opening certain portal pages — the gateway URL is always shown in the dialog as a fallback.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Getting help</h2>
+          <table aria-label="CPR support contacts">
+            <thead>
+              <tr>
+                <th>Issue</th>
+                <th>Contact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CPR+ not working as expected</td>
+                <!-- PLACEHOLDER -->
+                <td>IT Service Desk — placeholder@optum.com <strong>[PLACEHOLDER]</strong></td>
+              </tr>
+              <tr>
+                <td>VPN exemption needed at office</td>
+                <!-- PLACEHOLDER -->
+                <td>Network Access Team — placeholder@optum.com <strong>[PLACEHOLDER]</strong></td>
+              </tr>
+              <tr>
+                <td>Feedback or bug report</td>
+                <!-- PLACEHOLDER -->
+                <td>Employee VPN SLO team — placeholder@optum.com <strong>[PLACEHOLDER]</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+
+      <footer>
+        <div>CPR+ version: v1.10.0_RC1.17</div>
+        <div>Part of the WhiteWalker Network Automation Framework</div>
+        <div>© Optum Technology — Employee VPN SLO</div>
+        <div>This tool runs automatically and is managed by your IT department. For support, contact your IT Service Desk.</div>
+        <div><strong>Last updated: May 2026</strong></div>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
