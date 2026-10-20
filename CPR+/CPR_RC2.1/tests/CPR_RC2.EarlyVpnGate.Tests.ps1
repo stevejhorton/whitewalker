@@ -16,7 +16,6 @@ Describe 'CPR RC2.1 early VPN gate' {
         function Test-OnPremBySuffix { $false }
         function Get-VpnStateStable { param($TimeoutSec) 'Disconnected' }
         function Test-RecentWakeFromSleep { param($TimeWindowSeconds) $false }
-        function Test-EarlyTrustedNetwork { param($NetworkInfo) $false }
         function Invoke-EarlyVpnDisconnect { param($Reason, $VpnStateWas) $true }
         function Get-NwCheckResult { param($Url) [pscustomobject]@{ Status = 'online' } }
         $script:EarlyVpnGateEnabled = $true
@@ -60,13 +59,14 @@ Describe 'CPR RC2.1 early VPN gate' {
         (Invoke-EarlyVpnGate -NetworkInfo $script:HasIp).Reason | Should -Be 'wake_blocking'
     }
 
-    It 'disconnects Connected VPN after wake only on a trusted network' {
+    It 'never disconnects a fully Connected VPN, even after wake or SSID jump' {
         Mock Get-VpnState { 'Connected' }
         Mock Test-RecentWakeFromSleep { $true }
-        Mock Test-EarlyTrustedNetwork { $true }
-        (Invoke-EarlyVpnGate -NetworkInfo $script:HasIp).Reason | Should -Be 'wake_trusted'
-        Mock Test-EarlyTrustedNetwork { $false }
-        (Invoke-EarlyVpnGate -NetworkInfo $script:HasIp).Acted | Should -BeFalse
+        Mock Invoke-EarlyVpnDisconnect { $true }
+        Set-Content -Path $script:SsidCacheFile -Value 'OldNet'
+        $r = Invoke-EarlyVpnGate -NetworkInfo $script:HasIp
+        $r.Acted | Should -BeFalse
+        Should -Invoke Invoke-EarlyVpnDisconnect -Times 0 -Exactly
     }
 
     It 'disconnects a Reconnecting VPN on an SSID jump' {

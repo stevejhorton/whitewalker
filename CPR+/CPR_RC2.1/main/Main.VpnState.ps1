@@ -463,15 +463,6 @@ function Test-AnyUsableIp {
     return $false
 }
 
-function Test-EarlyTrustedNetwork {
-    # Test-SsidTrusted returns $true for ANY wired link, which is too loose for a
-    # disconnect-the-VPN decision (a docked laptop at home would count as trusted).
-    # For wired, require corp-only DNS suffixes instead.
-    param([object]$NetworkInfo)
-    if ($NetworkInfo.ConnectionType -eq 'Ethernet') { return (Test-OnPremBySuffix) }
-    return (Test-SsidTrusted -NetworkInfo $NetworkInfo)
-}
-
 function Invoke-EarlyVpnDisconnect {
     param([string]$Reason, [string]$VpnStateWas)
     Write-Log "Early VPN gate: disconnecting VPN now (reason=$Reason, state=$VpnStateWas)" "WARN"
@@ -494,11 +485,11 @@ function Invoke-EarlyVpnDisconnect {
 }
 
 function Invoke-EarlyVpnGate {
-    # Rules (VPN already Disconnected = nothing to do):
+    # Rules (only NOT-yet-connected VPN states are ever cut; Disconnected = nothing to do):
     #   no IP on any adapter + Connecting/Reconnecting -> disconnect (attempt cannot succeed)
     #   recent wake  OR SSID jump + Connecting/Reconnecting -> disconnect
-    #   recent wake  OR SSID jump + Connected + trusted network -> disconnect
-    #   Connected + untrusted network -> leave alone (a working off-prem tunnel is not in the way)
+    #   Connected -> NEVER disconnected here, on-prem or not. Users may legitimately VPN
+    #   from on-prem; the BlackHole subsystem owns that policy.
     param([object]$NetworkInfo)
     $r = [pscustomobject]@{ VpnState = 'Unknown'; HasIp = $false; Acted = $false; Reason = 'none' }
     if (-not $EarlyVpnGateEnabled) { $r.Reason = 'disabled'; return $r }
@@ -509,8 +500,7 @@ function Invoke-EarlyVpnGate {
         $script:LastVpnState = $state; $script:LastVpnStateAt = Get-Date
         if ($state -eq 'Disconnected') { $r.Reason = 'already_disconnected'; return $r }
 
-        $blocking  = @('Connecting', 'Reconnecting') -contains $state
-        $connected = ($state -eq 'Connected')
+        $blocking = @('Connecting', 'Reconnecting') -contains $state
         $reason = $null
 
         if (-not $r.HasIp) {
@@ -522,7 +512,6 @@ function Invoke-EarlyVpnGate {
             if ($wake -or $jump) {
                 $why = if ($wake) { 'wake' } else { 'ssid_jump' }
                 if ($blocking) { $reason = "${why}_blocking" }
-                elseif ($connected -and (Test-EarlyTrustedNetwork -NetworkInfo $NetworkInfo)) { $reason = "${why}_trusted" }
             }
         }
 

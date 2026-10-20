@@ -373,27 +373,11 @@ function Invoke-SsidChangeCheck {
         return
     }
 
-    # VPN is Connected - check if we're actually on-prem via DNS suffixes (no network needed).
-    # On-prem = only corp suffixes present. Off-prem = foreign suffixes in the list.
-    # This works regardless of SSID name - Ed can rename WLANi03 and it still works.
+    # VPN is fully Connected - leave it alone, on-prem or off-prem. Some users must
+    # VPN from on-prem; the BlackHole subsystem owns that policy. Only not-yet-connected
+    # states are ever cut on a network change.
     if ($vpnState -eq 'Connected') {
-        if (Test-OnPremBySuffix) {
-            Write-Log "VPN Connected but on-prem confirmed by DNS suffixes - disconnecting" "WARN"
-            try {
-                & $vpn_cmd disconnect | Out-Null
-                Start-Sleep -Seconds 2
-                Write-Log "VPN disconnected - on-prem confirmed" "INFO"
-            } catch { Write-Log "Error disconnecting VPN on on-prem detection: $_" "WARN" }
-            if ($BlackholeEnabled) {
-                Send-WwNotification -Title "VPN Disabled On This Network" `
-                    -Body "You are connected directly to the corporate network. VPN is not required here and has been disabled to improve performance and battery life." `
-                    -Duration 10
-            } else {
-                Write-Log "VPN disconnect notification suppressed (BlackholeEnabled=false)" "DEBUG"
-            }
-        } else {
-            Write-Log "VPN Connected, off-prem confirmed by DNS suffixes - leaving VPN alone" "INFO"
-        }
+        Write-Log "VPN Connected on SSID change - leaving VPN alone (BlackHole owns on-prem policy)" "INFO"
         return
     }
 
