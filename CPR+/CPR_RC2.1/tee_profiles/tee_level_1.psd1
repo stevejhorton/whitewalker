@@ -138,6 +138,12 @@
             # Fires when: VPN reports Connected but the gateway preflight failed (RC2.1 triage).
         }
 
+        network_changed_during_run = @{
+            action = 'network_changed_during_run'
+            fields = @('old_ssid','new_ssid','old_ip','new_ip','rerun')
+            # Fires when: SSID/IP/gateway changed while a run was in progress (end-of-run re-check).
+        }
+
         haystack_reroll_result = @{
             action = 'haystack_reroll_result'
             fields = @('result','needle_count','reason')

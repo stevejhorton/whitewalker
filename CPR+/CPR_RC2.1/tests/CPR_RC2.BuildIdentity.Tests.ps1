@@ -68,3 +68,42 @@ Describe 'Connected VPN short-circuits the unreachable branch' {
     }
 }
 
+
+Describe 'End-of-run network re-check' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        . ([scriptblock]::Create((Get-Content (Join-Path $root 'main\Main.Network.ps1') -Raw)))
+        $script:entry = Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw
+    }
+    BeforeEach {
+        $script:EndRunRecheckEnabled = $true; $script:EndRunRerunMax = 2; $script:EndRunRerunWindowSec = 60
+        $script:EndRunRerunDelaySec = 3; $script:CprTaskFolder = '\CPR\'; $script:WhatIf = $false
+        $script:EndRunRerunStateFile = Join-Path $TestDrive 'rerun.txt'
+        function Write-Log { param($m,$l) }
+        function Write-TeeLog { param($a,$f) $script:teeSeen = @{ a = $a; f = $f } }
+        Mock Request-CprRerun { $true }
+    }
+    It 'reports no change and does not re-run when the fingerprint matches' {
+        $ni = [pscustomobject]@{ SSID='A'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; InterfaceIndex=1; InterfaceGuid='g'; OperationalState='Up' }
+        Mock Get-NetworkInfo { $ni }
+        (Invoke-EndRunNetworkRecheck -Baseline $ni).Changed | Should -BeFalse
+        Should -Invoke Request-CprRerun -Times 0
+    }
+    It 'detects a flip, tees it and requests one re-run' {
+        $old = [pscustomobject]@{ SSID='SNAFU'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; InterfaceIndex=1; InterfaceGuid='g'; OperationalState='Up' }
+        $new = [pscustomobject]@{ SSID='cia_van'; IPAddress='2.2.2.2'; DefaultGateway='2.2.2.254'; InterfaceIndex=1; InterfaceGuid='g'; OperationalState='Up' }
+        Mock Get-NetworkInfo { $new }
+        $r = Invoke-EndRunNetworkRecheck -Baseline $old
+        $r.Changed | Should -BeTrue
+        $r.Rerun | Should -BeTrue
+        $script:teeSeen.a | Should -Be 'network_changed_during_run'
+    }
+    It 'caps chained re-runs' {
+        (Test-RerunAllowed) | Should -BeTrue
+        (Test-RerunAllowed) | Should -BeTrue
+        (Test-RerunAllowed) | Should -BeFalse
+    }
+    It 'runs before the maintenance stage' {
+        $entry.IndexOf('Invoke-EndRunNetworkRecheck') | Should -BeLessThan $entry.IndexOf('Invoke-MaintenanceStage -ExitReason')
+    }
+}

@@ -1710,3 +1710,61 @@ function Get-RedirectType {
         return "NON_ISE"
     }
 }
+
+# ---------------------------------------------------------------------------
+# End-of-run network re-check (RC2.1)
+# ---------------------------------------------------------------------------
+function Test-RerunAllowed {
+    # Cap chained re-runs: at most $EndRunRerunMax within $EndRunRerunWindowSec. Records the attempt.
+    $now = [datetime]::UtcNow
+    $stamps = @()
+    try {
+        if (Test-Path $EndRunRerunStateFile) {
+            $stamps = @(Get-Content $EndRunRerunStateFile -ErrorAction Stop | ForEach-Object {
+                try { [datetime]::Parse($_, [Globalization.CultureInfo]::InvariantCulture, 'RoundtripKind') } catch { $null }
+            } | Where-Object { $_ -and ($now - $_).TotalSeconds -lt $EndRunRerunWindowSec })
+        }
+    } catch { $stamps = @() }
+    if ($stamps.Count -ge $EndRunRerunMax) { return $false }
+    try { ($stamps + $now | ForEach-Object { $_.ToString('o') }) | Set-Content $EndRunRerunStateFile -Encoding ASCII -Force } catch { }
+    return $true
+}
+
+function Request-CprRerun {
+    # Detached starter: waits for this run to exit, then starts the task (IgnoreNew would drop it now).
+    $task = "$($CprTaskFolder)WW_main"
+    $cmd = "Start-Sleep -Seconds $EndRunRerunDelaySec; schtasks.exe /run /tn '$task' | Out-Null"
+    if ($WhatIf) { Write-Log "WHATIF: Would schedule re-run of $task" "INFO"; return $true }
+    try {
+        Start-Process "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command `"$cmd`"" -WindowStyle Hidden
+        return $true
+    } catch { Write-Log "Re-run starter failed: $_" "WARN"; return $false }
+}
+
+function Invoke-EndRunNetworkRecheck {
+    <#
+    Compare the network the run handled with the network right now. On change: log WARN, tee event,
+    and request a capped re-run. Returns the live NetworkInfo (or $null) so Write-RunEnd can show
+    the real SSID. The SSID cache deliberately stays at the SSID the run HANDLED, so the re-run
+    sees the new SSID as a jump.
+    #>
+    param($Baseline)
+    $result = [pscustomobject]@{ Changed = $false; Now = $null; Rerun = $false }
+    if (-not $EndRunRecheckEnabled -or $null -eq $Baseline) { return $result }
+    try {
+        $now = Get-NetworkInfo
+        $result.Now = $now
+        $oldFp = Get-CprNetworkFingerprint -NetworkInfo $Baseline
+        $newFp = Get-CprNetworkFingerprint -NetworkInfo $now
+        if ($oldFp -eq $newFp) { Write-Log "end_run_network_recheck changed=False" "DEBUG"; return $result }
+        $result.Changed = $true
+        Write-Log ("Network changed during run: ssid '{0}' -> '{1}', ip {2} -> {3}, gw {4} -> {5}" -f `
+            $Baseline.SSID, $now.SSID, $Baseline.IPAddress, $now.IPAddress, $Baseline.DefaultGateway, $now.DefaultGateway) "WARN"
+        if (Test-RerunAllowed) { $result.Rerun = Request-CprRerun } else { Write-Log "Re-run cap reached ($EndRunRerunMax in ${EndRunRerunWindowSec}s) - not re-running" "WARN" }
+        Write-TeeLog 'network_changed_during_run' @{
+            old_ssid = $Baseline.SSID; new_ssid = $now.SSID
+            old_ip = $Baseline.IPAddress; new_ip = $now.IPAddress; rerun = $result.Rerun
+        }
+    } catch { Write-Log "End-of-run network re-check failed: $_" "WARN" }
+    return $result
+}

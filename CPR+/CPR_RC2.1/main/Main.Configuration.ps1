@@ -370,3 +370,11 @@ $TrustedSsidSyncCooldownHours = 4              # min hours between NETLOGON sync
 $TrustedSsidFile             = "C:\ProgramData\WhiteWalker\trusted_ssids.cfg"
 $TrustedSsidSyncFlag         = "C:\ProgramData\WhiteWalker\trusted_ssids_sync.flag"
 $RemoteTrustedSsidFile       = "\\ms.ds.uhc.com\netlogon\UHG\Scripts\AOVPN\CPR\trusted_ssids.cfg"
+
+# End-of-run network re-check: if SSID/IP/gateway changed while the run was working, say so and
+# re-run once the current run has exited (IgnoreNew would drop a trigger fired mid-run).
+$EndRunRecheckEnabled   = $true
+$EndRunRerunMax         = 2      # max chained re-runs...
+$EndRunRerunWindowSec   = 60     # ...within this many seconds
+$EndRunRerunDelaySec    = 3      # detached starter waits this long so the current run has exited
+$EndRunRerunStateFile   = "C:\ProgramData\WhiteWalker\rerun_chain.txt"

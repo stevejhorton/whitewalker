@@ -29,6 +29,7 @@
         captive_walled_garden  = @{ action = 'captive_walled_garden';  fields = @('gateway_ip','ssid') }
         vpn_disconnect_forced  = @{ action = 'vpn_disconnect_forced';  fields = @('reason','vpn_state_was') }
         vpn_connected_triage   = @{ action = 'vpn_connected_triage';   fields = @('outcome','dc_reachable','preflight','vpn_state','waited_ms','wake','jump') }
+        network_changed_during_run = @{ action = 'network_changed_during_run'; fields = @('old_ssid','new_ssid','old_ip','new_ip','rerun') }
         xml_vault_restore      = @{ action = 'xml_vault_restore';      fields = @('profile_name','reason') }
         xml_vault_triggered    = @{ action = 'xml_vault_triggered'; fields = @('mode','status','source','reason','profile_name','profile_count') }
         xml_vault_passed       = @{ action = 'xml_vault_passed';    fields = @('mode','status','source','reason','profile_name','profile_count') }

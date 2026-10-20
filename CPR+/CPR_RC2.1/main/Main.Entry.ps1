@@ -1127,6 +1127,16 @@ function Invoke-WhiteWalkerMain {
                     Stop-CiscoBrowserKiller -Job $ciscoBrowserKillerJob
                 }
                 
+                # End-of-run network re-check: did the network flip while we worked?
+                $recheck = $null
+                if (Test-Path variable:networkInfo) {
+                    try { $recheck = Invoke-EndRunNetworkRecheck -Baseline $networkInfo }
+                    catch { Write-Log "End-of-run re-check error: $_" "WARN" }
+                }
+                if ($recheck -and $recheck.Now -and $recheck.Changed) {
+                    $script:endNetworkSsid = $recheck.Now.SSID
+                }
+
                 # Maintenance stage: last, after the flare and any remediation.
                 $maintSkip = (-not $OnlineFastPathRunMaintenance) -and `
                     (((Test-Path variable:onlineFastPathSelected) -and $onlineFastPathSelected) -or "$($script:exitReason)" -like 'vpn_connected:*')
