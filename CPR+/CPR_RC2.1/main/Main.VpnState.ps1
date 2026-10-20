@@ -484,6 +484,7 @@ function Invoke-EarlyVpnDisconnect {
             $s = Get-VpnState
         } while ($s -ne 'Disconnected' -and (Get-Date) -lt $deadline)
         Write-Log "Early VPN gate: state after disconnect = $s" "INFO"
+        $script:LastVpnState = $s; $script:LastVpnStateAt = Get-Date
         Write-TeeLog 'vpn_disconnect_forced' @{ reason = "early_gate:$Reason"; vpn_state_was = $VpnStateWas }
         return ($s -eq 'Disconnected')
     } catch {
@@ -505,6 +506,7 @@ function Invoke-EarlyVpnGate {
         $r.HasIp = Test-AnyUsableIp -NetworkInfo $NetworkInfo
         $state = Get-VpnState
         $r.VpnState = $state
+        $script:LastVpnState = $state; $script:LastVpnStateAt = Get-Date
         if ($state -eq 'Disconnected') { $r.Reason = 'already_disconnected'; return $r }
 
         $blocking  = @('Connecting', 'Reconnecting') -contains $state
@@ -547,6 +549,7 @@ function Invoke-GatedNwCheck {
     if ($PreflightRequiresSettledVpn) {
         $vpnState = $KnownVpnState
         if ([string]::IsNullOrEmpty($vpnState)) { $vpnState = Get-VpnStateStable -TimeoutSec $VpnStateMaxWaitSeconds }
+        $script:LastVpnState = $vpnState; $script:LastVpnStateAt = Get-Date
         if ($vpnState -notin @('Connected', 'Disconnected')) {
             Write-Log "Preflight skipped: VPN state '$vpnState' blocks all traffic - probe would always fail" "WARN"
             $skip = [PSCustomObject]@{
@@ -561,4 +564,19 @@ function Invoke-GatedNwCheck {
         }
     }
     return (Get-NwCheckResult -Url $Url)
+}
+
+function Test-XmlVaultSyncAllowed {
+    # The XmlVault share is only reachable on-prem or through the VPN tunnel.
+    # On-prem = corp-only DNS suffixes (no I/O). VPN state is reused from this run's
+    # own checks when fresh (a vpncli call costs several seconds), else queried.
+    $maxAgeSec = 30
+    if (Test-OnPremBySuffix) { return $true }
+    $state = $null
+    if ($script:LastVpnStateAt -and (((Get-Date) - $script:LastVpnStateAt).TotalSeconds -lt $maxAgeSec)) {
+        $state = $script:LastVpnState
+    } else {
+        $state = Get-VpnState
+    }
+    return ($state -eq 'Connected')
 }

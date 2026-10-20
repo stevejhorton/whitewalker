@@ -58,7 +58,9 @@ function Invoke-WhiteWalkerStartupSubsystems {
     # XmlVault - task lifecycle sync + startup sync trigger
     Sync-XmlVaultTask
     if ($XmlVaultEnabled) {
-        if (Test-Path $XmlVaultScriptPath) {
+        if (-not (Test-XmlVaultSyncAllowed)) {
+            Write-Log "XmlVault: startup sync skipped - not on-prem and VPN not Connected (share unreachable)" "INFO"
+        } elseif (Test-Path $XmlVaultScriptPath) {
             Write-Log "XmlVault: enabled - invoking startup sync" "INFO"
             if (-not $WhatIf) {
                 Start-Process "powershell.exe" `
@@ -316,6 +318,10 @@ function Invoke-WhiteWalkerMain {
                     Write-Log ("preflight_timing network_ready_to_preflight_ms=-1 network_ready_to_preflight_sec=-1 startup_to_preflight_ms=-1 preflight_duration_ms=0 status='suppressed' gateway_preflight_ran=false") "INFO"
                 }
 
+                # RC2.1: remember which network this preflight result belongs to.
+                $preflightFingerprint = Get-CprNetworkFingerprint -NetworkInfo $networkInfo
+                $reprobedOnNetworkChange = $false
+
                 $onlineFastPathSelected = ($OnlineFastPathEnabled -and $nwCheck.Status -eq 'online')
                 if ($onlineFastPathSelected) {
                     $onlineFastPathStartedAt = Get-Date
@@ -358,11 +364,32 @@ function Invoke-WhiteWalkerMain {
                     Test-MacRandomization -CurrentSsid $networkInfo.SSID -CurrentMac $networkInfo.MACAddress
                 }
 
+                # RC2.1: a preflight result belongs to the network it was taken on. If the
+                # adapter/IP/gateway/SSID fingerprint changed during this run (user hopped
+                # networks while startup maintenance or SSID-change handling ran), the
+                # result is stale - e.g. 'online' from home must not classify a captive
+                # portal network. Discard it and probe the new network. A new network with
+                # no usable IP yet ends the run: its DHCP event starts a fresh one.
+                $currentFingerprint = Get-CprNetworkFingerprint -NetworkInfo $networkInfo
+                if ($preflightFingerprint -and ($currentFingerprint -ne $preflightFingerprint)) {
+                    Write-Log "Network changed since preflight - discarding stale '$($nwCheck.Status)' result (was '$preflightFingerprint', now '$currentFingerprint')" "WARN"
+                    $global:LastCapPreflightResult = $null
+                    $script:LastWebHelper301Evidence = $null
+                    if (-not (Test-AnyUsableIp -NetworkInfo $networkInfo)) {
+                        Write-Log "New network has no usable IP yet - ending run; its DHCP event starts a fresh run" "WARN"
+                        $script:exitReason = "network_changed_no_ip"
+                        return
+                    }
+                    $nwCheck = Invoke-GatedNwCheck
+                    $reprobedOnNetworkChange = $true
+                    Write-Log "Preflight on new network: $($nwCheck.Status)" "INFO"
+                }
+
                 # The early probe can be INCONCLUSIVE because a still-negotiating
                 # Cisco tunnel was holding the stack when it fired. SSID-change
                 # handling above may have cleared that, so re-probe once - a
                 # usable (online/redirect) early result is kept as-is.
-                if ($nwCheck.Status -eq 'unreachable') {
+                if ($nwCheck.Status -eq 'unreachable' -and -not $reprobedOnNetworkChange) {
                     Write-Log "Early preflight was inconclusive - re-probing once after VPN/SSID handling settled" "INFO"
                     $nwCheck = Invoke-GatedNwCheck
                     Write-Log "Re-probe result after settling: $($nwCheck.Status)" "INFO"

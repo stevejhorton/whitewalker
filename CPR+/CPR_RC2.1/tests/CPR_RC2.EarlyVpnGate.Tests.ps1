@@ -4,7 +4,7 @@
 Describe 'CPR RC2.1 early VPN gate' {
     BeforeAll {
         $root = Split-Path -Parent $PSScriptRoot
-        $want = 'Test-AnyUsableIp', 'Test-SsidJump', 'Invoke-EarlyVpnGate', 'Invoke-GatedNwCheck'
+        $want = 'Test-AnyUsableIp', 'Test-SsidJump', 'Invoke-EarlyVpnGate', 'Invoke-GatedNwCheck', 'Test-XmlVaultSyncAllowed'
         foreach ($f in 'Main.VpnState.ps1', 'Main.SsidChange.ps1') {
             $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root "main\$f"), [ref]$null, [ref]$null)
             $defs = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in $want }, $true)
@@ -13,6 +13,7 @@ Describe 'CPR RC2.1 early VPN gate' {
         function Write-Log { param($m, $l) }
         function Write-TeeLog { param($a, $b) }
         function Get-VpnState { 'Disconnected' }
+        function Test-OnPremBySuffix { $false }
         function Get-VpnStateStable { param($TimeoutSec) 'Disconnected' }
         function Test-RecentWakeFromSleep { param($TimeWindowSeconds) $false }
         function Test-EarlyTrustedNetwork { param($NetworkInfo) $false }
@@ -90,5 +91,24 @@ Describe 'CPR RC2.1 early VPN gate' {
         (Invoke-GatedNwCheck -KnownVpnState 'Connected').Status | Should -Be 'online'
         (Invoke-GatedNwCheck -KnownVpnState 'Disconnected').Status | Should -Be 'online'
         Should -Invoke Get-NwCheckResult -Times 2 -Exactly
+    }
+
+    It 'allows XmlVault sync on-prem, or when VPN is Connected; blocks otherwise' {
+        $script:LastVpnStateAt = $null
+        Mock Test-OnPremBySuffix { $true }
+        Test-XmlVaultSyncAllowed | Should -BeTrue
+        Mock Test-OnPremBySuffix { $false }
+        Mock Get-VpnState { 'Connected' }
+        Test-XmlVaultSyncAllowed | Should -BeTrue
+        Mock Get-VpnState { 'Disconnected' }
+        Test-XmlVaultSyncAllowed | Should -BeFalse
+    }
+
+    It 'reuses a fresh cached VPN state instead of calling vpncli' {
+        Mock Test-OnPremBySuffix { $false }
+        Mock Get-VpnState { 'Disconnected' }
+        $script:LastVpnState = 'Connected'; $script:LastVpnStateAt = Get-Date
+        Test-XmlVaultSyncAllowed | Should -BeTrue
+        Should -Invoke Get-VpnState -Times 0 -Exactly
     }
 }
