@@ -40,6 +40,12 @@ Add-Sec 'TaskScheduler events (WW_main / probe), last 45 min' ($ev | ForEach-Obj
     $m = ($_.Message -replace '\s+', ' ' -replace '\{[0-9a-f-]+\}', '{I}')
     '{0} id={1} {2}' -f $_.TimeCreated.ToString('HH:mm:ss'), $_.Id, $m.Substring(0, [Math]::Min(120, $m.Length)) })
 
+# Who registered / updated / deleted WW_main and when (last 12h) - stale-registration check
+$reg = Get-WinEvent -FilterHashtable @{ LogName = 'Microsoft-Windows-TaskScheduler/Operational'; Id = 106,140,141; StartTime = (Get-Date).AddHours(-12) } |
+       Where-Object { $_.Message -match 'WW_main' } | Sort-Object TimeCreated
+Add-Sec 'WW_main register/update/delete history, last 12h' ($reg | ForEach-Object {
+    '{0} id={1} {2}' -f $_.TimeCreated.ToString('HH:mm:ss'), $_.Id, ($_.Message -replace '\s+', ' ') })
+
 # What CPR itself logged
 $log = 'C:\ProgramData\WhiteWalker\logs\white_walker.main.log'
 if (Test-Path $log) {
