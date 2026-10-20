@@ -66,6 +66,8 @@ Describe 'CPR RC2.1 early VPN gate' {
         Set-Content -Path $script:SsidCacheFile -Value 'OldNet'
         $r = Invoke-EarlyVpnGate -NetworkInfo $script:HasIp
         $r.Acted | Should -BeFalse
+        $r.Wake | Should -BeTrue
+        $r.Jump | Should -BeTrue
         Should -Invoke Invoke-EarlyVpnDisconnect -Times 0 -Exactly
     }
 

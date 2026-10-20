@@ -8,23 +8,39 @@
 # usable IP/default gateway is probed immediately instead of behind NETLOGON
 # self-update, HayStack reroll and XmlVault sync work. They still run on every
 # path that previously ran them, including the early no-network return.
+function Write-MaintStep {
+    # Timing marker between startup-maintenance steps. If a run stalls, the last
+    # marker in the log names the step that finished; the stall is in the next one.
+    param([string]$Name)
+    $now = Get-Date
+    $ms = 0
+    if ($script:maintStepAt) { $ms = [math]::Round(($now - $script:maintStepAt).TotalMilliseconds) }
+    Write-Log "maintenance_step name='$Name' elapsed_ms=$ms" "DEBUG"
+    $script:maintStepAt = $now
+}
+
 function Invoke-WhiteWalkerStartupSubsystems {
     param([bool]$RunMaintenance = $true)
     if ($script:startupSubsystemsRan) { return }
     $script:startupSubsystemsRan = $true
     $maintenanceStartedAt = Get-Date
+    $script:maintStepAt = $maintenanceStartedAt
+    Write-Log "maintenance_step name='begin' elapsed_ms=0" "DEBUG"
 
     # Required G: drain any USER-context Base handback into Main's log/evidence
     # trail before the rest of startup. SYSTEM stays the owner of control state.
     $null = Import-CapPortalUserHandback
+    Write-MaintStep 'handback'
 
     # Blackhole shutdown task - sync lifecycle with $BlackholeEnabled
     Sync-BlackholeShutdownTask
+    Write-MaintStep 'blackhole_task_sync'
 
     # Safety: run blackhole -rm at every startup regardless of state.
     # Ensures hosts entries are never left in place due to a prior state snafu.
     # When $BlackholeEnabled = $false, still fires -rm to clear any stale entries.
     Invoke-BlackholeAction -Tag 'startup'
+    Write-MaintStep 'blackhole_startup'
 
     if (-not $RunMaintenance) {
         Write-Log "maintenance_phase mode='deferred' reason='online_fast_path_policy' preserved='handback,blackhole_sync,blackhole_cleanup'" "INFO"
@@ -36,6 +52,7 @@ function Invoke-WhiteWalkerStartupSubsystems {
     # Self-update remains synchronous by default so download/extract/install exit
     # status and flag handoff are reliable and concurrent installs are impossible.
     Invoke-SelfUpdate
+    Write-MaintStep 'self_update'
 
     # HayStack - event monitor subsystem reroll check
     if ($HaystackEnabled) {
@@ -55,8 +72,11 @@ function Invoke-WhiteWalkerStartupSubsystems {
         Write-Log "HayStack: disabled - skipping" "DEBUG"
     }
 
+    Write-MaintStep 'haystack'
+
     # XmlVault - task lifecycle sync + startup sync trigger
     Sync-XmlVaultTask
+    Write-MaintStep 'xmlvault_task_sync'
     if ($XmlVaultEnabled) {
         if (-not (Test-XmlVaultSyncAllowed)) {
             Write-Log "XmlVault: startup sync skipped - not on-prem and VPN not Connected (share unreachable)" "INFO"
@@ -75,6 +95,7 @@ function Invoke-WhiteWalkerStartupSubsystems {
     } else {
         Write-Log "XmlVault: disabled - skipping" "DEBUG"
     }
+    Write-MaintStep 'xmlvault'
     Write-Log ("phase_timing phase='startup_maintenance' elapsed_ms={0} mode='synchronous'" -f `
         [math]::Round(((Get-Date) - $maintenanceStartedAt).TotalMilliseconds)) "INFO"
 }
@@ -227,26 +248,32 @@ function Invoke-WhiteWalkerMain {
                 # VPN Disconnected always takes the normal path.
                 # =====================================================================
                 if ($VpnConnectedShortCircuit -and $earlyGate.VpnState -eq 'Connected' -and -not $earlyGate.Acted) {
-                    $scFlavor = Get-VpnTunnelFlavor
-                    if ($scFlavor -eq 'mgmt_tun' -or $scFlavor -eq 'user_tun') {
-                        Write-Log "VPN Connected at run start (flavor=$scFlavor) - skipping preflight and captive-portal checks" "INFO"
-                        Invoke-WhiteWalkerStartupSubsystems -RunMaintenance:$OnlineFastPathRunMaintenance
-                        $scTelemetry = Get-CprConnectionTelemetry -NetworkInfo $networkInfo
-                        Write-TeeLog 'network_state' @{
-                            ip        = $networkInfo.IPAddress
-                            gw        = $networkInfo.DefaultGateway
-                            dns       = ($networkInfo.DNSServers -join ',')
-                            ssid      = $scTelemetry.ssid
-                            connection_type = $scTelemetry.connection_type
-                            vpn_state = 'Connected'
-                            lease_sec = $(if ($null -ne $networkInfo.LeaseDurationSeconds) { $networkInfo.LeaseDurationSeconds } else { -1 })
+                    if ($earlyGate.Wake -or $earlyGate.Jump) {
+                        # Secure Client can still report Connected for seconds after a wake or
+                        # network hop, before it notices the tunnel is dead. Do not trust it.
+                        Write-Log "VPN reports Connected but a wake/SSID jump just happened (wake=$($earlyGate.Wake) jump=$($earlyGate.Jump)) - state may be stale, not short-circuiting" "WARN"
+                    } else {
+                        $scFlavor = Get-VpnTunnelFlavor
+                        if ($scFlavor -eq 'mgmt_tun' -or $scFlavor -eq 'user_tun') {
+                            Write-Log "VPN Connected at run start (flavor=$scFlavor) - skipping preflight and captive-portal checks" "INFO"
+                            Invoke-WhiteWalkerStartupSubsystems -RunMaintenance:$OnlineFastPathRunMaintenance
+                            $scTelemetry = Get-CprConnectionTelemetry -NetworkInfo $networkInfo
+                            Write-TeeLog 'network_state' @{
+                                ip        = $networkInfo.IPAddress
+                                gw        = $networkInfo.DefaultGateway
+                                dns       = ($networkInfo.DNSServers -join ',')
+                                ssid      = $scTelemetry.ssid
+                                connection_type = $scTelemetry.connection_type
+                                vpn_state = 'Connected'
+                                lease_sec = $(if ($null -ne $networkInfo.LeaseDurationSeconds) { $networkInfo.LeaseDurationSeconds } else { -1 })
+                            }
+                            Send-FlareEvent $scFlavor
+                            Clear-CaptiveEventHistory "VPN connected"
+                            $script:exitReason = "vpn_connected:$scFlavor"
+                            return
                         }
-                        Send-FlareEvent $scFlavor
-                        Clear-CaptiveEventHistory "VPN connected"
-                        $script:exitReason = "vpn_connected:$scFlavor"
-                        return
+                        Write-Log "VPN reported Connected but tunnel flavor is '$scFlavor' - continuing with normal preflight" "WARN"
                     }
-                    Write-Log "VPN reported Connected but tunnel flavor is '$scFlavor' - continuing with normal preflight" "WARN"
                 }
 
                 # =====================================================================

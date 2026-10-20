@@ -491,7 +491,7 @@ function Invoke-EarlyVpnGate {
     #   Connected -> NEVER disconnected here, on-prem or not. Users may legitimately VPN
     #   from on-prem; the BlackHole subsystem owns that policy.
     param([object]$NetworkInfo)
-    $r = [pscustomobject]@{ VpnState = 'Unknown'; HasIp = $false; Acted = $false; Reason = 'none' }
+    $r = [pscustomobject]@{ VpnState = 'Unknown'; HasIp = $false; Acted = $false; Reason = 'none'; Wake = $false; Jump = $false }
     if (-not $EarlyVpnGateEnabled) { $r.Reason = 'disabled'; return $r }
     try {
         $r.HasIp = Test-AnyUsableIp -NetworkInfo $NetworkInfo
@@ -509,6 +509,7 @@ function Invoke-EarlyVpnGate {
             $wake = $false
             if ($VpnWakeDetection) { $wake = Test-RecentWakeFromSleep -TimeWindowSeconds $VpnWakeTimeWindow }
             $jump = Test-SsidJump -CurrentSsid $NetworkInfo.SSID
+            $r.Wake = [bool]$wake; $r.Jump = [bool]$jump
             if ($wake -or $jump) {
                 $why = if ($wake) { 'wake' } else { 'ssid_jump' }
                 if ($blocking) { $reason = "${why}_blocking" }
