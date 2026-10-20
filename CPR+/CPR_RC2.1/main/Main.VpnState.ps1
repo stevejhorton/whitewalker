@@ -443,3 +443,122 @@ function VPN-Gatekeeper-AndMaybeExit {
   Write-Log ("VPN state remained Unknown after {0}s; proceeding as not connected." -f $VpnStateMaxWaitSeconds)
 }
 
+
+# ------------------------- RC2.1 early VPN gate ------------------------------
+# Secure Client fires a reconnect to its cached headend on ANY network state
+# change. In Connecting/Reconnecting it blocks ALL traffic (802.1x, ISE posture,
+# captive portals). This gate runs first, before any wait/sleep/preflight.
+function Test-AnyUsableIp {
+    # True if ANY physical WiFi/Ethernet adapter holds a non-APIPA IPv4 address.
+    # Uses the per-adapter records Get-NetworkInfo already gathered (.Adapters).
+    param([object]$NetworkInfo)
+    try {
+        $adapters = @($NetworkInfo.Adapters | Where-Object { $_ })
+        if ($adapters.Count -eq 0) { $adapters = @($NetworkInfo) }
+        foreach ($a in $adapters) {
+            $ip = [string]$a.IPAddress
+            if ($ip -and $ip -ne 'N/A' -and $ip -notmatch '^169\.254\.') { return $true }
+        }
+    } catch { Write-Log "Test-AnyUsableIp error: $_" "DEBUG" }
+    return $false
+}
+
+function Test-EarlyTrustedNetwork {
+    # Test-SsidTrusted returns $true for ANY wired link, which is too loose for a
+    # disconnect-the-VPN decision (a docked laptop at home would count as trusted).
+    # For wired, require corp-only DNS suffixes instead.
+    param([object]$NetworkInfo)
+    if ($NetworkInfo.ConnectionType -eq 'Ethernet') { return (Test-OnPremBySuffix) }
+    return (Test-SsidTrusted -NetworkInfo $NetworkInfo)
+}
+
+function Invoke-EarlyVpnDisconnect {
+    param([string]$Reason, [string]$VpnStateWas)
+    Write-Log "Early VPN gate: disconnecting VPN now (reason=$Reason, state=$VpnStateWas)" "WARN"
+    if ($WhatIf) { Write-Log "WHATIF: Would run vpncli disconnect" "INFO"; return $false }
+    try {
+        & $vpn_cmd disconnect | Out-Null
+        $deadline = (Get-Date).AddSeconds($EarlyGateDisconnectWaitSec)
+        do {
+            Start-Sleep -Milliseconds 500
+            $s = Get-VpnState
+        } while ($s -ne 'Disconnected' -and (Get-Date) -lt $deadline)
+        Write-Log "Early VPN gate: state after disconnect = $s" "INFO"
+        Write-TeeLog 'vpn_disconnect_forced' @{ reason = "early_gate:$Reason"; vpn_state_was = $VpnStateWas }
+        return ($s -eq 'Disconnected')
+    } catch {
+        Write-Log "Early VPN gate: disconnect error: $_" "WARN"
+        return $false
+    }
+}
+
+function Invoke-EarlyVpnGate {
+    # Rules (VPN already Disconnected = nothing to do):
+    #   no IP on any adapter + Connecting/Reconnecting -> disconnect (attempt cannot succeed)
+    #   recent wake  OR SSID jump + Connecting/Reconnecting -> disconnect
+    #   recent wake  OR SSID jump + Connected + trusted network -> disconnect
+    #   Connected + untrusted network -> leave alone (a working off-prem tunnel is not in the way)
+    param([object]$NetworkInfo)
+    $r = [pscustomobject]@{ VpnState = 'Unknown'; HasIp = $false; Acted = $false; Reason = 'none' }
+    if (-not $EarlyVpnGateEnabled) { $r.Reason = 'disabled'; return $r }
+    try {
+        $r.HasIp = Test-AnyUsableIp -NetworkInfo $NetworkInfo
+        $state = Get-VpnState
+        $r.VpnState = $state
+        if ($state -eq 'Disconnected') { $r.Reason = 'already_disconnected'; return $r }
+
+        $blocking  = @('Connecting', 'Reconnecting') -contains $state
+        $connected = ($state -eq 'Connected')
+        $reason = $null
+
+        if (-not $r.HasIp) {
+            if ($blocking) { $reason = 'no_ip' }
+        } else {
+            $wake = $false
+            if ($VpnWakeDetection) { $wake = Test-RecentWakeFromSleep -TimeWindowSeconds $VpnWakeTimeWindow }
+            $jump = Test-SsidJump -CurrentSsid $NetworkInfo.SSID
+            if ($wake -or $jump) {
+                $why = if ($wake) { 'wake' } else { 'ssid_jump' }
+                if ($blocking) { $reason = "${why}_blocking" }
+                elseif ($connected -and (Test-EarlyTrustedNetwork -NetworkInfo $NetworkInfo)) { $reason = "${why}_trusted" }
+            }
+        }
+
+        if ($reason) {
+            $r.Acted = $true
+            $r.Reason = $reason
+            [void](Invoke-EarlyVpnDisconnect -Reason $reason -VpnStateWas $state)
+        } else {
+            $r.Reason = 'no_action'
+        }
+        Write-Log ("early_vpn_gate state='{0}' has_ip={1} acted={2} reason='{3}'" -f $state, $r.HasIp, $r.Acted, $r.Reason) "INFO"
+    } catch {
+        Write-Log "Early VPN gate error: $_" "WARN"
+    }
+    return $r
+}
+
+function Invoke-GatedNwCheck {
+    # Gateway preflight only runs when the Cisco client is Disconnected or Connected.
+    # Any intermediate state blocks all traffic, so the probe is guaranteed to fail
+    # (and burns its full timeout). Get-VpnStateStable keeps the original "give the
+    # client n secs to settle" window before we give up on the probe.
+    param([string]$Url = $NewPreflightURL, [string]$KnownVpnState = '')
+    if ($PreflightRequiresSettledVpn) {
+        $vpnState = $KnownVpnState
+        if ([string]::IsNullOrEmpty($vpnState)) { $vpnState = Get-VpnStateStable -TimeoutSec $VpnStateMaxWaitSeconds }
+        if ($vpnState -notin @('Connected', 'Disconnected')) {
+            Write-Log "Preflight skipped: VPN state '$vpnState' blocks all traffic - probe would always fail" "WARN"
+            $skip = [PSCustomObject]@{
+                Status = 'unreachable'; Classification = 'INCONCLUSIVE'; RedirectUrl = $null
+                RedirectType = ''; HttpStatus = ''; Protocol = ''; Fqdn = ''; Port = ''
+                DurationMs = 0; Attempt = 1; ProbeUrl = $Url
+                ObservationTime = (Get-Date).ToString('o')
+                Reason = 'vpn_state_not_settled'; ErrorMessage = "vpn_state=$vpnState"
+            }
+            try { $global:LastCapPreflightResult = $skip } catch { }
+            return $skip
+        }
+    }
+    return (Get-NwCheckResult -Url $Url)
+}

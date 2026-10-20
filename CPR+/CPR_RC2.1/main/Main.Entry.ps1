@@ -126,7 +126,12 @@ function Invoke-WhiteWalkerMain {
                 # Handles "Connect Automatically" unchecked scenario where adapter exists but not connected
                 $networkInfo = Get-NetworkInfo
                 $script:currentSsid = $networkInfo.SSID  # captured for Write-RunEnd SSID cache update
-                
+
+                # RC2.1 early VPN gate: FIRST decision of every run, ahead of every
+                # wait, sleep and probe. Secure Client fires a reconnect on any network
+                # state change and blocks all traffic while Connecting/Reconnecting.
+                $earlyGate = Invoke-EarlyVpnGate -NetworkInfo $networkInfo
+
                 # If no active connection, retry a few times before giving up
                 if ($networkInfo.IPAddress -eq "N/A" -or $networkInfo.ConnectionType -eq "Unknown") {
                     Write-Log "No active network connection detected (IP: $($networkInfo.IPAddress), Type: $($networkInfo.ConnectionType))" "WARN"
@@ -285,8 +290,15 @@ function Invoke-WhiteWalkerMain {
                     # observed; on cap expiry it probes anyway and records
                     # signal='not_confirmed'. Never a fixed sleep, so a healthy
                     # corporate-wireless path (WLANi03 posture) is not delayed.
+                    # RC2.1: settle VPN state BEFORE the readiness poll - in Connecting/
+                    # Reconnecting every readiness probe fails and burns the full cap.
+                    $preSettleVpnState = 'Disconnected'
+                    if ($PreflightRequiresSettledVpn) {
+                        $preSettleVpnState = Get-VpnStateStable -TimeoutSec $VpnStateMaxWaitSeconds
+                    }
+                    $vpnSettledForProbe = ($preSettleVpnState -in @('Connected', 'Disconnected'))
                     $readiness = Wait-CprNetworkReady -GatewayAddress $networkInfo.DefaultGateway `
-                        -ProbeHost $NewPreflightURL -Disabled:(-not $NetworkReadyEnabled)
+                        -ProbeHost $NewPreflightURL -Disabled:((-not $NetworkReadyEnabled) -or (-not $vpnSettledForProbe))
                     Write-Log ("network_ready_gate network_ready_wait_ms={0} signal='{1}' attempts={2} max_wait_ms={3} poll_interval_ms={4}" -f `
                         $readiness.WaitedMs, $readiness.Signal, $readiness.Attempts, `
                         $NetworkReadyMaxWaitMs, $NetworkReadyPollIntervalMs) $(if ($readiness.Ready) { 'INFO' } else { 'WARN' })
@@ -294,7 +306,7 @@ function Invoke-WhiteWalkerMain {
                     $preflightStartedAt = Get-Date
                     $networkReadyToPreflightMs = [math]::Round(($preflightStartedAt - $networkReadyAt).TotalMilliseconds)
                     Write-Log "detection_source=gateway_preflight - running authoritative gateway.optum.com classification" "INFO"
-                    $nwCheck = Get-NwCheckResult
+                    $nwCheck = Invoke-GatedNwCheck -KnownVpnState $preSettleVpnState
                     $preflightFinishedAt = Get-Date
                     Write-Log ("preflight_timing network_ready_to_preflight_ms={0} network_ready_to_preflight_sec={1} startup_to_preflight_ms={2} preflight_duration_ms={3} status='{4}'" -f `
                         $networkReadyToPreflightMs, [math]::Round($networkReadyToPreflightMs / 1000, 2), `
@@ -352,7 +364,7 @@ function Invoke-WhiteWalkerMain {
                 # usable (online/redirect) early result is kept as-is.
                 if ($nwCheck.Status -eq 'unreachable') {
                     Write-Log "Early preflight was inconclusive - re-probing once after VPN/SSID handling settled" "INFO"
-                    $nwCheck = Get-NwCheckResult
+                    $nwCheck = Invoke-GatedNwCheck
                     Write-Log "Re-probe result after settling: $($nwCheck.Status)" "INFO"
                 }
                 

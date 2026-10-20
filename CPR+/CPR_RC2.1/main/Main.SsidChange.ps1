@@ -322,6 +322,18 @@ function Test-OnPremBySuffix {
     }
 }
 
+function Test-SsidJump {
+    # Read-only: compares the current SSID to the cache WITHOUT touching it
+    # (Update-SsidCache still runs at run end). False when either side is unknown.
+    param([string]$CurrentSsid)
+    if ([string]::IsNullOrEmpty($CurrentSsid) -or $CurrentSsid -eq 'N/A') { return $false }
+    if (-not (Test-Path $SsidCacheFile)) { return $false }
+    try {
+        $cached = (Get-Content $SsidCacheFile -Raw -ErrorAction Stop).Trim()
+        return (-not [string]::IsNullOrEmpty($cached) -and $cached -ne $CurrentSsid)
+    } catch { return $false }
+}
+
 function Invoke-SsidChangeCheck {
     param([string]$CurrentSsid)
     if ([string]::IsNullOrEmpty($CurrentSsid) -or $CurrentSsid -eq 'N/A') { return }

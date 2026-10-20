@@ -2,7 +2,7 @@
 # Depends on: WW helper scripts loaded by WW_main.ps1.
 
 # ------------------------------- Config ---------------------------------------
-$ver                    = "3.14.0_RC2.0.1"
+$ver                    = "3.14.0_RC2.1.0"
 $initial_sleep          = 3     # seconds after DHCP before checks
 $LogPath                = "C:\ProgramData\WhiteWalker\logs\white_walker.main.log"
 
@@ -48,6 +48,11 @@ $VpnStateMaxWaitSeconds = 12     # how long to wait for vpncli to settle to Conn
 $VpnIntermediateMaxWait = 30     # force disconnect if stuck in Reconnecting/Connecting/Unknown >30s
 $VpnWakeDetection = $true        # detect wake from sleep and disconnect blocking VPN (smart disconnect)
 $VpnWakeTimeWindow = 120         # seconds - if wake event within this window, consider it a wake scenario
+
+# RC2.1 early VPN gate - runs at the TOP of every run, before any wait/sleep/preflight
+$EarlyVpnGateEnabled        = $true  # disconnect blocking VPN on wake / SSID jump / no-IP before anything else
+$EarlyGateDisconnectWaitSec = 6      # max seconds to wait for vpncli to report Disconnected after an early disconnect
+$PreflightRequiresSettledVpn = $true # skip gateway preflight unless VPN is Disconnected or Connected (it always fails otherwise)
 
 # Rescan & flare behavior
 $RescanOnlyOnRedirect   = $true
