@@ -403,6 +403,9 @@ function Write-RunEnd([string]$Reason='') {
   if ($script:currentSsid) {
       Update-SsidCache -Ssid $script:currentSsid
   }
+  if ($script:endNetworkSsid -and $script:endNetworkSsid -ne $script:currentSsid) {
+      Add-LogLine ("network_now ssid=""{0}"" (run handled ssid=""{1}"")" -f $script:endNetworkSsid, $script:currentSsid)
+  }
   $bar = ('-' * 80)
   Add-LogLine $bar
   Add-LogLine ("RUN END    run_id={0} exit_reason=""{1}""" -f $RunId, $Reason)

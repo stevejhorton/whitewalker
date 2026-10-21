@@ -158,6 +158,7 @@ function Invoke-WhiteWalkerMain {
                 # Handles "Connect Automatically" unchecked scenario where adapter exists but not connected
                 $networkInfo = Get-NetworkInfo
                 $script:currentSsid = $networkInfo.SSID  # captured for Write-RunEnd SSID cache update
+                $script:runAdapterSet = Get-CprActivePhysicalSet
 
                 # RC2.1 early VPN gate: FIRST decision of every run, ahead of every
                 # wait, sleep and probe. Secure Client fires a reconnect on any network
@@ -197,6 +198,7 @@ function Invoke-WhiteWalkerMain {
 
                 # Cache current SSID for Write-RunEnd to persist at run completion
                 $script:currentSsid = $networkInfo.SSID
+                $script:runAdapterSet = Get-CprActivePhysicalSet
 
                 # WLANi03 awareness: always on-prem corp wireless, ISE likely mid-posture scan.
                 # If we have no valid IP yet, wait longer than normal before proceeding.
@@ -257,14 +259,15 @@ function Invoke-WhiteWalkerMain {
                 # VPN Disconnected always takes the normal path.
                 # =====================================================================
                 if ($VpnConnectedShortCircuit -and $earlyGate.VpnState -eq 'Connected' -and -not $earlyGate.Acted) {
-                    if ($earlyGate.Wake -or $earlyGate.Jump) {
-                        # Secure Client can still report Connected for seconds after a wake or
-                        # network hop, before it notices the tunnel is dead. Do not trust it.
-                        Write-Log "VPN reports Connected but a wake/SSID jump just happened (wake=$($earlyGate.Wake) jump=$($earlyGate.Jump)) - state may be stale, not short-circuiting" "WARN"
+                    if (($earlyGate.Wake -or $earlyGate.Jump) -and -not $VpnConnectedTrustOnWakeJump) {
+                        # Optional paranoia (pivot off by default): Secure Client can report Connected for
+                        # seconds after a hop. Default is to trust Connected - when it goes stale it flips to
+                        # Reconnecting and its 2072/2037/2044 events start a new run.
+                        Write-Log "VPN reports Connected but a wake/SSID jump just happened (wake=$($earlyGate.Wake) jump=$($earlyGate.Jump)) - not short-circuiting" "WARN"
                     } else {
                         $scFlavor = Get-VpnTunnelFlavor
                         if ($scFlavor -eq 'mgmt_tun' -or $scFlavor -eq 'user_tun') {
-                            Write-Log "VPN Connected at run start (flavor=$scFlavor) - skipping preflight and captive-portal checks" "INFO"
+                            Write-Log "VPN Connected at run start (flavor=$scFlavor wake=$($earlyGate.Wake) jump=$($earlyGate.Jump)) - skipping preflight and captive-portal checks" "INFO"
                             Invoke-WhiteWalkerStartupSubsystems
                             $scTelemetry = Get-CprConnectionTelemetry -NetworkInfo $networkInfo
                             Write-TeeLog 'network_state' @{
@@ -408,6 +411,7 @@ function Invoke-WhiteWalkerMain {
                     -Force:([bool]$script:NetworkSnapshotInvalidated)
                 $script:NetworkSnapshotInvalidated = $false
                 $script:currentSsid = $networkInfo.SSID
+                $script:runAdapterSet = Get-CprActivePhysicalSet
                 $connectionTelemetry = Get-CprConnectionTelemetry -NetworkInfo $networkInfo
 
                 Write-TeeLog 'network_state' @{
@@ -455,7 +459,9 @@ function Invoke-WhiteWalkerMain {
                 # Cisco tunnel was holding the stack when it fired. SSID-change
                 # handling above may have cleared that, so re-probe once - a
                 # usable (online/redirect) early result is kept as-is.
-                if ($nwCheck.Status -eq 'unreachable' -and -not $reprobedOnNetworkChange) {
+                # RC2.1: nothing was done to a VPN that stayed Connected, so a second probe cannot differ.
+                $vpnStayedConnected = ($earlyGate.VpnState -eq 'Connected' -and -not $earlyGate.Acted)
+                if ($nwCheck.Status -eq 'unreachable' -and -not $reprobedOnNetworkChange -and -not $vpnStayedConnected) {
                     Write-Log "Early preflight was inconclusive - re-probing once after VPN/SSID handling settled" "INFO"
                     $nwCheck = Invoke-GatedNwCheck
                     Write-Log "Re-probe result after settling: $($nwCheck.Status)" "INFO"
@@ -638,6 +644,36 @@ function Invoke-WhiteWalkerMain {
                         #   A) Genuine network problem (no connectivity)
                         #   B) On-prem unpostured: ISE BLOCKS nwcheck but only REDIRECTS enroll.cisco.com
                         # CRITICAL: Test enroll.cisco.com IMMEDIATELY before DHCP lease expires
+                        # RC2.1: a Connected VPN settles it. enroll.cisco.com only means something when
+                        # there is no VPN (it redirects to an ISE PSN only for an unpostured endpoint), so
+                        # with the VPN up there is nothing to learn from it or from any captive-portal
+                        # test. A stale Connected after a hop turns into Reconnecting by itself, and that
+                        # event starts a fresh run that handles it. Saves ~12s of timeouts per hop.
+                        $vpnBeforeEnroll = Get-VpnState
+                        if ($vpnBeforeEnroll -eq "Connected") {
+                            $triage = Invoke-ConnectedUnreachableTriage
+                            Write-Log ("connected_triage outcome='{0}' dc_reachable={1} preflight='{2}' vpn_state='{3}' waited_ms={4} wake={5} jump={6}" -f `
+                                $triage.Outcome, $triage.DcReachable, $triage.Preflight, $triage.VpnState, $triage.WaitedMs, $earlyGate.Wake, $earlyGate.Jump) "INFO"
+                            Write-TeeLog 'vpn_connected_triage' @{
+                                outcome = $triage.Outcome; dc_reachable = [string]$triage.DcReachable; preflight = $triage.Preflight
+                                vpn_state = $triage.VpnState; waited_ms = [string]$triage.WaitedMs
+                                wake = [string][bool]$earlyGate.Wake; jump = [string][bool]$earlyGate.Jump }
+                            if ($triage.Outcome -eq 'state_left_connected') {
+                                # The stale Connected resolved: treat it like any not-Connected VPN and
+                                # carry on into the normal enroll / captive-portal checks below.
+                                if ($triage.VpnState -ne 'Disconnected') {
+                                    $null = Invoke-EarlyVpnDisconnect -Reason 'stale_connected_blocking' -VpnStateWas $triage.VpnState
+                                }
+                                Write-Log "Stale Connected resolved to '$($triage.VpnState)' - continuing with normal checks" "INFO"
+                            } else {
+                                $flavor = Get-VpnTunnelFlavor
+                                Send-FlareEvent $flavor
+                                $script:exitReason = if ($triage.Preflight -eq 'online') { "vpn_connected:$flavor" } else { "vpn_connected_nwcheck_unreachable:$flavor" }
+                                Invoke-BlackholeAction -Tag $flavor
+                                return
+                            }
+                        }
+
                         Write-Log "nwcheck: UNREACHABLE - immediately testing enroll.cisco.com before network drops" "WARN"
                         
                         $enrollResult = Test-Redirect -Url $ISERedirectTestURL
@@ -1100,6 +1136,16 @@ function Invoke-WhiteWalkerMain {
                     (((Test-Path variable:onlineFastPathSelected) -and $onlineFastPathSelected) -or "$($script:exitReason)" -like 'vpn_connected:*')
                 try { Invoke-MaintenanceStage -ExitReason "$($script:exitReason)" -Skip $maintSkip }
                 catch { Write-Log "Maintenance stage error: $_" "WARN" }
+
+                # End-of-run network re-check: last step before exit - did the network flip while we worked?
+                $recheck = $null
+                if (Test-Path variable:networkInfo) {
+                    try { $recheck = Invoke-EndRunNetworkRecheck -Baseline $networkInfo }
+                    catch { Write-Log "End-of-run re-check error: $_" "WARN" }
+                }
+                if ($recheck -and $recheck.Now -and $recheck.Changed) {
+                    $script:endNetworkSsid = $recheck.Now.SSID
+                }
 
                 Write-RunEnd $script:exitReason
             }

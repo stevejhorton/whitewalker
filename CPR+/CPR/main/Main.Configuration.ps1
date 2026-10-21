@@ -51,9 +51,14 @@ $VpnWakeTimeWindow = 120         # seconds - if wake event within this window, c
 
 # RC2.1 early VPN gate - runs at the TOP of every run, before any wait/sleep/preflight
 $EarlyVpnGateEnabled        = $true  # disconnect blocking VPN on wake / SSID jump / no-IP before anything else
+# Connected VPN + gateway preflight unreachable: poll for the state to leave Connected (stale
+# Connected after a hop) or the DC to answer a ping, instead of probing blind.
+$StaleConnectedMaxWaitSec   = 8
+$StaleConnectedPollSec      = 2
 $EarlyGateDisconnectWaitSec = 6      # max seconds to wait for vpncli to report Disconnected after an early disconnect
 $PreflightRequiresSettledVpn = $true # skip gateway preflight unless VPN is Disconnected or Connected (it always fails otherwise)
 $VpnConnectedShortCircuit   = $true  # VPN already Connected at the gate: skip preflight + cap-portal checks, flare tunnel flavor, exit
+$VpnConnectedTrustOnWakeJump = $true  # Connected means Connected even right after a wake/SSID jump (no preflight). $false = old stale-guard: fall through to the normal path
 
 # Rescan & flare behavior
 $RescanOnlyOnRedirect   = $true
@@ -366,3 +371,11 @@ $TrustedSsidSyncCooldownHours = 4              # min hours between NETLOGON sync
 $TrustedSsidFile             = "C:\ProgramData\WhiteWalker\trusted_ssids.cfg"
 $TrustedSsidSyncFlag         = "C:\ProgramData\WhiteWalker\trusted_ssids_sync.flag"
 $RemoteTrustedSsidFile       = "\\ms.ds.uhc.com\netlogon\UHG\Scripts\AOVPN\CPR\trusted_ssids.cfg"
+
+# End-of-run network re-check (last step, after maintenance): if the handled adapter's SSID/IP/gateway/link changed, say so and
+# pop one capped re-run the current run has exited (IgnoreNew would drop a trigger fired mid-run).
+$EndRunRecheckEnabled   = $true
+$EndRunRerunMax         = 2      # max chained re-runs...
+$EndRunRerunWindowSec   = 60     # ...within this many seconds
+$EndRunRerunDelaySec    = 5      # detached starter waits this long so the current run has exited
+$EndRunRerunStateFile   = "C:\ProgramData\WhiteWalker\rerun_chain.txt"

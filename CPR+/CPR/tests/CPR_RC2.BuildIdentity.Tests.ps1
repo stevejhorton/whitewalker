@@ -54,3 +54,77 @@ Describe 'Uninstall removes everything' {
         $src | Should -Match 'Remove-CprTaskFolder'
     }
 }
+
+Describe 'Connected VPN short-circuits the unreachable branch' {
+    BeforeAll { $script:entry = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.Entry.ps1') -Raw }
+    It 'exits on a Connected VPN before testing enroll.cisco.com' {
+        $exit = $entry.IndexOf('skipping enroll.cisco.com and captive-portal checks')
+        $test = $entry.IndexOf('$enrollResult = Test-Redirect -Url $ISERedirectTestURL')
+        $exit | Should -BeGreaterThan 0
+        $exit | Should -BeLessThan $test
+    }
+    It 'does not re-probe a VPN that stayed Connected' {
+        $entry | Should -Match 'not \$reprobedOnNetworkChange -and -not \$vpnStayedConnected'
+    }
+}
+
+
+Describe 'End-of-run network re-check' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        . ([scriptblock]::Create((Get-Content (Join-Path $root 'main\Main.Network.ps1') -Raw)))
+        $script:entry = Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw
+    }
+    BeforeEach {
+        $script:EndRunRecheckEnabled = $true; $script:EndRunRerunMax = 2; $script:EndRunRerunWindowSec = 60
+        $script:EndRunRerunDelaySec = 5; $script:CprTaskFolder = '\CPR\'; $script:WhatIf = $false
+        $script:EndRunRerunStateFile = Join-Path $TestDrive 'rerun.txt'
+        $script:base = [pscustomobject]@{ SSID='SNAFU'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; InterfaceGuid='{g}'; AdapterClass='wifi' }
+        function Write-Log { param($m,$l) }
+        function Write-TeeLog { param($a,$f) $script:teeSeen = @{ a = $a; f = $f } }
+        Mock Request-CprRerun { $true }
+        $script:runAdapterSet = 'a'
+        Mock Get-CprActivePhysicalSet { 'a' }
+    }
+    It 'no change: no re-run' {
+        Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$true; State='Up'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; SSID='SNAFU' } }
+        (Invoke-EndRunNetworkRecheck -Baseline $base).Changed | Should -BeFalse
+        Should -Invoke Request-CprRerun -Times 0
+    }
+    It 'SSID flip alone triggers one re-run and a tee event' {
+        Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$true; State='Up'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; SSID='cia_van' } }
+        $r = Invoke-EndRunNetworkRecheck -Baseline $base
+        $r.Changed | Should -BeTrue; $r.Rerun | Should -BeTrue
+        $script:teeSeen.a | Should -Be 'network_changed_during_run'
+    }
+    It 'a different set of active physical adapters (dock/undock) triggers a re-run' {
+        Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$true; State='Up'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; SSID='SNAFU' } }
+        Mock Get-CprActivePhysicalSet { 'a,b' }
+        $r = Invoke-EndRunNetworkRecheck -Baseline $base
+        $r.Changed | Should -BeTrue; $r.Rerun | Should -BeTrue
+    }
+    It 'adapter gone or down counts as changed' {
+        Mock Get-CprQuickNetworkProbe { [pscustomobject]@{ Found=$false; State='missing'; IPAddress='N/A'; DefaultGateway='N/A'; SSID='N/A' } }
+        (Invoke-EndRunNetworkRecheck -Baseline $base).Changed | Should -BeTrue
+    }
+    It 'caps chained re-runs' {
+        (Test-RerunAllowed) | Should -BeTrue
+        (Test-RerunAllowed) | Should -BeTrue
+        (Test-RerunAllowed) | Should -BeFalse
+    }
+    It 'is the last step: after the maintenance stage, before Write-RunEnd' {
+        $m = $entry.IndexOf('Invoke-MaintenanceStage -ExitReason')
+        $c = $entry.IndexOf('Invoke-EndRunNetworkRecheck')
+        $e = $entry.IndexOf('Write-RunEnd $script:exitReason', $c)
+        $c | Should -BeGreaterThan $m
+        $e | Should -BeGreaterThan $c
+    }
+}
+
+Describe 'Connected VPN is trusted on wake/jump' {
+    It 'stale-guard is behind a pivot that defaults to trusting Connected' {
+        $root = Split-Path -Parent $PSScriptRoot
+        (Get-Content (Join-Path $root 'main\Main.Configuration.ps1') -Raw) | Should -Match '\$VpnConnectedTrustOnWakeJump\s*=\s*\$true'
+        (Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw) | Should -Match '\(\$earlyGate\.Wake -or \$earlyGate\.Jump\) -and -not \$VpnConnectedTrustOnWakeJump'
+    }
+}

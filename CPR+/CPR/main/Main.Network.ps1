@@ -1710,3 +1710,99 @@ function Get-RedirectType {
         return "NON_ISE"
     }
 }
+
+# ---------------------------------------------------------------------------
+# End-of-run network re-check (RC2.1)
+# ---------------------------------------------------------------------------
+function Test-RerunAllowed {
+    # Cap chained re-runs: at most $EndRunRerunMax within $EndRunRerunWindowSec. Records the attempt.
+    $now = [datetime]::UtcNow
+    $stamps = @()
+    try {
+        if (Test-Path $EndRunRerunStateFile) {
+            $stamps = @(Get-Content $EndRunRerunStateFile -ErrorAction Stop | ForEach-Object {
+                try { [datetime]::Parse($_, [Globalization.CultureInfo]::InvariantCulture, 'RoundtripKind') } catch { $null }
+            } | Where-Object { $_ -and ($now - $_).TotalSeconds -lt $EndRunRerunWindowSec })
+        }
+    } catch { $stamps = @() }
+    if ($stamps.Count -ge $EndRunRerunMax) { return $false }
+    try { ($stamps + $now | ForEach-Object { $_.ToString('o') }) | Set-Content $EndRunRerunStateFile -Encoding ASCII -Force } catch { }
+    return $true
+}
+
+function Request-CprRerun {
+    # Detached starter: waits for this run to exit, then starts the task (IgnoreNew would drop it now).
+    $task = "$($CprTaskFolder)WW_main"
+    $cmd = "Start-Sleep -Seconds $EndRunRerunDelaySec; schtasks.exe /run /tn '$task' | Out-Null"
+    if ($WhatIf) { Write-Log "WHATIF: Would schedule re-run of $task" "INFO"; return $true }
+    try {
+        Start-Process "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command `"$cmd`"" -WindowStyle Hidden
+        return $true
+    } catch { Write-Log "Re-run starter failed: $_" "WARN"; return $false }
+}
+
+function Get-CprActivePhysicalSet {
+    # Sorted, comma-joined GUIDs of physical adapters that are Up and hold an IPv4 default gateway.
+    # In-process .NET only. Same physical/non-VPN filter as Get-NetworkInfo. $null on failure.
+    try {
+        $ids = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() | Where-Object {
+            $_.OperationalStatus -eq 'Up' -and
+            $_.NetworkInterfaceType -notin 'Loopback','Tunnel' -and
+            $_.Description -notmatch 'Cisco|VPN|TAP|Virtual|Tunnel|WAN Miniport|AnyConnect' -and
+            @($_.GetIPProperties().GatewayAddresses | Where-Object { $_.Address.AddressFamily -eq 'InterNetwork' -and $_.Address.ToString() -ne '0.0.0.0' }).Count -gt 0
+        } | ForEach-Object { $_.Id.ToLowerInvariant() } | Sort-Object
+        return (@($ids) -join ',')
+    } catch { return $null }
+}
+
+function Get-CprQuickNetworkProbe {
+    # Lightest possible read of the handled adapter: in-process .NET only (no CIM, no new process),
+    # except one netsh call for the SSID when the adapter is Wi-Fi.
+    param($Baseline)
+    $p = [ordered]@{ Found = $false; State = 'missing'; IPAddress = 'N/A'; DefaultGateway = 'N/A'; SSID = 'N/A' }
+    $nic = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() |
+        Where-Object { $_.Id -eq [string]$Baseline.InterfaceGuid } | Select-Object -First 1
+    if (-not $nic) { return [pscustomobject]$p }
+    $p.Found = $true; $p.State = [string]$nic.OperationalStatus
+    $props = $nic.GetIPProperties()
+    $ip = $props.UnicastAddresses | Where-Object { $_.Address.AddressFamily -eq 'InterNetwork' -and $_.Address.ToString() -notmatch '^(127\.|169\.254\.)' } | Select-Object -First 1
+    if ($ip) { $p.IPAddress = $ip.Address.ToString() }
+    $gw = $props.GatewayAddresses | Where-Object { $_.Address.AddressFamily -eq 'InterNetwork' -and $_.Address.ToString() -ne '0.0.0.0' } | Select-Object -First 1
+    if ($gw) { $p.DefaultGateway = $gw.Address.ToString() }
+    if ($Baseline.AdapterClass -eq 'wifi') { $p.SSID = Get-WlanSsidForAdapter -AdapterName $nic.Name }
+    return [pscustomobject]$p
+}
+
+function Invoke-EndRunNetworkRecheck {
+    <#
+    Final sanity check on the way out: did SSID/IP/gateway/link state of the handled adapter change
+    during the run? If so, log it, tee it, and pop ONE capped re-run - the re-run does the real work.
+    The SSID cache deliberately stays at the SSID the run HANDLED so the re-run sees a jump.
+    #>
+    param($Baseline)
+    $result = [pscustomobject]@{ Changed = $false; Now = $null; Rerun = $false }
+    if (-not $EndRunRecheckEnabled -or $null -eq $Baseline) { return $result }
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    try {
+        $now = Get-CprQuickNetworkProbe -Baseline $Baseline
+        $result.Now = $now
+        $diff = @()
+        if (-not $now.Found -or $now.State -ne 'Up') { $diff += "link:$($now.State)" }
+        if ("$($Baseline.IPAddress)" -ne $now.IPAddress) { $diff += 'ip' }
+        if ("$($Baseline.DefaultGateway)" -ne $now.DefaultGateway) { $diff += 'gw' }
+        if ($Baseline.AdapterClass -eq 'wifi' -and "$($Baseline.SSID)" -ne $now.SSID) { $diff += 'ssid' }
+        $setNow = Get-CprActivePhysicalSet
+        if ($null -ne $script:runAdapterSet -and $null -ne $setNow -and $setNow -ne $script:runAdapterSet) { $diff += 'adapters' }
+        Write-Log ("end_run_network_recheck changed={0} elapsed_ms={1}" -f ($diff.Count -gt 0), $sw.ElapsedMilliseconds) "DEBUG"
+        if ($diff.Count -eq 0) { return $result }
+        $result.Changed = $true
+        Write-Log ("Network changed during run ({0}): ssid '{1}' -> '{2}', ip {3} -> {4}, gw {5} -> {6}" -f `
+            ($diff -join ','), $Baseline.SSID, $now.SSID, $Baseline.IPAddress, $now.IPAddress, $Baseline.DefaultGateway, $now.DefaultGateway) "WARN"
+        if (Test-RerunAllowed) { $result.Rerun = Request-CprRerun } else { Write-Log "Re-run cap reached ($EndRunRerunMax in ${EndRunRerunWindowSec}s) - not re-running" "WARN" }
+        Write-TeeLog 'network_changed_during_run' @{
+            old_ssid = $Baseline.SSID; new_ssid = $now.SSID
+            old_ip = $Baseline.IPAddress; new_ip = $now.IPAddress; rerun = $result.Rerun
+        }
+    } catch { Write-Log "End-of-run network re-check failed: $_" "WARN" }
+    return $result
+}
