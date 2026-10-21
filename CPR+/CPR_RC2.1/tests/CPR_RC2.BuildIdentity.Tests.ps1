@@ -128,3 +128,10 @@ Describe 'Connected VPN is trusted on wake/jump' {
         (Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw) | Should -Match '\(\$earlyGate\.Wake -or \$earlyGate\.Jump\) -and -not \$VpnConnectedTrustOnWakeJump'
     }
 }
+
+Describe 'DHCP settle sleep ordering' {
+    It 'a Connected VPN short-circuits before the post-DHCP sleep' {
+        $e = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.Entry.ps1') -Raw
+        $e.IndexOf('RC2.1 Connected short-circuit') | Should -BeLessThan $e.IndexOf('Start-Sleep -Seconds $initial_sleep')
+    }
+}

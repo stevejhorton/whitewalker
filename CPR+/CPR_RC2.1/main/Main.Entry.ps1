@@ -233,24 +233,6 @@ function Invoke-WhiteWalkerMain {
                 # (Invoke-CaptivePortalRemediation / walled garden). Init null for finally safety net.
                 $ciscoBrowserKillerJob = $null
 
-                # Only the DHCP settling delay survives here - it is the one wait
-                # that is genuinely required before probing a freshly acquired
-                # lease. Nothing else is allowed between network-ready and the
-                # authoritative preflight.
-                Write-Log "Sleeping $initial_sleep seconds post-DHCP (DHCP settling - required before probing a fresh lease)..."
-                Start-Sleep -Seconds $initial_sleep
-
-                # APIPA check: 169.254.x.x + no gateway = no real network connection yet.
-                # No point hitting nwcheck or anything else - just bail.
-                if ($networkInfo.IPAddress -match '^169\.254\.' -and 
-                    ($networkInfo.DefaultGateway -eq 'N/A' -or [string]::IsNullOrEmpty($networkInfo.DefaultGateway))) {
-                    Write-Log "APIPA address ($($networkInfo.IPAddress)) with no gateway - not connected to network yet" "WARN"
-                    $script:exitReason = "no_net_transient"
-                    Invoke-WhiteWalkerStartupSubsystems
-                    Invoke-BlackholeAction -Tag 'no_net_transient'
-                    return
-                }
-
                 # =====================================================================
                 # RC2.1 Connected short-circuit: the early gate left VPN fully Connected,
                 # so the network is demonstrably up and there is no portal or ISE redirect
@@ -286,6 +268,25 @@ function Invoke-WhiteWalkerMain {
                         }
                         Write-Log "VPN reported Connected but tunnel flavor is '$scFlavor' - continuing with normal preflight" "WARN"
                     }
+                }
+
+                # (Moved below the Connected short-circuit: a Connected VPN needs no DHCP settle.)
+                # Only the DHCP settling delay survives here - it is the one wait
+                # that is genuinely required before probing a freshly acquired
+                # lease. Nothing else is allowed between network-ready and the
+                # authoritative preflight.
+                Write-Log "Sleeping $initial_sleep seconds post-DHCP (DHCP settling - required before probing a fresh lease)..."
+                Start-Sleep -Seconds $initial_sleep
+
+                # APIPA check: 169.254.x.x + no gateway = no real network connection yet.
+                # No point hitting nwcheck or anything else - just bail.
+                if ($networkInfo.IPAddress -match '^169\.254\.' -and 
+                    ($networkInfo.DefaultGateway -eq 'N/A' -or [string]::IsNullOrEmpty($networkInfo.DefaultGateway))) {
+                    Write-Log "APIPA address ($($networkInfo.IPAddress)) with no gateway - not connected to network yet" "WARN"
+                    $script:exitReason = "no_net_transient"
+                    Invoke-WhiteWalkerStartupSubsystems
+                    Invoke-BlackholeAction -Tag 'no_net_transient'
+                    return
                 }
 
                 # =====================================================================
