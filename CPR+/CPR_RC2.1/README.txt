@@ -260,6 +260,12 @@ and fields (for example `classification`, `os_name`, `trace_id`) therefore reach
 endpoints on upgrade; a tag missing from the profile is still reported truthfully
 as `tag_not_in_profile`.
 
+Level 0 is not fully silent: the master's L0 section (`tee_level_info`, `tee_level_set`) is part
+of EVERY level.  `tee_level_info` reports the effective level, the reason it is set (`reason`:
+first_install_default, legacy_profile_default, upgrade_kept_level, flag, flag_keep,
+revert_expired, console_pick, console_refresh), who wrote it, the profile version and any
+pending revert time - once a day and whenever the profile changes.
+
 Changing the level without admin rights: create an empty file
 `C:\Windows\Temp\cpr_tee_<1-5>.flag` (name only - content is ignored).  The next WW_main
 run applies it, deletes the flag, sends a `tee_level_set` event and reverts to the

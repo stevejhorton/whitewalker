@@ -31,6 +31,44 @@ function Send-TeeLevelSetEvent {
     } catch { }
 }
 
+function Send-TeeLevelInfoIfDue {
+    <#
+    Reports the EFFECTIVE tee level and why, at every level (tee_level_info lives in master L0, so even
+    level 0 reports). Sent when the active profile file changed or $TeeLevelInfoHours have passed.
+    The cheap check (file stamp vs. active file timestamp) runs first; the profile is only parsed when due.
+    #>
+    try {
+        if (-not (Test-Path -LiteralPath $TeeEventsFile)) { return }
+        $f = Get-Item -LiteralPath $TeeEventsFile -ErrorAction Stop
+        $sig = "$($f.LastWriteTimeUtc.Ticks)|$($f.Length)"
+        if (Test-Path -LiteralPath $TeeLevelInfoStampFile) {
+            try {
+                $stamp = Get-Content -LiteralPath $TeeLevelInfoStampFile -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+                $at = [datetime]::MinValue
+                if ($stamp.signature -eq $sig -and [datetime]::TryParse([string]$stamp.sent_at, [ref]$at) -and
+                    ((Get-Date) - $at).TotalHours -lt $TeeLevelInfoHours) { return }
+            } catch { }
+        }
+        $info = Get-CprActiveTeeLevelInfo -ActivePath $TeeEventsFile
+        if (-not $info.Readable -or $null -eq $info.Level) { return }
+        $st = Read-TeeRevertState
+        $revertAt = if ($st -and $st.expires_at) { [string]$st.expires_at } else { '' }
+        $r = Write-TeeLog 'tee_level_info' @{
+            level           = "$($info.Level)"
+            reason          = $(if ($info.Reason) { "$($info.Reason)" } else { 'unknown_legacy' })
+            source          = $(if ($info.GeneratedBy) { "$($info.GeneratedBy)" } else { 'unknown' })
+            generated       = $(if ($info.Generated) { "$($info.Generated)" } else { '' })
+            profile_version = $(if ($info.ProfileVersion) { "$($info.ProfileVersion)" } else { '' })
+            revert_at       = $revertAt
+            tag_count       = "$($info.TagCount)"
+        } -PassThru
+        if ($r -and $r.Queued) {
+            @{ sent_at = (Get-Date).ToString('o'); signature = $sig } | ConvertTo-Json |
+                Set-Content -LiteralPath $TeeLevelInfoStampFile -Encoding UTF8 -Force -ErrorAction SilentlyContinue
+        }
+    } catch { }
+}
+
 function Move-TeeFlagToFailed {
     param([string]$Path)
     try {
@@ -61,7 +99,7 @@ function Invoke-TeeLevelFlagCheck {
                 if ($null -ne $info.Level -and [int]$info.Level -eq [int]$state.set_level) {
                     if ($WhatIf) { Write-Log "WHATIF: would revert tee level $($state.set_level) -> $($state.previous_level)" "INFO" }
                     else {
-                        $r = Set-CprTeeLevel -Level ([int]$state.previous_level) -MasterPath $TeeMasterFile -ActivePath $TeeEventsFile -GeneratedBy 'cpr_tee_revert'
+                        $r = Set-CprTeeLevel -Level ([int]$state.previous_level) -MasterPath $TeeMasterFile -ActivePath $TeeEventsFile -GeneratedBy 'cpr_tee_revert' -Reason 'revert_expired'
                         if ($r.Success) {
                             Write-Log "TeeFlag: reverted tee level $($state.set_level) -> $($state.previous_level) (flag level expired)" "INFO"
                             Send-TeeLevelSetEvent -Level $state.previous_level -PreviousLevel $state.set_level -Source 'revert' -Result 'reverted' -Reason 'expired'
@@ -119,7 +157,7 @@ function Invoke-TeeLevelFlagCheck {
                 if ($WhatIf) {
                     Write-Log "WHATIF: would set tee level $($pick.Level) from $($pick.File.Name)" "INFO"
                 } else {
-                    $r = Set-CprTeeLevel -Level $pick.Level -MasterPath $TeeMasterFile -ActivePath $TeeEventsFile -GeneratedBy 'cpr_tee_flag'
+                    $r = Set-CprTeeLevel -Level $pick.Level -MasterPath $TeeMasterFile -ActivePath $TeeEventsFile -GeneratedBy 'cpr_tee_flag' -Reason $(if ($pick.Keep) { 'flag_keep' } else { 'flag' })
                     if ($r.Success) {
                         Remove-Item -LiteralPath $pick.File.FullName -Force -ErrorAction SilentlyContinue
                         $stateOut = [ordered]@{
@@ -141,6 +179,9 @@ function Invoke-TeeLevelFlagCheck {
                 }
             }
         }
+
+        # ---- 2b. effective level report (always-on, level 0 and up) ------------------------------
+        if (-not $WhatIf) { Send-TeeLevelInfoIfDue }
 
         # ---- 3. sweep stale *.failed -------------------------------------------------------------
         if (-not $WhatIf) {

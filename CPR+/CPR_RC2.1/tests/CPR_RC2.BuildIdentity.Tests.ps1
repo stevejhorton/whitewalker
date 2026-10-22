@@ -196,6 +196,18 @@ Describe 'Tee master and level tool' {
         $r.Success | Should -BeFalse
         (Get-Content $active -Raw) | Should -Be $before
     }
+    It 'level 0 still carries the level reporting events (and nothing else)' {
+        $l0 = Get-CprTeeLevelProfile -Level 0 -MasterPath $script:master
+        @($l0.Events.Keys | Sort-Object) | Should -Be @('tee_level_info','tee_level_set')
+    }
+    It 'the generated header records who wrote the profile and why' {
+        $active = Join-Path $TestDrive 'why.psd1'
+        $null = Set-CprTeeLevel -Level 2 -MasterPath $script:master -ActivePath $active -GeneratedBy 'unit' -Reason 'because'
+        $i = Get-CprActiveTeeLevelInfo -ActivePath $active
+        $i.Reason | Should -Be 'because'
+        $i.GeneratedBy | Should -Be 'unit'
+        $i.TagCount | Should -BeGreaterThan 2
+    }
     It 'Get-CprActiveTeeLevelInfo reads the Level marker and the Custom opt-out' {
         $p = Join-Path $TestDrive 'info.psd1'
         Set-Content $p "@{ Level = 5; ProfileVersion = 'v'; Custom = `$true; Events = @{} }" -Encoding UTF8
@@ -219,11 +231,12 @@ Describe 'cpr_tee_<N>.flag handler' {
         $script:TeeMasterFile = Join-Path $script:root 'WW_tee_master.psd1'
         $script:TeeEventsFile = Join-Path $script:flagDir 'active.psd1'
         $script:TeeRevertStateFile = Join-Path $script:flagDir 'revert.json'
+        $script:TeeLevelInfoHours = 24; $script:TeeLevelInfoStampFile = Join-Path $script:flagDir 'info.stamp'
         $script:TeeDefaultLevel = 1; $script:TeeFlagCooldownMinutes = 10; $script:TeeFlagRevertHours = 336
         $script:TeeFlagFailedMaxAgeDays = 7; $script:WhatIf = $false
         $script:teeEvents = @()
         function Write-Log { param($m,$l) }
-        function Write-TeeLog { param($Tag,$Data) $script:teeEvents += ,@{ Tag = $Tag; Data = $Data } }
+        function Write-TeeLog { param($Tag,$Data,[switch]$PassThru) $script:teeEvents += ,@{ Tag = $Tag; Data = $Data }; if ($PassThru) { [pscustomobject]@{ Queued = $true } } }
         . $script:TeeSetScript
         $null = Set-CprTeeLevel -Level 1 -MasterPath $script:TeeMasterFile -ActivePath $script:TeeEventsFile
     }
@@ -318,6 +331,19 @@ Describe 'cpr_tee_<N>.flag handler' {
         New-Item (Join-Path $script:flagDir 'cpr_tee_4_keep.flag') -ItemType File | Out-Null
         Invoke-TeeLevelFlagCheck
         (Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json).expires_at | Should -BeNullOrEmpty
+    }
+    It 'reports the effective level and reason (tee_level_info) once, then not again until it changes or 24h pass' {
+        Invoke-TeeLevelFlagCheck
+        @($script:teeEvents | Where-Object { $_.Tag -eq 'tee_level_info' }).Count | Should -Be 1
+        Invoke-TeeLevelFlagCheck
+        @($script:teeEvents | Where-Object { $_.Tag -eq 'tee_level_info' }).Count | Should -Be 1
+        New-Item (Join-Path $script:flagDir 'cpr_tee_4.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        $infos = @($script:teeEvents | Where-Object { $_.Tag -eq 'tee_level_info' })
+        $infos.Count | Should -Be 2
+        $infos[1].Data.level | Should -Be '4'
+        $infos[1].Data.reason | Should -Be 'flag'
+        $infos[1].Data.revert_at | Should -Not -BeNullOrEmpty
     }
     It 'sweeps stale .failed flags but keeps fresh ones' {
         $old = New-Item (Join-Path $script:flagDir 'cpr_tee_5.failed') -ItemType File

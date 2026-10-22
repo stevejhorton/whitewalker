@@ -825,7 +825,7 @@ Active tee profile: $($status.Active)" -ForegroundColor Cyan
     try {
         . $script:TeeSetScript   # function scope only
         $n = [int]($status.Level -replace '^tee_level_', '')
-        $r = Set-CprTeeLevel -Level $n -MasterPath $script:TeeMasterFile -ActivePath $script:ActiveTeeProfile -GeneratedBy 'admin_console_refresh'
+        $r = Set-CprTeeLevel -Level $n -MasterPath $script:TeeMasterFile -ActivePath $script:ActiveTeeProfile -GeneratedBy 'admin_console_refresh' -Reason 'console_refresh'
         if (-not $r.Success) { throw $r.Error }
         Write-WWAdminLog "Refreshed active tee profile at '$($status.Level)' from master (selected level preserved)"
         Write-Host "Done. Active profile regenerated at $($status.Level); the selected level is unchanged." -ForegroundColor Green
@@ -870,7 +870,7 @@ function Invoke-WWTeeLevelPicker {
 
     try {
         . $script:TeeSetScript   # function scope only
-        $r = Set-CprTeeLevel -Level $chosen.Level -MasterPath $script:TeeMasterFile -ActivePath $script:ActiveTeeProfile -GeneratedBy 'admin_console'
+        $r = Set-CprTeeLevel -Level $chosen.Level -MasterPath $script:TeeMasterFile -ActivePath $script:ActiveTeeProfile -GeneratedBy 'admin_console' -Reason 'console_pick'
         if (-not $r.Success) { throw $r.Error }
     } catch {
         Write-Host "Failed to activate $($chosen.Name): $_" -ForegroundColor Red

@@ -2,7 +2,7 @@
     # =========================================================================
     # WW_tee_master.psd1 - THE ONE FILE that defines every tee log level.
     # =========================================================================
-    # Each LnN section lists ONLY the tags that level ADDS. A level contains its
+    # Each Ln section lists ONLY the tags that level ADDS. A level contains its
     # own tags plus every tag of all lower levels (level 3 = L1 + L2 + L3).
     # WW_set_tee_level.ps1 merges levels 1..N and writes the active
     # WW_tee_events.psd1 (flat, with Level / ProfileVersion / Generated header).
@@ -12,11 +12,12 @@
     # call the same tool. Bump MasterVersion whenever any tag changes so a stale
     # active profile is detectable.
     #
-    # Level 0 is SILENT and has no section. Plain data file: no code runs here.
-    MasterVersion = 'RC2.1-m2'
+    # L0 holds the always-on tee level reporting events (every level includes it, so even level 0
+    # reports which level a box runs at). Plain data file: no code runs here.
+    MasterVersion = 'RC2.1-m3'
 
     LevelDescriptions = @{
-        L0 = 'SILENT - no events leave the box'
+        L0 = 'MINIMAL - only tee level reporting (tee_level_info / tee_level_set); nothing else leaves the box'
         L1 = 'CORE - fleet health, VPN/ISE, captive portal incl. flare lifecycle (all of it), XmlVault, self-update (recommended default)'
         L2 = 'CORE + NETWORK CONTEXT - adds per-run network state and SSID changes'
         L3 = '+ POSTURE DETAIL / MAC RANDOMIZATION / TRUSTED SSID'
@@ -25,6 +26,27 @@
     }
 
     Levels = @{
+        L0 = @{
+            Events = @{
+
+                tee_level_set = @{
+                    action = 'tee_level_set'
+                    fields = @('level','previous_level','source','result','reason')
+                    # Fires when: the tee level is changed by a cpr_tee_<N>.flag, an automatic
+                    # revert, the installer, or the admin console. Always on (level 0 and up) so
+                    # every change (and every refusal) is visible in Splunk.
+                }
+
+                tee_level_info = @{
+                    action = 'tee_level_info'
+                    fields = @('level','reason','source','generated','profile_version','revert_at','tag_count')
+                    # Fires when: once per $TeeLevelInfoHours (24h) AND whenever the effective level or
+                    # profile changes. Always on - present at every level, including 0 - so Splunk can
+                    # always see which level a box runs at, why, and when a flag level will revert.
+                }
+            }
+        }
+
         L1 = @{
             Events = @{
 
@@ -181,14 +203,6 @@
                     fields = @('mode','result','duration_sec')
                     # Fires when: full or base cap portal runner completes (success,
                     # timeout, or escalation from base->full).
-                }
-
-                tee_level_set = @{
-                    action = 'tee_level_set'
-                    fields = @('level','previous_level','source','result','reason')
-                    # Fires when: the tee level is changed by a cpr_tee_<N>.flag, an automatic
-                    # revert, the installer, or the admin console. Always in level 1 so every
-                    # change (and every refusal) is visible in Splunk.
                 }
 
                 flare_dispatched = @{ action = 'flare_dispatched';       fields = @('flare_tag','event_id','context','dispatch_method','status','reason','ssid','vpn_state') }

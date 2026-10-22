@@ -26,7 +26,8 @@ param(
     [ValidateRange(-1,5)][int]$Level = -1,
     [string]$MasterPath = (Join-Path $PSScriptRoot 'WW_tee_master.psd1'),
     [string]$ActivePath = (Join-Path $PSScriptRoot 'WW_tee_events.psd1'),
-    [string]$GeneratedBy = 'WW_set_tee_level'
+    [string]$GeneratedBy = 'WW_set_tee_level',
+    [string]$Reason = ''
 )
 
 function Read-CprTeeMaster {
@@ -39,7 +40,8 @@ function Read-CprTeeMaster {
 
 function Get-CprTeeLevelProfile {
     <#
-    Returns @{ Events = <merged hashtable>; MasterVersion; Level } for levels 1..Level.
+    Returns @{ Events = <merged hashtable>; MasterVersion; Level } for levels 0..Level
+    (L0 = the always-on tee level reporting events, present at every level including 0).
     A tag defined in two levels is a master error and throws (the Pester test also guards it).
     #>
     param(
@@ -49,7 +51,7 @@ function Get-CprTeeLevelProfile {
     )
     if ($null -eq $Master) { $Master = Read-CprTeeMaster -MasterPath $MasterPath }
     $events = @{}
-    for ($i = 1; $i -le $Level; $i++) {
+    for ($i = 0; $i -le $Level; $i++) {
         $section = $Master.Levels["L$i"]
         if ($null -eq $section -or $null -eq $section.Events) { continue }
         foreach ($tag in $section.Events.Keys) {
@@ -66,7 +68,7 @@ function ConvertTo-CprPsdString {
 }
 
 function ConvertTo-CprTeeProfileText {
-    param([Parameter(Mandatory)]$LevelProfile, [string]$GeneratedBy = 'WW_set_tee_level')
+    param([Parameter(Mandatory)]$LevelProfile, [string]$GeneratedBy = 'WW_set_tee_level', [string]$Reason = '')
     $nl = "`r`n"
     $sb = [System.Text.StringBuilder]::new()
     [void]$sb.Append("@{$nl")
@@ -77,6 +79,7 @@ function ConvertTo-CprTeeProfileText {
     [void]$sb.Append("    ProfileVersion = $(ConvertTo-CprPsdString $LevelProfile.MasterVersion)$nl")
     [void]$sb.Append("    Generated      = $(ConvertTo-CprPsdString ([datetime]::UtcNow.ToString('o')))$nl")
     [void]$sb.Append("    GeneratedBy    = $(ConvertTo-CprPsdString $GeneratedBy)$nl")
+    [void]$sb.Append("    Reason         = $(ConvertTo-CprPsdString $Reason)$nl")
     [void]$sb.Append("    Events = @{$nl")
     foreach ($tag in ($LevelProfile.Events.Keys | Sort-Object)) {
         $def = $LevelProfile.Events[$tag]
@@ -88,9 +91,9 @@ function ConvertTo-CprTeeProfileText {
 }
 
 function Get-CprActiveTeeLevelInfo {
-    <# Reads Level / ProfileVersion / Custom from the active profile. Never throws. #>
+    <# Reads Level / ProfileVersion / Custom / Reason / GeneratedBy / Generated from the active profile. Never throws. #>
     param([string]$ActivePath = (Join-Path $PSScriptRoot 'WW_tee_events.psd1'))
-    $info = [pscustomobject]@{ Exists = $false; Level = $null; ProfileVersion = $null; Custom = $false; Readable = $false }
+    $info = [pscustomobject]@{ Exists = $false; Level = $null; ProfileVersion = $null; Custom = $false; Readable = $false; Reason = $null; GeneratedBy = $null; Generated = $null; TagCount = 0 }
     if (-not (Test-Path -LiteralPath $ActivePath)) { return $info }
     $info.Exists = $true
     try {
@@ -102,6 +105,10 @@ function Get-CprActiveTeeLevelInfo {
         }
         $info.ProfileVersion = $d.ProfileVersion
         $info.Custom = ($d.Custom -eq $true)
+        $info.Reason = $d.Reason
+        $info.GeneratedBy = $d.GeneratedBy
+        $info.Generated = $d.Generated
+        $info.TagCount = @($d.Events.Keys).Count
     } catch { }
     return $info
 }
@@ -112,14 +119,15 @@ function Set-CprTeeLevel {
         [Parameter(Mandatory)][ValidateRange(0,5)][int]$Level,
         [string]$MasterPath = (Join-Path $PSScriptRoot 'WW_tee_master.psd1'),
         [string]$ActivePath = (Join-Path $PSScriptRoot 'WW_tee_events.psd1'),
-        [string]$GeneratedBy = 'WW_set_tee_level'
+        [string]$GeneratedBy = 'WW_set_tee_level',
+        [string]$Reason = ''
     )
     $result = [pscustomobject]@{ Success = $false; Level = $Level; PreviousLevel = $null; Path = $ActivePath; Error = $null }
     $tmp = "$ActivePath.new"
     try {
         $result.PreviousLevel = (Get-CprActiveTeeLevelInfo -ActivePath $ActivePath).Level
         $lp = Get-CprTeeLevelProfile -Level $Level -MasterPath $MasterPath
-        $text = ConvertTo-CprTeeProfileText -LevelProfile $lp -GeneratedBy $GeneratedBy
+        $text = ConvertTo-CprTeeProfileText -LevelProfile $lp -GeneratedBy $GeneratedBy -Reason $Reason
         Set-Content -LiteralPath $tmp -Value $text -Encoding UTF8 -Force -ErrorAction Stop
 
         # Validate before it goes live: must parse, carry the right Level, and hold every tag.
@@ -141,7 +149,7 @@ function Set-CprTeeLevel {
 
 # Run directly (not dot-sourced) with -Level: apply and set the exit code.
 if ($MyInvocation.InvocationName -ne '.' -and $Level -ge 0) {
-    $r = Set-CprTeeLevel -Level $Level -MasterPath $MasterPath -ActivePath $ActivePath -GeneratedBy $GeneratedBy
+    $r = Set-CprTeeLevel -Level $Level -MasterPath $MasterPath -ActivePath $ActivePath -GeneratedBy $GeneratedBy -Reason $Reason
     if ($r.Success) { Write-Output "tee level $($r.Level) written to $($r.Path) (was: $(if ($null -ne $r.PreviousLevel) { $r.PreviousLevel } else { 'unknown' }))"; exit 0 }
     Write-Error "tee level change failed: $($r.Error)"; exit 1
 }

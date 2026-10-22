@@ -316,6 +316,8 @@ $TeeFlagEnabled           = $true
 $TeeFlagDir               = "C:\Windows\Temp"
 $TeeFlagCooldownMinutes   = 10     # minimum minutes between flag-applied level changes (extra flags wait)
 $TeeFlagRevertHours       = 336    # cpr_tee_<N>.flag reverts to the previous level after this long (14 days); 0 = never. cpr_tee_<N>_keep.flag never reverts
+$TeeLevelInfoHours         = 24     # tee_level_info (effective level + reason) is re-sent at least this often; also on any change
+$TeeLevelInfoStampFile     = "C:\ProgramData\WhiteWalker\tee_level_info.stamp"
 $TeeFlagFailedMaxAgeDays  = 7      # stale *.failed flags (cpr_tee_*, cpr_update_*) are swept after this long
 $TeeRevertStateFile       = "C:\ProgramData\WhiteWalker\tee_level_revert.json"
 

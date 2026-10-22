@@ -791,10 +791,11 @@ function Update-TeeProfile {
             return $true
         }
         $level  = if ($null -ne $info.Level) { [int]$info.Level } else { [int]$TeeDefaultLevel }
+        $reasonKey = if ($null -ne $info.Level) { 'upgrade_kept_level' } elseif ($info.Exists) { 'legacy_profile_default' } else { 'first_install_default' }
         $reason = if ($null -ne $info.Level) { "kept level $level (was ProfileVersion '$($info.ProfileVersion)')" }
                   elseif ($info.Exists)      { "no Level marker (legacy profile) - using default level $level" }
                   else                       { "first install - using default level $level" }
-        $r = Set-CprTeeLevel -Level $level -MasterPath $masterPath -ActivePath $activePath -GeneratedBy 'install.ps1'
+        $r = Set-CprTeeLevel -Level $level -MasterPath $masterPath -ActivePath $activePath -GeneratedBy 'install.ps1' -Reason $reasonKey
         if ($r.Success) {
             Write-InstallLog "Tee profile written: level $level - $reason" "SUCCESS"
             return $true

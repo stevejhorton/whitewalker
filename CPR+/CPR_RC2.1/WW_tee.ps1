@@ -27,7 +27,7 @@
   dropped. Swapping logging intensity fleet-wide (or on one box for an
   incident) is just a file copy:
 
-      .\WW_set_tee_level.ps1 -Level 0   # silence everything
+      .\WW_set_tee_level.ps1 -Level 0   # minimal: only tee_level_info / tee_level_set
       .\WW_set_tee_level.ps1 -Level 5   # everything, for an incident
       (or touch C:\Windows\Temp\cpr_tee_<1-5>.flag - no admin needed; levels live in WW_tee_master.psd1)
 
