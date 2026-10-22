@@ -804,6 +804,7 @@ function Update-TeeProfile {
                 Write-InstallLog "ERROR: tee profile write reported success at '$($r.Path)' but $realPath reads Level='$($back.Level)' (expected $level)" "ERROR"
                 return $false
             }
+            $script:TeeLevelFinal = $level
             Write-InstallLog "Tee profile written: level $level - $reason" "SUCCESS"
             return $true
         }
@@ -1374,6 +1375,8 @@ try {
         Write-InstallLog "" "INFO"
         Write-InstallLog "Log-and-Tee subsystem deployed to: $MainScriptDeployDir" "INFO"
         Write-InstallLog "  WW_tee_events.psd1 - ACTIVE profile (generated from WW_tee_master.psd1; its Level is kept on upgrade)" "INFO"
+        $teeLvlText = if ($null -ne $script:TeeLevelFinal) { "level $($script:TeeLevelFinal)" } else { "level not changed by this install" }
+        Write-InstallLog "  Tee level now: $teeLvlText" "INFO"
         Write-InstallLog "  Change level: WW_set_tee_level.ps1 -Level N, the admin console, or touch C:\Windows\Temp\cpr_tee_<1-5>.flag (no admin needed)" "INFO"
         Write-InstallLog "" "INFO"
         Write-InstallLog "Logs: $LogDir" "INFO"
