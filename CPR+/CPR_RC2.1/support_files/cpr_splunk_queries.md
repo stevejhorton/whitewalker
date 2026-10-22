@@ -34,13 +34,13 @@ index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="needle_hit" | 
 index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="haystack_header_fields" | table EvtTime,action,machine,user,Label,header_field,collected_at,ww_version,os,model,serial,last_boot,csc_version,csc_source,vpn_profile | dedup EvtTime | sort - EvtTime
 ```
 ```spl
-index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="cpr_self_update_triggered" | table EvtTime,action,machine,user,channel,status,network_state,reason | dedup EvtTime | sort - EvtTime
+index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="cpr_self_update_triggered" | table EvtTime,action,machine,user,channel,status,attempt,network_state,reason | dedup EvtTime | sort - EvtTime
 ```
 ```spl
-index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="cpr_self_update_passed" | table EvtTime,action,machine,user,channel,status,network_state,reason,exit_code | dedup EvtTime | sort - EvtTime
+index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="cpr_self_update_passed" | table EvtTime,action,machine,user,channel,status,attempt,network_state,reason,exit_code | dedup EvtTime | sort - EvtTime
 ```
 ```spl
-index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="cpr_self_update_failed" | table EvtTime,action,machine,user,channel,status,network_state,reason,exit_code | dedup EvtTime | sort - EvtTime
+index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="cpr_self_update_failed" | table EvtTime,action,machine,user,channel,status,attempt,network_state,reason,exit_code | dedup EvtTime | sort - EvtTime
 ```
 ```spl
 index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="xml_vault_triggered" | table EvtTime,action,machine,user,mode,status,source,reason,profile_name,profile_count | dedup EvtTime | sort - EvtTime

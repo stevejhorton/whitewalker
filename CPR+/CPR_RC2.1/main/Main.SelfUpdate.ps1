@@ -10,7 +10,9 @@ function Invoke-SelfUpdate {
     Checks for cpr_update_dev.flag or cpr_update_prod.flag in C:\Windows\Temp.
     If found and network state allows, pulls cpr_current.zip from NETLOGON
     bin/DEV or bin/PROD channel, extracts to $env:TEMP, and runs install.ps1.
-    Renames flag to .failed on error so techs can see it. Never touches logs.
+    On failure the attempt count is written into the flag and the next run retries;
+    after $SelfUpdateMaxAttempts failures the flag is renamed .failed so techs can see it.
+    Never touches logs.
     Gated by $SelfUpdateEnabled.
     #>
 
@@ -37,12 +39,25 @@ function Invoke-SelfUpdate {
 
     if (-not $channel) { return }  # no flag, nothing to do
 
+    # Failed attempts so far live in the flag itself (an empty/legacy flag = 0). The flag sits in a
+    # user-writable folder, so anything that is not a positive integer counts as 0 and the value is capped.
+    $maxAttempts = [math]::Max(1, [int]$SelfUpdateMaxAttempts)
+    $priorFailures = 0
+    try {
+        $rawCount = [string](Get-Content -LiteralPath $flagFile -Raw -ErrorAction Stop)
+        $parsedCount = 0
+        if ([int]::TryParse($rawCount.Trim(), [ref]$parsedCount) -and $parsedCount -gt 0) {
+            $priorFailures = [math]::Min($parsedCount, $maxAttempts)
+        }
+    } catch { }
+
     $telemetryNetworkState = Get-SelfUpdateNetworkState
     Write-TeeLog 'cpr_self_update_triggered' @{
         channel       = $channel
         status        = 'detected'
         network_state = $telemetryNetworkState
         reason        = 'flag_detected'
+        attempt       = [string]($priorFailures + 1)
     }
 
     if (-not $SelfUpdateEnabled) {
@@ -104,9 +119,15 @@ function Invoke-SelfUpdate {
 
     try {
         # Verify share is reachable
-        if (-not (Test-Path $remoteZip)) {
-            $failureReason = "remote_zip_missing"
-            throw "Remote zip not found: $remoteZip"
+        if (-not (Test-Path -LiteralPath $remoteZip)) {
+            # Test-Path is $false for "not there" AND for "could not reach it" (slow SMB/DNS on a busy box).
+            # Probe the parent folder to tell them apart so Splunk shows the real cause.
+            if (Test-Path -LiteralPath $SelfUpdateRemoteBase) {
+                $failureReason = "remote_zip_missing"
+                throw "Remote zip not found (share reachable): $remoteZip"
+            }
+            $failureReason = "share_unreachable"
+            throw "Share not reachable (neither the zip nor $SelfUpdateRemoteBase could be seen): $remoteZip"
         }
 
         # Pull zip
@@ -172,30 +193,42 @@ function Invoke-SelfUpdate {
             network_state = $lastState
             reason        = 'install_completed'
             exit_code     = if ($null -ne $proc.ExitCode) { [string]$proc.ExitCode } else { '' }
+            attempt       = [string]($priorFailures + 1)
         }
         Write-Log ("phase_timing phase='self_update_maintenance' elapsed_ms={0} status='completed'" -f `
             [math]::Round(((Get-Date) - $selfUpdateStartedAt).TotalMilliseconds)) "INFO"
 
     } catch {
-        $failedFlag = $flagFile -replace '\.(flag)$', '.failed'
+        $failedFlag   = $flagFile -replace '\.(flag)$', '.failed'
         $errorSummary = if ($_.Exception -and $_.Exception.Message) { $_.Exception.Message } else { $_.ToString() }
+        $failedCount  = $priorFailures + 1
+        $gaveUp       = ($failedCount -ge $maxAttempts)
         Write-TeeLog 'cpr_self_update_failed' @{
             channel       = $channel
-            status        = 'failed'
+            status        = if ($gaveUp) { 'gave_up' } else { 'retry_pending' }
             network_state = $lastState
             reason        = $failureReason
             exit_code     = if ($null -ne $installerExitCode) { [string]$installerExitCode } else { '' }
+            attempt       = [string]$failedCount
         }
         Write-Log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" "ERROR"
-        Write-Log "[!!] SELF-UPDATE FAILED - channel=$channel" "ERROR"
+        Write-Log "[!!] SELF-UPDATE FAILED - channel=$channel attempt $failedCount of $maxAttempts" "ERROR"
         Write-Log "[!!] Error category: $failureReason" "ERROR"
         Write-Log "[!!] Error: $errorSummary" "ERROR"
-        Write-Log "[!!] Flag renamed to: $failedFlag" "ERROR"
+        if ($gaveUp) {
+            Write-Log "[!!] Giving up - flag renamed to: $failedFlag" "ERROR"
+        } else {
+            Write-Log "[!!] Flag kept (count=$failedCount); the next run will retry" "ERROR"
+        }
         Write-Log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" "ERROR"
         try {
-            Rename-Item -Path $flagFile -NewName (Split-Path $failedFlag -Leaf) -Force -ErrorAction Stop
+            if ($gaveUp) {
+                Rename-Item -Path $flagFile -NewName (Split-Path $failedFlag -Leaf) -Force -ErrorAction Stop
+            } else {
+                Set-Content -LiteralPath $flagFile -Value ([string]$failedCount) -Encoding ASCII -Force -ErrorAction Stop
+            }
         } catch {
-            Write-Log "SelfUpdate: could not rename flag file: $_" "WARN"
+            Write-Log "SelfUpdate: could not update flag file: $_" "WARN"
         }
         Remove-Item $localZip -Force -ErrorAction SilentlyContinue
         Write-Log ("phase_timing phase='self_update_maintenance' elapsed_ms={0} status='failed' reason='{1}'" -f `

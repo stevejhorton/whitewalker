@@ -482,3 +482,35 @@ Describe 'Admin console log browser' {
         $b | Should -Not -Match 'Set-Content|Add-Content|Remove-Item|Out-File'
     }
 }
+
+Describe 'Self-update retry counter' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $script:su  = Get-Content (Join-Path $root 'main\Main.SelfUpdate.ps1') -Raw
+        $script:cfg = Get-Content (Join-Path $root 'main\Main.Configuration.ps1') -Raw
+    }
+    It 'has a configurable attempt limit' {
+        $script:cfg | Should -Match '\$SelfUpdateMaxAttempts\s*=\s*5'
+    }
+    It 'reads the count from the flag and treats junk as zero' {
+        $script:su | Should -Match 'Get-Content -LiteralPath \$flagFile -Raw'
+        $script:su | Should -Match '\[int\]::TryParse\(\$rawCount\.Trim\(\)'
+        $script:su | Should -Match '\[math\]::Min\(\$parsedCount, \$maxAttempts\)'
+    }
+    It 'keeps the flag and records the count until the limit, then renames to .failed' {
+        $script:su | Should -Match 'Set-Content -LiteralPath \$flagFile -Value \(\[string\]\$failedCount\)'
+        $script:su | Should -Match '\$gaveUp\s*=\s*\(\$failedCount -ge \$maxAttempts\)'
+        $script:su | Should -Match "if \(\`$gaveUp\) \{\s*Rename-Item -Path \`$flagFile"
+    }
+    It 'tees every attempt with attempt= and a retry_pending / gave_up status' {
+        $script:su | Should -Match "'gave_up' \} else \{ 'retry_pending'"
+        ([regex]::Matches($script:su, 'attempt\s*=\s*\[string\]')).Count | Should -BeGreaterOrEqual 3
+    }
+    It 'tells an unreachable share from a missing zip' {
+        $script:su | Should -Match 'share_unreachable'
+        $script:su | Should -Match 'Test-Path -LiteralPath \$SelfUpdateRemoteBase'
+    }
+    It 'adds no nested functions (only Get-SelfUpdateNetworkState is allowed)' {
+        ([regex]::Matches($script:su, '(?m)^\s+function ')).Count | Should -Be 1
+    }
+}

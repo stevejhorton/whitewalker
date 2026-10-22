@@ -337,6 +337,7 @@ $SelfUpdateDevFlag           = "C:\Windows\Temp\cpr_update_dev.flag"
 $SelfUpdateProdFlag          = "C:\Windows\Temp\cpr_update_prod.flag"
 $SelfUpdateCooldownFlag      = "C:\ProgramData\WhiteWalker\cpr_update_ran.flag"
 $SelfUpdateCooldownMinutes   = 10   # prevent re-trigger loop
+$SelfUpdateMaxAttempts       = 5    # failed attempts before the flag is renamed .failed (each failure is written into the flag; next run retries)
 $SelfUpdateRemoteBase        = "\\ms.ds.uhc.com\netlogon\UHG\Scripts\AOVPN\CPR\bin"
 $SelfUpdateZipName           = "cpr_current.zip"
 $SelfUpdateInstallScript     = "install.ps1"
