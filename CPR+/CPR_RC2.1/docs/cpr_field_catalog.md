@@ -116,8 +116,11 @@ is the cache recomputation time. `vpn_profile` can be `NOT_SET` when absent.
 
 Actions: `cpr_self_update_triggered`, `cpr_self_update_passed`,
 `cpr_self_update_failed`. Common fields plus `channel` (`DEV`/`PROD`),
-`status`, `network_state`, `reason`; passed/failed events also normally carry
-`exit_code`.
+`status`, `network_state`, `reason`, `attempt` (which try this was, 1-based);
+passed/failed events also normally carry `exit_code`. On failure `status` is
+`retry_pending` (flag kept, next run retries) or `gave_up` (flag renamed `.failed`
+after `$SelfUpdateMaxAttempts`); `reason` can be `share_unreachable` or
+`remote_zip_missing`.
 
 ### XmlVault
 

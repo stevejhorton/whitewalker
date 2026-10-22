@@ -14,7 +14,7 @@
     #
     # L0 holds the always-on tee level reporting events (every level includes it, so even level 0
     # reports which level a box runs at). Plain data file: no code runs here.
-    MasterVersion = 'RC2.1-m3'
+    MasterVersion = 'RC2.1-m4'
 
     LevelDescriptions = @{
         L0 = 'MINIMAL - only tee level reporting (tee_level_info / tee_level_set); nothing else leaves the box'
@@ -73,20 +73,20 @@
 
                 cpr_self_update_triggered = @{
                     action = 'cpr_self_update_triggered'
-                    fields = @('channel','status','network_state','reason')
+                    fields = @('channel','status','network_state','reason','attempt')
                     # Fires when: DEV/PROD update flag is detected and self-update is
                     # evaluating eligibility.
                 }
 
                 cpr_self_update_passed = @{
                     action = 'cpr_self_update_passed'
-                    fields = @('channel','status','network_state','reason','exit_code')
+                    fields = @('channel','status','network_state','reason','exit_code','attempt')
                     # Fires when: update install.ps1 completes successfully.
                 }
 
                 cpr_self_update_failed = @{
                     action = 'cpr_self_update_failed'
-                    fields = @('channel','status','network_state','reason','exit_code')
+                    fields = @('channel','status','network_state','reason','exit_code','attempt')
                     # Fires when: update is skipped (deferred/disabled/cooldown) or
                     # fails during package/install processing.
                 }
