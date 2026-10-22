@@ -268,7 +268,7 @@ if ($RunSimulation) {
         Write-Line "Direct delivery bypasses the local queue entirely, so an empty/missing queue file above is NOT evidence of failure."
         Write-Line "The only authoritative confirmation is Splunk. Run this query:"
         Write-Line '  index=cba_cpr_logging test="1" action="cap_portal_redirect" | table EvtTime,action,machine,user,url,port,ssid,vpn_state'
-        Write-Line "Expect 2 rows (one per default PortalUrls entry) with machine=$env:COMPUTERNAME and a recent EvtTime."
+        Write-Line "Expect 2 rows (one per default PortalUrls entry) with machine=CPR_TESTER and a recent EvtTime."
     } else {
         Write-Line "Test-HayStackSyslog.ps1 not found in any expected location - skipping simulation."
         Write-Line "Expected one of:"

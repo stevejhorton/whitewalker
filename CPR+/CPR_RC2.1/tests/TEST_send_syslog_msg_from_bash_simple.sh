@@ -1,5 +1,8 @@
 hostname=`hostname`
 user=`whoami`
+machine="CPR_TESTER"
+evt=$(date -Iseconds)
+msg="<133>$(date '+%b %e %H:%M:%S') $hostname CPR-test: action=\"test_shot\" machine=\"$machine\" user=\"$user\" EvtTime=\"$evt\" msg=\"hello from bash\" note=\"src_host=$hostname\""
 
-echo "SENT: <133>$(date '+%b %e %H:%M:%S') testhost CPR-test: action=test_shot machine=\"$hostname\" user=\"$user\" msg=\"hello from bash\""
-echo "<133>$(date '+%b %e %H:%M:%S') testhost CPR-test: action=test_shot machine=\"$hostname\" user=\"$user\" msg=\"hello from bash\"" | nc -u -w1 cpr-syslog.uhc.com 514
+echo "SENT: $msg"
+echo "$msg" | nc -u -w1 cpr-syslog.uhc.com 514

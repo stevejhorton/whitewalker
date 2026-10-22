@@ -134,7 +134,7 @@
     Version : 1.0.0
 
     Key behaviors:
-      - machine= is always resolved from Win32_ComputerSystem or environment
+      - machine= is the -MachineName value (default CPR_TESTER) on every test event
       - user= is always resolved from Win32_ComputerSystem.UserName (works in SYSTEM context)
       - port= is calculated from URI: explicit port if present, else 80/443 for http/https
       - EvtTime is RFC 3339 ISO format (ISO 8601 zulu time)
@@ -188,7 +188,8 @@ param(
         'https://portal.example.test:8443/login?from=cpr_test',
         'http://portal.example.test:8080/auth?from=cpr_test'
     ),
-    [string]  $TestMarker        = '1'
+    [string]  $TestMarker        = '1',
+    [string]  $MachineName       = 'CPR_TESTER'   # machine= value for every test event (real host stays in the syslog header)
 )
 
 Set-StrictMode -Version Latest
@@ -215,6 +216,7 @@ function Get-LoggedOnUser {
 }
 
 function Get-MachineName {
+    if (-not [string]::IsNullOrWhiteSpace($MachineName)) { return $MachineName }
     if (-not [string]::IsNullOrWhiteSpace($env:COMPUTERNAME)) {
         return $env:COMPUTERNAME
     }

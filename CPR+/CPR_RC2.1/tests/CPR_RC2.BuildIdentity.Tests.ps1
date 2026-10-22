@@ -447,3 +447,22 @@ Describe 'Syslog path diagnostic' {
     }
 }
 
+
+Describe 'Test tools follow the production message convention' {
+    BeforeAll { $script:t = Join-Path (Split-Path -Parent $PSScriptRoot) 'tests' }
+    It 'every raw test sender uses machine=CPR_TESTER and stamps EvtTime' -TestCases @(
+        @{ f = 'TEST_send_syslog_msg_from_powershell_simple.ps1' },
+        @{ f = 'TEST_send_syslog_msg.py' },
+        @{ f = 'TEST_send_syslog_msg_from_bash_simple.sh' }
+    ) {
+        $c = Get-Content (Join-Path $script:t $f) -Raw
+        $c | Should -Match 'CPR_TESTER'
+        $c | Should -Match 'EvtTime'
+        $c | Should -Not -Match 'action=test_shot'      # action is quoted like production
+    }
+    It 'Test-HayStackSyslog and the mock flow default MachineName to CPR_TESTER' -TestCases @(
+        @{ f = 'Test-HayStackSyslog.ps1' }, @{ f = 'TEST_mock_cap_portal_flow.ps1' }
+    ) {
+        (Get-Content (Join-Path $script:t $f) -Raw) | Should -Match "\`$MachineName\s*=\s*'CPR_TESTER'"
+    }
+}
