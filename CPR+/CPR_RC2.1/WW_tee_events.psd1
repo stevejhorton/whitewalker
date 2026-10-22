@@ -36,6 +36,9 @@
         xml_vault_failed    	  = @{ action = 'xml_vault_failed';    fields = @('mode','status','source','reason','profile_name','profile_count') }
 	vpn_disconnect_forced     = @{ action = 'vpn_disconnect_forced';     fields = @('reason','vpn_state_was') }
         vpn_connected_triage   = @{ action = 'vpn_connected_triage';   fields = @('outcome','dc_reachable','preflight','vpn_state','waited_ms','wake','jump') }
+        cpr_self_update_triggered = @{ action = 'cpr_self_update_triggered'; fields = @('channel','status','network_state','reason') }
+        cpr_self_update_passed = @{ action = 'cpr_self_update_passed'; fields = @('channel','status','network_state','reason','exit_code') }
+        cpr_self_update_failed = @{ action = 'cpr_self_update_failed'; fields = @('channel','status','network_state','reason','exit_code') }
         network_changed_during_run = @{ action = 'network_changed_during_run'; fields = @('old_ssid','new_ssid','old_ip','new_ip','rerun') }
         network_state             = @{ action = 'network_state';            fields = @('ip','gw','dns','ssid','connection_type','vpn_state','lease_sec') }
         ssid_changed              = @{ action = 'ssid_changed';              fields = @('old_ssid','new_ssid','vpn_forced_disconnect') }

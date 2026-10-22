@@ -135,3 +135,23 @@ Describe 'DHCP settle sleep ordering' {
         $e.IndexOf('RC2.1 Connected short-circuit') | Should -BeLessThan $e.IndexOf('Start-Sleep -Seconds $initial_sleep')
     }
 }
+
+Describe 'Tee tag drift' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $script:codeTags = @(Get-ChildItem $root -Recurse -Filter *.ps1 | Where-Object { $_.FullName -notmatch '[\\/]tests[\\/]' } |
+            ForEach-Object { [regex]::Matches((Get-Content $_.FullName -Raw), "Write-TeeLog\s+'([a-z0-9_]+)'") } |
+            ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+    }
+    It 'every tag the code emits is in the default active profile and levels 3-5' {
+        $root = Split-Path -Parent $PSScriptRoot
+        $files = @('WW_tee_events.psd1') + (3..5 | ForEach-Object { "tee_profiles\tee_level_$_.psd1" })
+        foreach ($f in $files) {
+            $txt = Get-Content (Join-Path $root $f) -Raw
+            foreach ($t in $codeTags) {
+                if ($t -eq 'not_a_real_tag') { continue }
+                $txt | Should -Match ("(?m)^\s*" + [regex]::Escape($t) + "\s*=") -Because "$f is missing tag '$t'"
+            }
+        }
+    }
+}
