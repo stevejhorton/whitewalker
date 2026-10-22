@@ -137,13 +137,33 @@ if ($Send) {
         Write-PathLine 'FAIL' "WW_syslog.ps1 not found at $syslog" 'Red'
         $problems.Add('WW_syslog.ps1 missing')
     } else {
+        # Same conventions as production emitters (WW_tee.ps1 Write-TeeLog): action, machine, user, EvtTime
+        # first, then schema-known fields only (Label, vpn_state, note). machine= is the test name by request;
+        # the real host goes in note= so it is still traceable.
+        $helper = Join-Path $root 'WW_haystack_schema.ps1'
+        if (Test-Path -LiteralPath $helper) { try { . $helper } catch { } }
+        $user = ''
+        if (Get-Command Get-HaystackUserContext -ErrorAction SilentlyContinue) {
+            try { $user = [string](Get-HaystackUserContext) } catch { }
+        }
+        if ([string]::IsNullOrWhiteSpace($user)) { $user = 'USER_UNKNOWN' }
         $token = (Get-Date).ToString('yyyyMMddHHmmss')
-        $msg = 'action=needle_hit machine="{0}" Label="cpr_syslog_path_test" token="{1}" src_host="{2}" state="{3}" route_if="{4}"' -f `
-            $MachineName, $token, $env:COMPUTERNAME, $state, $ifAlias
+        $msg = 'action="needle_hit" machine="{0}" user="{1}" EvtTime="{2}" Label="cpr_syslog_path_test" vpn_state="{3}" note="token={4} src_host={5} route_if={6}"' -f `
+            $MachineName, $user, (Get-Date -Format 'o'), $state, $token, $env:COMPUTERNAME, $ifAlias
+        if (Get-Command Test-HaystackMsgSchema -ErrorAction SilentlyContinue) {
+            $chk = Test-HaystackMsgSchema -Payload $msg
+            if ($chk.IsValid -and $chk.UnknownFields.Count -eq 0) {
+                Write-PathLine 'OK' "payload passes the haystack schema (mandatory fields present, no unknown fields)" 'Green'
+            } else {
+                Write-PathLine 'WARN' "payload schema check: missing=[$($chk.MissingFields -join ',')] unknown=[$($chk.UnknownFields -join ',')]" 'Yellow'
+                $problems.Add('payload fails schema check')
+            }
+        }
         & $syslog -Message $msg -SyslogServer $Server -Port $Port
         if ($LASTEXITCODE -eq 0) {
             Write-PathLine 'OK' "sent 1 UDP test message to ${Server}:${Port}" 'Green'
-            Write-Host "       Splunk search:  machine=""$MachineName"" Label=""cpr_syslog_path_test"" token=""$token""" -ForegroundColor White
+            Write-Host "       Splunk search:  index=cba_cpr_logging machine=""$MachineName"" Label=""cpr_syslog_path_test"" | table EvtTime,action,machine,user,vpn_state,note | sort 0 - EvtTime" -ForegroundColor White
+            Write-Host "       (this send: note contains token=$token)" -ForegroundColor White
         } else {
             Write-PathLine 'FAIL' "WW_syslog.ps1 returned exit code $LASTEXITCODE" 'Red'
             $problems.Add('send failed')

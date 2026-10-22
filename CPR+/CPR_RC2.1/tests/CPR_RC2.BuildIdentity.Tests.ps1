@@ -431,6 +431,12 @@ Describe 'Syslog path diagnostic' {
     It 'only sends a test message when -Send is given' {
         $script:diag | Should -Match 'if \(\$Send\)'
     }
+    It 'builds the test payload in the production field order with EvtTime and a resolved user' {
+        $script:diag | Should -Match 'action="needle_hit" machine="\{0\}" user="\{1\}" EvtTime="\{2\}"'
+        $script:diag | Should -Match "Get-Date -Format 'o'"
+        $script:diag | Should -Match 'Get-HaystackUserContext'
+        $script:diag | Should -Match 'Test-HaystackMsgSchema'
+    }
     It 'is wired into the console Quick Actions and WW_diagnostics.ps1 (read-only there)' {
         $console = Get-Content (Join-Path $script:root 'admin\Invoke-WhiteWalkerAction.ps1') -Raw
         $console | Should -Match "'5' \{ Invoke-WWAction -Name 'QuickAction:SyslogPathTest'"
