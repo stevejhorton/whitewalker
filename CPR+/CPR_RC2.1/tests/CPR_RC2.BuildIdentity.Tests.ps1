@@ -145,6 +145,33 @@ Describe 'Tee master and level tool' {
             ForEach-Object { [regex]::Matches((Get-Content $_.FullName -Raw), "Write-TeeLog\s+'([a-z0-9_]+)'") } |
             ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
     }
+    It 'the tool has no param() block, so dot-sourcing it cannot overwrite the caller''s variables' {
+        $text = Get-Content (Join-Path $script:root 'WW_set_tee_level.ps1') -Raw
+        $text | Should -Not -Match '(?m)^\s*(\[CmdletBinding\(\)\]\s*)?param\s*\('
+        function Test-DotSourceKeepsLocals {
+            param([string]$ToolPath)
+            $activePath = 'C:\sentinel\active.psd1'; $masterPath = 'C:\sentinel\master.psd1'
+            $level = 3; $reason = 'sentinel'; $generatedBy = 'sentinel'
+            . $ToolPath
+            return @($activePath, $masterPath, $level, $reason, $generatedBy)
+        }
+        $v = Test-DotSourceKeepsLocals -ToolPath (Join-Path $script:root 'WW_set_tee_level.ps1')
+        $v[0] | Should -Be 'C:\sentinel\active.psd1'
+        $v[1] | Should -Be 'C:\sentinel\master.psd1'
+        $v[2] | Should -Be 3
+        $v[3] | Should -Be 'sentinel'
+        $v[4] | Should -Be 'sentinel'
+    }
+    It 'command-line use still works (-Level N -MasterPath -ActivePath) and rejects a bad level' {
+        $out = Join-Path $TestDrive 'cli_active.psd1'
+        $tool = Join-Path $script:root 'WW_set_tee_level.ps1'
+        & $tool -Level 2 -MasterPath $script:master -ActivePath $out -Reason 'cli_test' | Out-Null
+        (Import-PowerShellDataFile $out).Level | Should -Be 2
+        (Import-PowerShellDataFile $out).Reason | Should -Be 'cli_test'
+        Remove-Item $out -Force
+        try { & $tool -Level 9 -MasterPath $script:master -ActivePath $out 2>$null | Out-Null } catch { }
+        Test-Path $out | Should -BeFalse
+    }
     It 'every tag the code emits is defined in the master (tag drift guard)' {
         $all = Get-CprTeeLevelProfile -Level 5 -MasterPath $script:master
         foreach ($t in $script:codeTags) {

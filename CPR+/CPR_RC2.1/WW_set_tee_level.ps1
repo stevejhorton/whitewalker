@@ -17,18 +17,15 @@
 
       .\WW_set_tee_level.ps1 -Level 2
       .\WW_set_tee_level.ps1 -Level 1 -MasterPath .\WW_tee_master.psd1 -ActivePath .\out.psd1
+      (also -GeneratedBy <text> and -Reason <text>)
 
 .OUTPUTS
   [pscustomobject] Success, Level, PreviousLevel, Path, Error
 #>
-[CmdletBinding()]
-param(
-    [ValidateRange(-1,5)][int]$Level = -1,
-    [string]$MasterPath = (Join-Path $PSScriptRoot 'WW_tee_master.psd1'),
-    [string]$ActivePath = (Join-Path $PSScriptRoot 'WW_tee_events.psd1'),
-    [string]$GeneratedBy = 'WW_set_tee_level',
-    [string]$Reason = ''
-)
+# NO param() block, on purpose. This file is dot-sourced by the installer, the main script, the admin
+# console and the tests; a param() block would bind $Level/$MasterPath/$ActivePath/$GeneratedBy/$Reason
+# into the CALLER's scope and silently overwrite same-named caller variables (that is how the installer
+# once "wrote" the profile to the wrong path). Command-line use is parsed from $args at the bottom.
 
 function Read-CprTeeMaster {
     param([Parameter(Mandatory)][string]$MasterPath)
@@ -147,9 +144,24 @@ function Set-CprTeeLevel {
     return $result
 }
 
-# Run directly (not dot-sourced) with -Level: apply and set the exit code.
-if ($MyInvocation.InvocationName -ne '.' -and $Level -ge 0) {
-    $r = Set-CprTeeLevel -Level $Level -MasterPath $MasterPath -ActivePath $ActivePath -GeneratedBy $GeneratedBy -Reason $Reason
+# Run directly (not dot-sourced): parse -Level N [-MasterPath p] [-ActivePath p] [-GeneratedBy s] [-Reason s]
+# by hand (see the note at the top) and set the exit code. Dot-sourced or no arguments: just defines the functions.
+if ($MyInvocation.InvocationName -ne '.' -and $args.Count -gt 0) {
+    $cliOpt = @{
+        Level       = ''
+        MasterPath  = (Join-Path $PSScriptRoot 'WW_tee_master.psd1')
+        ActivePath  = (Join-Path $PSScriptRoot 'WW_tee_events.psd1')
+        GeneratedBy = 'WW_set_tee_level'
+        Reason      = ''
+    }
+    for ($cliI = 0; $cliI -lt $args.Count; $cliI++) {
+        $cliName = ([string]$args[$cliI]).TrimStart('-')
+        if ($cliOpt.ContainsKey($cliName) -and ($cliI + 1) -lt $args.Count) { $cliI++; $cliOpt[$cliName] = [string]$args[$cliI] }
+        else { Write-Error "unknown or incomplete argument '$($args[$cliI])' - use -Level N [-MasterPath p] [-ActivePath p] [-GeneratedBy s] [-Reason s]"; exit 2 }
+    }
+    $cliLevel = -1
+    if (-not [int]::TryParse($cliOpt.Level, [ref]$cliLevel) -or $cliLevel -lt 0 -or $cliLevel -gt 5) { Write-Error "-Level must be 0..5"; exit 2 }
+    $r = Set-CprTeeLevel -Level $cliLevel -MasterPath $cliOpt.MasterPath -ActivePath $cliOpt.ActivePath -GeneratedBy $cliOpt.GeneratedBy -Reason $cliOpt.Reason
     if ($r.Success) { Write-Output "tee level $($r.Level) written to $($r.Path) (was: $(if ($null -ne $r.PreviousLevel) { $r.PreviousLevel } else { 'unknown' }))"; exit 0 }
     Write-Error "tee level change failed: $($r.Error)"; exit 1
 }

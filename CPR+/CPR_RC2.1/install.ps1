@@ -797,6 +797,13 @@ function Update-TeeProfile {
                   else                       { "first install - using default level $level" }
         $r = Set-CprTeeLevel -Level $level -MasterPath $masterPath -ActivePath $activePath -GeneratedBy 'install.ps1' -Reason $reasonKey
         if ($r.Success) {
+            # Trust but verify: read back the REAL active file, not whatever path the writer reported.
+            $realPath = Join-Path $TeeEventsDefaultFile.Dest $TeeEventsDefaultFile.Name
+            $back = Get-CprActiveTeeLevelInfo -ActivePath $realPath
+            if ($back.Level -ne $level) {
+                Write-InstallLog "ERROR: tee profile write reported success at '$($r.Path)' but $realPath reads Level='$($back.Level)' (expected $level)" "ERROR"
+                return $false
+            }
             Write-InstallLog "Tee profile written: level $level - $reason" "SUCCESS"
             return $true
         }
