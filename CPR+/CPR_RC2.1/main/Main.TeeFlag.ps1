@@ -38,7 +38,7 @@ function Send-TeeLevelInfoIfDue {
     The cheap check (file stamp vs. active file timestamp) runs first; the profile is only parsed when due.
     #>
     try {
-        if (-not (Test-Path -LiteralPath $TeeEventsFile)) { return }
+        if (-not (Test-Path -LiteralPath $TeeEventsFile)) { Write-Log "TeeLevelInfo: skipped - active profile missing ($TeeEventsFile)" "DEBUG"; return }
         $f = Get-Item -LiteralPath $TeeEventsFile -ErrorAction Stop
         $sig = "$($f.LastWriteTimeUtc.Ticks)|$($f.Length)"
         if (Test-Path -LiteralPath $TeeLevelInfoStampFile) {
@@ -46,11 +46,14 @@ function Send-TeeLevelInfoIfDue {
                 $stamp = Get-Content -LiteralPath $TeeLevelInfoStampFile -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
                 $at = [datetime]::MinValue
                 if ($stamp.signature -eq $sig -and [datetime]::TryParse([string]$stamp.sent_at, [ref]$at) -and
-                    ((Get-Date) - $at).TotalHours -lt $TeeLevelInfoHours) { return }
+                    ((Get-Date) - $at).TotalHours -lt $TeeLevelInfoHours) {
+                    Write-Log ("TeeLevelInfo: not due (sent {0:N1}h ago, profile unchanged)" -f ((Get-Date) - $at).TotalHours) "DEBUG"
+                    return
+                }
             } catch { }
         }
         $info = Get-CprActiveTeeLevelInfo -ActivePath $TeeEventsFile
-        if (-not $info.Readable -or $null -eq $info.Level) { return }
+        if (-not $info.Readable -or $null -eq $info.Level) { Write-Log "TeeLevelInfo: skipped - active profile unreadable or has no Level (readable=$($info.Readable) level=$($info.Level))" "WARN"; return }
         $st = Read-TeeRevertState
         $revertAt = if ($st -and $st.expires_at) { [string]$st.expires_at } else { '' }
         $r = Write-TeeLog 'tee_level_info' @{
@@ -62,11 +65,12 @@ function Send-TeeLevelInfoIfDue {
             revert_at       = $revertAt
             tag_count       = "$($info.TagCount)"
         } -PassThru
+        if ($r) { Write-Log "TeeLevelInfo: level=$($info.Level) reason=$($info.Reason) queued=$($r.Queued) result=$($r.Reason)" "DEBUG" }
         if ($r -and $r.Queued) {
             @{ sent_at = (Get-Date).ToString('o'); signature = $sig } | ConvertTo-Json |
                 Set-Content -LiteralPath $TeeLevelInfoStampFile -Encoding UTF8 -Force -ErrorAction SilentlyContinue
         }
-    } catch { }
+    } catch { Write-Log "TeeLevelInfo: error (ignored): $_" "WARN" }
 }
 
 function Move-TeeFlagToFailed {
@@ -83,7 +87,10 @@ function Invoke-TeeLevelFlagCheck {
     <# Cheap when idle: one filtered directory listing and one Test-Path. Never throws. #>
     if (-not $TeeFlagEnabled) { return }
     try {
-        if (-not (Test-Path -LiteralPath $TeeSetScript) -or -not (Test-Path -LiteralPath $TeeMasterFile)) { return }
+        if (-not (Test-Path -LiteralPath $TeeSetScript) -or -not (Test-Path -LiteralPath $TeeMasterFile)) {
+            Write-Log "TeeFlag: skipped - tee tool or master missing (tool=$(Test-Path -LiteralPath $TeeSetScript) master=$(Test-Path -LiteralPath $TeeMasterFile)) - reinstall needed" "WARN"
+            return
+        }
 
         # Dot-sourced INSIDE this function so the tool's parameters never leak into the main scope.
         . $TeeSetScript
