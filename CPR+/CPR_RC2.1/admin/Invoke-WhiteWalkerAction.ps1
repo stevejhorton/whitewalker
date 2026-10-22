@@ -60,6 +60,7 @@ $script:DiagToolInventory = @(
     [pscustomobject]@{ Path = "diagnostics\Get-CapPortalDiag.ps1";                     Description = "Consolidated captive-portal telemetry diagnostic (Haystack/Tee config, queue, state.json, HayStack_Monitor task)." }
     [pscustomobject]@{ Path = "diagnostics\New-NeedlePreview.ps1";                     Description = "Read-only: preview a NEEDLE candidate against real Event Log data before committing it." }
     [pscustomobject]@{ Path = "diagnostics\New-DefenderNeedlePreview.ps1";             Description = "Read-only: list MDM firewall rules and generate a ready-to-paste DEFENDER needle line." }
+    [pscustomobject]@{ Path = "diagnostics\Test-CprSyslogPath.ps1";                  Description = "Read-only: can this box reach the syslog VIP? (state, DNS, route, queue). Quick Actions option 5 also sends a CPR_TESTER test message." }
     [pscustomobject]@{ Path = "diagnostics\Test-DefenderFwRuleExists.ps1";             Description = "Read-only: check whether a specific MDM-delivered firewall rule exists in the registry." }
     [pscustomobject]@{ Path = "diagnostics\browser_test.ps1";                         Description = "Launches a test browser session the same way CPR does from SYSTEM context." }
     [pscustomobject]@{ Path = "diagnostics\get_webview2_ver.ps1";                      Description = "Quick check of the installed WebView2 runtime version/path." }
@@ -988,18 +989,31 @@ function Invoke-WWQuickClearVpnHosts {
     Write-Host "`nDone." -ForegroundColor Green
 }
 
+function Invoke-WWQuickSyslogPathTest {
+    Write-Host "`nThis checks the path to the syslog VIP (state, DNS, route, queue) and sends ONE UDP test message" -ForegroundColor Cyan
+    Write-Host "(machine=CPR_TESTER Label=cpr_syslog_path_test) that you can search for in Splunk." -ForegroundColor Cyan
+    if (-not (Confirm-WWAction "Run the syslog path test and send one test message?")) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+    $syslogTest = Join-Path $script:WWRoot "diagnostics\Test-CprSyslogPath.ps1"
+    if (-not (Test-Path -LiteralPath $syslogTest)) { Write-Host "Test-CprSyslogPath.ps1 not found at $syslogTest" -ForegroundColor Red; return }
+    & $syslogTest -Send
+    Write-WWAdminLog "Ran syslog path test (sent 1 CPR_TESTER message) via: $syslogTest -Send"
+    Write-Host "`nDone." -ForegroundColor Green
+}
+
 function Invoke-WWQuickActionsMenu {
     Write-Host "`nQuick Actions:" -ForegroundColor Cyan
     Write-Host "  1. Force HayStack reroll"
     Write-Host "  2. Clear stale flag files"
     Write-Host "  3. Force an immediate WW_main run"
     Write-Host "  4. Clear Blackhole VPN hosts entries"
+    Write-Host "  5. Syslog path test (checks the route to the syslog VIP, sends one CPR_TESTER message)"
     $choice = Read-Host "Select a quick action (or press Enter to cancel)"
     switch ($choice) {
         '1' { Invoke-WWAction -Name 'QuickAction:HaystackReroll' -Action { Invoke-WWQuickHaystackReroll } }
         '2' { Invoke-WWAction -Name 'QuickAction:ClearStaleFlags' -Action { Invoke-WWQuickClearStaleFlags } }
         '3' { Invoke-WWAction -Name 'QuickAction:ForceMainRun' -Action { Invoke-WWQuickForceMainRun } }
         '4' { Invoke-WWAction -Name 'QuickAction:ClearVpnHosts' -Action { Invoke-WWQuickClearVpnHosts } }
+        '5' { Invoke-WWAction -Name 'QuickAction:SyslogPathTest' -Action { Invoke-WWQuickSyslogPathTest } }
         default { Write-Host "Cancelled." -ForegroundColor Yellow }
     }
 }

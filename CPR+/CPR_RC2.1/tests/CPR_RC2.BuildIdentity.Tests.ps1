@@ -408,3 +408,36 @@ Describe 'Installer tee profile handling' {
         $cfg | Should -Match '\$TeeDefaultLevel\s*=\s*1'
     }
 }
+
+Describe 'Syslog path diagnostic' {
+    BeforeAll {
+        $script:root = Split-Path -Parent $PSScriptRoot
+        $script:diag = Get-Content (Join-Path $script:root 'diagnostics\Test-CprSyslogPath.ps1') -Raw
+    }
+    It 'defaults the test machine name to CPR_TESTER' {
+        $script:diag | Should -Match "MachineName\s*=\s*'CPR_TESTER'"
+    }
+    It 'indexes the resolved addresses safely (regression: a lone string made $ip[0] one character)' {
+        $script:diag | Should -Match '\$ips\s*=\s*@\('
+        $script:diag | Should -Match '\[string\]\$ips\[0\]'
+        $script:diag | Should -Not -Match 'Find-NetRoute\s+-RemoteIPAddress\s+\$ip\['
+    }
+    It 'reads the same state file and reachable-state list as haystack_action.ps1' {
+        $ha = Get-Content (Join-Path $script:root 'haystack_action.ps1') -Raw
+        $ha | Should -Match 'C:\\Windows\\UHGLogs\\state\.json'
+        $script:diag | Should -Match 'C:\\Windows\\UHGLogs\\state\.json'
+        $script:diag | Should -Match "'on_prem',\s*'user_tun',\s*'mgmt_tun'"
+    }
+    It 'only sends a test message when -Send is given' {
+        $script:diag | Should -Match 'if \(\$Send\)'
+    }
+    It 'is wired into the console Quick Actions and WW_diagnostics.ps1 (read-only there)' {
+        $console = Get-Content (Join-Path $script:root 'admin\Invoke-WhiteWalkerAction.ps1') -Raw
+        $console | Should -Match "'5' \{ Invoke-WWAction -Name 'QuickAction:SyslogPathTest'"
+        $console | Should -Match 'Test-CprSyslogPath\.ps1" -Send|Test-CprSyslogPath\.ps1 -Send|\$syslogTest -Send'
+        $wd = Get-Content (Join-Path $script:root 'WW_diagnostics.ps1') -Raw
+        $wd | Should -Match 'function Test-SyslogPathDiag'
+        $wd | Should -Not -Match '\$tool\s+-Send'
+    }
+}
+

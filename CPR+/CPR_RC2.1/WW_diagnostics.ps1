@@ -8,6 +8,7 @@ param(
     [switch]$Captive,        # Test captive portal detection
     [switch]$Connectivity,   # Test DC/Gateway connectivity
     [switch]$Flags,          # Test flag file operations
+    [switch]$Syslog,         # Check the path to the syslog VIP (read-only; no test message sent)
     [switch]$Verbose         # Verbose output
 )
 
@@ -111,6 +112,7 @@ function Show-Help {
     Write-Host "  .\WW_diagnostics.ps1 -Captive             Test captive portal detection"
     Write-Host "  .\WW_diagnostics.ps1 -Connectivity        Test DC/Gateway connectivity"
     Write-Host "  .\WW_diagnostics.ps1 -Flags               Test flag file operations"
+    Write-Host "  .\WW_diagnostics.ps1 -Syslog              Check the route to the syslog VIP (diagnostics\Test-CprSyslogPath.ps1 -Send also sends a CPR_TESTER message)"
     Write-Host "  .\WW_diagnostics.ps1 -Captive -Verbose    Run with verbose output"
     Write-Host ""
     Write-Host "DIAGNOSTIC MODES:" -ForegroundColor Yellow
@@ -760,6 +762,17 @@ function Test-TeeProfileHealth {
     }
 }
 
+function Test-SyslogPathDiag {
+    <# Read-only wrapper: runs diagnostics\Test-CprSyslogPath.ps1 WITHOUT -Send (no test message leaves the box). #>
+    Write-SubHeader "SYSLOG PATH (state / DNS / route / queue)"
+    $tool = Join-Path $PSScriptRoot 'diagnostics\Test-CprSyslogPath.ps1'
+    if (-not (Test-Path -LiteralPath $tool)) {
+        Write-Warning "Test-CprSyslogPath.ps1 not found at $tool - re-run install.ps1"
+        return
+    }
+    & $tool
+}
+
 function Test-AllDiagnostics {
     Write-Host ""
     Write-Host ("=" * 80) -ForegroundColor Cyan
@@ -773,6 +786,7 @@ function Test-AllDiagnostics {
     Test-ConnectivityClassification
     Test-FlagFileOperations
     Test-TeeProfileHealth
+    Test-SyslogPathDiag
     
     Write-Header "FINAL SUMMARY - WHAT WHITEWALKER WOULD DO"
     
@@ -874,13 +888,13 @@ if (-not $isAdmin) {
 }
 
 # Check if any test flag is set
-$anyTestRequested = $All -or $Network -or $VPN -or $Captive -or $Connectivity -or $Flags
+$anyTestRequested = $All -or $Network -or $VPN -or $Captive -or $Connectivity -or $Flags -or $Syslog
 
 if (-not $anyTestRequested) {
     Write-Host ""
     Write-Host "ERROR: No diagnostic test specified" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Usage: .\WW_diagnostics.ps1 [-All|-Network|-VPN|-Captive|-Connectivity|-Flags]" -ForegroundColor Yellow
+    Write-Host "Usage: .\WW_diagnostics.ps1 [-All|-Network|-VPN|-Captive|-Connectivity|-Flags|-Syslog]" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Examples:" -ForegroundColor Cyan
     Write-Host "  .\WW_diagnostics.ps1 -h              Show help"
@@ -914,6 +928,10 @@ if ($All) {
     
     if ($Flags) {
         Test-FlagFileOperations
+    }
+
+    if ($Syslog) {
+        Test-SyslogPathDiag
     }
 }
 
