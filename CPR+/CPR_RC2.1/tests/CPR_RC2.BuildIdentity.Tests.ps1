@@ -165,7 +165,7 @@ Describe 'Tee master and level tool' {
     }
     It 'level 1 carries all captive-portal events and the tee_level_set event' {
         $l1 = Get-CprTeeLevelProfile -Level 1 -MasterPath $script:master
-        foreach ($t in 'cap_portal_redirect','cap_portal_remediation_passed','cap_portal_remediation_failed','cap_portal_preflight_observation','cap_portal_webhelper_navigation','cap_portal_runner_result','captive_walled_garden','tee_level_set','cpr_self_update_passed') {
+        foreach ($t in 'cap_portal_redirect','cap_portal_remediation_passed','cap_portal_remediation_failed','cap_portal_preflight_observation','cap_portal_webhelper_navigation','cap_portal_runner_result','captive_walled_garden','tee_level_set','cpr_self_update_passed','flare_dispatched','flare_failed','flare_suppressed','flare_runner_started','flare_runner_completed') {
             $l1.Events.ContainsKey($t) | Should -BeTrue -Because $t
         }
     }
@@ -219,7 +219,7 @@ Describe 'cpr_tee_<N>.flag handler' {
         $script:TeeMasterFile = Join-Path $script:root 'WW_tee_master.psd1'
         $script:TeeEventsFile = Join-Path $script:flagDir 'active.psd1'
         $script:TeeRevertStateFile = Join-Path $script:flagDir 'revert.json'
-        $script:TeeDefaultLevel = 1; $script:TeeFlagCooldownMinutes = 10; $script:TeeFlagRevertHours = 72
+        $script:TeeDefaultLevel = 1; $script:TeeFlagCooldownMinutes = 10; $script:TeeFlagRevertHours = 336
         $script:TeeFlagFailedMaxAgeDays = 7; $script:WhatIf = $false
         $script:teeEvents = @()
         function Write-Log { param($m,$l) }
@@ -283,6 +283,41 @@ Describe 'cpr_tee_<N>.flag handler' {
         $st | ConvertTo-Json | Set-Content $script:TeeRevertStateFile
         Invoke-TeeLevelFlagCheck
         (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 2
+    }
+    It 'a _keep flag sets the level with NO revert, even long after' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_5_keep.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 5
+        $st = Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json
+        $st.expires_at | Should -BeNullOrEmpty
+        $st.applied_at = (Get-Date).AddDays(-60).ToString('o')
+        $st | ConvertTo-Json | Set-Content $script:TeeRevertStateFile
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 5
+        ($script:teeEvents | Where-Object { $_.Data.reason -eq 'keep' }).Count | Should -Be 1
+    }
+    It 'a _keep flag cancels a pending revert and later flags revert to the kept level, not the old one' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_5.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        $st = Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json
+        $st.applied_at = (Get-Date).AddHours(-1).ToString('o')
+        $st | ConvertTo-Json | Set-Content $script:TeeRevertStateFile
+        New-Item (Join-Path $script:flagDir 'cpr_tee_3_keep.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 3
+        (Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json).expires_at | Should -BeNullOrEmpty
+        $st = Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json
+        $st.applied_at = (Get-Date).AddHours(-1).ToString('o')
+        $st | ConvertTo-Json | Set-Content $script:TeeRevertStateFile
+        New-Item (Join-Path $script:flagDir 'cpr_tee_5.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        (Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json).previous_level | Should -Be 3
+    }
+    It 'at the same level the _keep flag wins over the plain flag' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_4.flag') -ItemType File | Out-Null
+        New-Item (Join-Path $script:flagDir 'cpr_tee_4_keep.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        (Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json).expires_at | Should -BeNullOrEmpty
     }
     It 'sweeps stale .failed flags but keeps fresh ones' {
         $old = New-Item (Join-Path $script:flagDir 'cpr_tee_5.failed') -ItemType File

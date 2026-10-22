@@ -13,13 +13,13 @@
     # active profile is detectable.
     #
     # Level 0 is SILENT and has no section. Plain data file: no code runs here.
-    MasterVersion = 'RC2.1-m1'
+    MasterVersion = 'RC2.1-m2'
 
     LevelDescriptions = @{
         L0 = 'SILENT - no events leave the box'
-        L1 = 'CORE - fleet health, VPN/ISE, captive portal (all of it), XmlVault, self-update (recommended default)'
+        L1 = 'CORE - fleet health, VPN/ISE, captive portal incl. flare lifecycle (all of it), XmlVault, self-update (recommended default)'
         L2 = 'CORE + NETWORK CONTEXT - adds per-run network state and SSID changes'
-        L3 = '+ POSTURE DETAIL / FLARE LIFECYCLE / MAC RANDOMIZATION / TRUSTED SSID'
+        L3 = '+ POSTURE DETAIL / MAC RANDOMIZATION / TRUSTED SSID'
         L4 = 'RESERVED - currently identical to level 3 (room to grow)'
         L5 = 'EVERYTHING - debug / incident investigation'
     }
@@ -190,6 +190,16 @@
                     # revert, the installer, or the admin console. Always in level 1 so every
                     # change (and every refusal) is visible in Splunk.
                 }
+
+                flare_dispatched = @{ action = 'flare_dispatched';       fields = @('flare_tag','event_id','context','dispatch_method','status','reason','ssid','vpn_state') }
+
+                flare_failed = @{ action = 'flare_failed';           fields = @('flare_tag','event_id','context','dispatch_method','status','reason','ssid','vpn_state') }
+
+                flare_runner_completed = @{ action = 'flare_runner_completed'; fields = @('runner','flare_tag','event_id','context','status','reason','duration_sec','ssid','ip','gw','dns','vpn_state') }
+
+                flare_runner_started = @{ action = 'flare_runner_started';   fields = @('runner','flare_tag','event_id','context','status','reason','duration_sec','ssid','ip','gw','dns','vpn_state') }
+
+                flare_suppressed = @{ action = 'flare_suppressed';       fields = @('flare_tag','event_id','context','dispatch_method','status','reason','ssid','vpn_state') }
             }
         }
 
@@ -230,16 +240,6 @@
 
         L3 = @{
             Events = @{
-
-                flare_dispatched = @{ action = 'flare_dispatched';       fields = @('flare_tag','event_id','context','dispatch_method','status','reason','ssid','vpn_state') }
-
-                flare_suppressed = @{ action = 'flare_suppressed';       fields = @('flare_tag','event_id','context','dispatch_method','status','reason','ssid','vpn_state') }
-
-                flare_failed = @{ action = 'flare_failed';           fields = @('flare_tag','event_id','context','dispatch_method','status','reason','ssid','vpn_state') }
-
-                flare_runner_started = @{ action = 'flare_runner_started';   fields = @('runner','flare_tag','event_id','context','status','reason','duration_sec','ssid','ip','gw','dns','vpn_state') }
-
-                flare_runner_completed = @{ action = 'flare_runner_completed'; fields = @('runner','flare_tag','event_id','context','status','reason','duration_sec','ssid','ip','gw','dns','vpn_state') }
 
                 trusted_ssid_result = @{
                     action = 'trusted_ssid_result'

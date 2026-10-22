@@ -263,8 +263,9 @@ as `tag_not_in_profile`.
 Changing the level without admin rights: create an empty file
 `C:\Windows\Temp\cpr_tee_<1-5>.flag` (name only - content is ignored).  The next WW_main
 run applies it, deletes the flag, sends a `tee_level_set` event and reverts to the
-previous level after `$TeeFlagRevertHours` (72).  Bad names or failures rename the
-flag to `.failed` (swept after 7 days).
+previous level after `$TeeFlagRevertHours` (336 hours = 14 days).  Use
+`cpr_tee_<1-5>_keep.flag` to make the level stick (no revert, and it cancels a pending
+revert).  Bad names or failures rename the flag to `.failed` (swept after 7 days).
 
 Examples from `C:\ProgramData\WhiteWalker`:
 

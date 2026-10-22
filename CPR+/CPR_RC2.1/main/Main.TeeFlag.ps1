@@ -1,10 +1,12 @@
 # Main.TeeFlag.ps1 - user-touchable tee level flag + automatic revert.
 #
-# A user without admin rights can create  C:\Windows\Temp\cpr_tee_<1-5>.flag.  The next WW_main run
-# (running as SYSTEM) applies that level through WW_set_tee_level.ps1 - the same lever the admin
-# console and the installer use. The flag is NAME ONLY: its content is never read. On success the
-# flag is deleted; on any failure it is renamed *.failed (swept after $TeeFlagFailedMaxAgeDays).
-# A flag-set level reverts to the previous level after $TeeFlagRevertHours.
+# A user without admin rights can create  C:\Windows\Temp\cpr_tee_<1-5>.flag  or  cpr_tee_<1-5>_keep.flag.
+# The next WW_main run (running as SYSTEM) applies that level through WW_set_tee_level.ps1 - the same
+# lever the admin console and the installer use. The flag is NAME ONLY: its content is never read.
+# On success the flag is deleted; on any failure it is renamed *.failed (swept after
+# $TeeFlagFailedMaxAgeDays).
+#   cpr_tee_<N>.flag       -> level N, reverts to the previous level after $TeeFlagRevertHours (14 days)
+#   cpr_tee_<N>_keep.flag  -> level N, sticks (cancels any pending revert) until someone changes it
 
 function Read-TeeRevertState {
     if (-not (Test-Path -LiteralPath $TeeRevertStateFile)) { return $null }
@@ -83,11 +85,11 @@ function Invoke-TeeLevelFlagCheck {
         foreach ($f in $teeFiles) {
             if ($f.Extension -ne '.flag') { continue }
             if ($f.Attributes -band [System.IO.FileAttributes]::ReparsePoint) { $invalid += $f; continue }
-            if ($f.Name -match '^cpr_tee_([1-5])\.flag$') { $valid += [pscustomobject]@{ File = $f; Level = [int]$Matches[1] } }
+            if ($f.Name -match '^cpr_tee_([1-5])(_keep)?\.flag$') { $valid += [pscustomobject]@{ File = $f; Level = [int]$Matches[1]; Keep = [bool]$Matches[2] } }
             else { $invalid += $f }
         }
         foreach ($f in $invalid) {
-            Write-Log "TeeFlag: ignoring invalid flag name '$($f.Name)' (expected cpr_tee_<1-5>.flag)" "WARN"
+            Write-Log "TeeFlag: ignoring invalid flag name '$($f.Name)' (expected cpr_tee_<1-5>.flag or cpr_tee_<1-5>_keep.flag)" "WARN"
             if (-not $WhatIf) { Move-TeeFlagToFailed -Path $f.FullName }
             Send-TeeLevelSetEvent -Level '' -PreviousLevel $null -Source 'flag' -Result 'rejected' -Reason 'invalid_name'
         }
@@ -101,14 +103,17 @@ function Invoke-TeeLevelFlagCheck {
             if ($last -and ($now - $last).TotalMinutes -lt $TeeFlagCooldownMinutes) {
                 Write-Log "TeeFlag: cooldown ($TeeFlagCooldownMinutes min) - flag left in place for a later run" "DEBUG"
             } else {
-                $pick = $valid | Sort-Object Level -Descending | Select-Object -First 1
+                # Highest level wins; at the same level the sticky (_keep) flag wins.
+                $pick = $valid | Sort-Object @{ Expression = 'Level'; Descending = $true }, @{ Expression = 'Keep'; Descending = $true } | Select-Object -First 1
                 foreach ($v in $valid) {
                     if ($v.File.FullName -ne $pick.File.FullName -and -not $WhatIf) {
                         Remove-Item -LiteralPath $v.File.FullName -Force -ErrorAction SilentlyContinue
                     }
                 }
                 $info = Get-CprActiveTeeLevelInfo -ActivePath $TeeEventsFile
-                $previous = if ($state -and $null -ne $state.previous_level) { [int]$state.previous_level }
+                # A PENDING revert keeps its original previous level (flags don't chain); otherwise
+                # the level to return to is whatever is active right now.
+                $previous = if ($state -and $state.expires_at -and $null -ne $state.previous_level) { [int]$state.previous_level }
                             elseif ($null -ne $info.Level) { [int]$info.Level }
                             else { [int]$TeeDefaultLevel }
                 if ($WhatIf) {
@@ -121,12 +126,13 @@ function Invoke-TeeLevelFlagCheck {
                             previous_level = $previous
                             set_level      = $pick.Level
                             applied_at     = $now.ToString('o')
-                            expires_at     = $(if ($TeeFlagRevertHours -gt 0) { $now.AddHours($TeeFlagRevertHours).ToString('o') } else { $null })
+                            expires_at     = $(if (-not $pick.Keep -and $TeeFlagRevertHours -gt 0) { $now.AddHours($TeeFlagRevertHours).ToString('o') } else { $null })
+                            keep           = $pick.Keep
                         }
                         try { ($stateOut | ConvertTo-Json) | Set-Content -LiteralPath $TeeRevertStateFile -Encoding UTF8 -Force -ErrorAction Stop }
                         catch { Write-Log "TeeFlag: could not write revert state: $_" "WARN" }
-                        Write-Log "TeeFlag: tee level set to $($pick.Level) by $($pick.File.Name) (previous=$previous, revert after ${TeeFlagRevertHours}h)" "INFO"
-                        Send-TeeLevelSetEvent -Level $pick.Level -PreviousLevel $previous -Source 'flag' -Result 'applied' -Reason "revert_hours=$TeeFlagRevertHours"
+                        Write-Log "TeeFlag: tee level set to $($pick.Level) by $($pick.File.Name) (previous=$previous, $(if ($pick.Keep) { 'keep - no revert' } else { "revert after ${TeeFlagRevertHours}h" }))" "INFO"
+                        Send-TeeLevelSetEvent -Level $pick.Level -PreviousLevel $previous -Source 'flag' -Result 'applied' -Reason $(if ($pick.Keep) { 'keep' } else { "revert_hours=$TeeFlagRevertHours" })
                     } else {
                         Write-Log "TeeFlag: could not set tee level $($pick.Level): $($r.Error)" "WARN"
                         Move-TeeFlagToFailed -Path $pick.File.FullName
