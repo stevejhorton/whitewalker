@@ -372,10 +372,10 @@ Describe 'Telemetry contract - schema and tee profiles' {
         $root = Split-Path $PSScriptRoot -Parent
         $script:schema = Import-PowerShellDataFile (Join-Path $root 'support_files/haystack_msg_schema.psd1')
         $script:profiles = @{}
-        foreach ($level in 3, 4, 5) {
-            $script:profiles["level$level"] = Import-PowerShellDataFile (Join-Path $root "tee_profiles/tee_level_$level.psd1")
+        . (Join-Path $root 'WW_set_tee_level.ps1')
+        foreach ($level in 1, 3, 4, 5) {
+            $script:profiles["level$level"] = Get-CprTeeLevelProfile -Level $level -MasterPath (Join-Path $root 'WW_tee_master.psd1')
         }
-        $script:profiles['active'] = Import-PowerShellDataFile (Join-Path $root 'WW_tee_events.psd1')
     }
 
     It 'registers every new flare lifecycle tag from level 3 upward and in the active profile' {
@@ -394,11 +394,11 @@ Describe 'Telemetry contract - schema and tee profiles' {
     }
 
     It 'carries the new flare fields on the flare tags' {
-        $fields = $script:profiles['active'].Events['flare_dispatched'].fields
+        $fields = $script:profiles['level5'].Events['flare_dispatched'].fields
         foreach ($f in 'flare_tag', 'event_id', 'context', 'dispatch_method', 'status', 'reason', 'ssid', 'vpn_state') {
             $fields | Should -Contain $f
         }
-        $runnerFields = $script:profiles['active'].Events['flare_runner_started'].fields
+        $runnerFields = $script:profiles['level5'].Events['flare_runner_started'].fields
         $runnerFields | Should -Contain 'runner'
         $runnerFields | Should -Contain 'duration_sec'
     }

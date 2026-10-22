@@ -187,38 +187,26 @@ Describe 'Invoke-WhiteWalkerAction - needles sync diff (Get-WWNeedlesSyncStatus)
 
 Describe 'Invoke-WhiteWalkerAction - tee level picker (Get-WWTeeLevelFiles / Get-WWActiveTeeProfileName)' {
     BeforeEach {
-        $script:TeeProfilesDir = Join-Path $TestDrive 'tee_profiles'
-        New-Item -Path $script:TeeProfilesDir -ItemType Directory -Force | Out-Null
-
+        $script:TeeMasterFile = Join-Path $TestDrive 'WW_tee_master.psd1'
+        $script:TeeSetScript  = Join-Path (Split-Path -Parent $PSScriptRoot) 'WW_set_tee_level.ps1'
         @'
 @{
-    # =========================================================================
-    # tee_level_0.psd1 - SILENCE
-    # =========================================================================
-    Events = @{}
-}
-'@ | Set-Content -Path (Join-Path $script:TeeProfilesDir 'tee_level_0.psd1') -Encoding UTF8
-
-        @'
-@{
-    # =========================================================================
-    # tee_level_2.psd1 - CORE + NETWORK CONTEXT
-    # =========================================================================
-    Events = @{
-        tech_checkin = @{ action = 'tech_checkin'; fields = @('note') }
+    MasterVersion = 'T1'
+    LevelDescriptions = @{ L0 = 'SILENT'; L1 = 'CORE'; L2 = 'CORE + NETWORK CONTEXT'; L3 = 'L3'; L4 = 'L4'; L5 = 'L5' }
+    Levels = @{
+        L1 = @{ Events = @{ a_tag = @{ action = 'a_tag'; fields = @('x') } } }
+        L2 = @{ Events = @{ tech_checkin = @{ action = 'tech_checkin'; fields = @('note') } } }
     }
 }
-'@ | Set-Content -Path (Join-Path $script:TeeProfilesDir 'tee_level_2.psd1') -Encoding UTF8
-
+'@ | Set-Content -Path $script:TeeMasterFile -Encoding UTF8
         $script:ActiveTeeProfile = Join-Path $TestDrive 'WW_tee_events.psd1'
+        Remove-Item $script:ActiveTeeProfile -Force -ErrorAction SilentlyContinue
     }
 
-    It 'lists every tee_level_*.psd1 file with a description pulled from its header comment' {
+    It 'lists levels 0-5 from the master with descriptions' {
         $levels = @(Get-WWTeeLevelFiles)
-
-        $levels.Count                        | Should -Be 2
+        $levels.Count | Should -Be 6
         ($levels | Select-Object -ExpandProperty Name) | Should -Contain 'tee_level_0'
-        ($levels | Select-Object -ExpandProperty Name) | Should -Contain 'tee_level_2'
         ($levels | Where-Object Name -eq 'tee_level_2').Description | Should -Match 'CORE \+ NETWORK CONTEXT'
     }
 
@@ -226,10 +214,21 @@ Describe 'Invoke-WhiteWalkerAction - tee level picker (Get-WWTeeLevelFiles / Get
         Get-WWActiveTeeProfileName | Should -BeNullOrEmpty
     }
 
-    It 'identifies the active profile by content hash after activation' {
-        Copy-Item -Path (Join-Path $script:TeeProfilesDir 'tee_level_2.psd1') -Destination $script:ActiveTeeProfile -Force
-
+    It 'identifies the active profile by its Level marker after activation' {
+        . $script:TeeSetScript
+        (Set-CprTeeLevel -Level 2 -MasterPath $script:TeeMasterFile -ActivePath $script:ActiveTeeProfile).Success | Should -BeTrue
         Get-WWActiveTeeProfileName | Should -Be 'tee_level_2'
+    }
+
+    It 'reports a freshly generated profile as current and one missing a tag as stale' {
+        . $script:TeeSetScript
+        $null = Set-CprTeeLevel -Level 2 -MasterPath $script:TeeMasterFile -ActivePath $script:ActiveTeeProfile
+        (Test-WWTeeProfileStale).Stale | Should -BeFalse
+        "@{ Level = 2; ProfileVersion = 'T1'; Events = @{ a_tag = @{ action = 'a_tag'; fields = @('x') } } }" |
+            Set-Content -Path $script:ActiveTeeProfile -Encoding UTF8
+        $st = Test-WWTeeProfileStale
+        $st.Stale | Should -BeTrue
+        $st.MissingTags | Should -Contain 'tech_checkin'
     }
 }
 

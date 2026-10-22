@@ -12,7 +12,8 @@ The files in this directory are dot-sourced by `../WW_main.ps1` in this order:
 8. `Main.VpnState.ps1` — posture service and VPN state/gatekeeper logic.
 9. `Main.SsidChange.ps1` — trusted SSID, cache, notification, and SSID changes.
 10. `Main.SelfUpdate.ps1` — self-update handling.
-11. `Main.Entry.ps1` — `Invoke-WhiteWalkerMain` orchestration.
+11. `Main.TeeFlag.ps1` — user-touchable `cpr_tee_<N>.flag` tee level + automatic revert.
+12. `Main.Entry.ps1` — `Invoke-WhiteWalkerMain` orchestration.
 
 The order is intentional: configuration and shared functions are available
 before dependent libraries, while the orchestration is loaded last. Runtime

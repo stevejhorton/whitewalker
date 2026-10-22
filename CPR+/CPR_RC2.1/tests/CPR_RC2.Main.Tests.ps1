@@ -15,6 +15,7 @@ Describe 'CPR RC2 main loader' {
             'Main.VpnState.ps1'
             'Main.SsidChange.ps1'
             'Main.SelfUpdate.ps1'
+            'Main.TeeFlag.ps1'
             'Main.Entry.ps1'
         )
     }

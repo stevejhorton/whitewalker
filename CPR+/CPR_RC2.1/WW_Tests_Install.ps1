@@ -166,6 +166,8 @@ Describe 'Install manifest - RC1.25 required runtime helpers' {
         @{ Name = 'WW_tee.ps1' }
         @{ Name = 'WW_haystack_schema.ps1' }
         @{ Name = 'WW_tee_events.psd1' }
+        @{ Name = 'WW_tee_master.psd1' }
+        @{ Name = 'WW_set_tee_level.ps1' }
         @{ Name = 'haystack_msg_schema.psd1' }
     ) {
         param($Name)

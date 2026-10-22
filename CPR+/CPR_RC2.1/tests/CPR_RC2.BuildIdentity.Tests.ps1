@@ -136,22 +136,187 @@ Describe 'DHCP settle sleep ordering' {
     }
 }
 
-Describe 'Tee tag drift' {
+Describe 'Tee master and level tool' {
     BeforeAll {
-        $root = Split-Path -Parent $PSScriptRoot
-        $script:codeTags = @(Get-ChildItem $root -Recurse -Filter *.ps1 | Where-Object { $_.FullName -notmatch '[\\/]tests[\\/]' } |
+        $script:root = Split-Path -Parent $PSScriptRoot
+        $script:master = Join-Path $script:root 'WW_tee_master.psd1'
+        . (Join-Path $script:root 'WW_set_tee_level.ps1')
+        $script:codeTags = @(Get-ChildItem $script:root -Recurse -Filter *.ps1 | Where-Object { $_.FullName -notmatch '[\\/]tests[\\/]' } |
             ForEach-Object { [regex]::Matches((Get-Content $_.FullName -Raw), "Write-TeeLog\s+'([a-z0-9_]+)'") } |
             ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
     }
-    It 'every tag the code emits is in the default active profile and levels 3-5' {
-        $root = Split-Path -Parent $PSScriptRoot
-        $files = @('WW_tee_events.psd1') + (3..5 | ForEach-Object { "tee_profiles\tee_level_$_.psd1" })
-        foreach ($f in $files) {
-            $txt = Get-Content (Join-Path $root $f) -Raw
-            foreach ($t in $codeTags) {
-                if ($t -eq 'not_a_real_tag') { continue }
-                $txt | Should -Match ("(?m)^\s*" + [regex]::Escape($t) + "\s*=") -Because "$f is missing tag '$t'"
-            }
+    It 'every tag the code emits is defined in the master (tag drift guard)' {
+        $all = Get-CprTeeLevelProfile -Level 5 -MasterPath $script:master
+        foreach ($t in $script:codeTags) {
+            if ($t -eq 'not_a_real_tag') { continue }
+            $all.Events.ContainsKey($t) | Should -BeTrue -Because "master is missing tag '$t'"
         }
+    }
+    It 'no tag is defined in two levels' {
+        { Get-CprTeeLevelProfile -Level 5 -MasterPath $script:master } | Should -Not -Throw
+    }
+    It 'levels are cumulative: each level contains every tag of the level below' {
+        $prev = @()
+        foreach ($n in 0..5) {
+            $tags = @((Get-CprTeeLevelProfile -Level $n -MasterPath $script:master).Events.Keys)
+            foreach ($t in $prev) { $tags | Should -Contain $t }
+            $prev = $tags
+        }
+    }
+    It 'level 1 carries all captive-portal events and the tee_level_set event' {
+        $l1 = Get-CprTeeLevelProfile -Level 1 -MasterPath $script:master
+        foreach ($t in 'cap_portal_redirect','cap_portal_remediation_passed','cap_portal_remediation_failed','cap_portal_preflight_observation','cap_portal_webhelper_navigation','cap_portal_runner_result','captive_walled_garden','tee_level_set','cpr_self_update_passed') {
+            $l1.Events.ContainsKey($t) | Should -BeTrue -Because $t
+        }
+    }
+    It 'generated text parses back with the same Level and tag count for every level' {
+        foreach ($n in 0..5) {
+            $lp = Get-CprTeeLevelProfile -Level $n -MasterPath $script:master
+            $path = Join-Path $TestDrive "gen$n.psd1"
+            Set-Content $path (ConvertTo-CprTeeProfileText -LevelProfile $lp) -Encoding UTF8
+            $d = Import-PowerShellDataFile $path
+            $d.Level | Should -Be $n
+            @($d.Events.Keys).Count | Should -Be @($lp.Events.Keys).Count
+        }
+    }
+    It 'Set-CprTeeLevel writes the active file, keeps a .bak, and reports the previous level' {
+        $active = Join-Path $TestDrive 'active.psd1'
+        (Set-CprTeeLevel -Level 2 -MasterPath $script:master -ActivePath $active).Success | Should -BeTrue
+        $r = Set-CprTeeLevel -Level 4 -MasterPath $script:master -ActivePath $active
+        $r.Success | Should -BeTrue
+        $r.PreviousLevel | Should -Be 2
+        (Get-CprActiveTeeLevelInfo -ActivePath $active).Level | Should -Be 4
+        Test-Path "$active.bak" | Should -BeTrue
+    }
+    It 'a failure leaves the existing active profile untouched' {
+        $active = Join-Path $TestDrive 'keep.psd1'
+        Set-Content $active "@{ Level = 3; ProfileVersion = 'x'; Events = @{} }" -Encoding UTF8
+        $before = Get-Content $active -Raw
+        $r = Set-CprTeeLevel -Level 2 -MasterPath (Join-Path $TestDrive 'missing.psd1') -ActivePath $active
+        $r.Success | Should -BeFalse
+        (Get-Content $active -Raw) | Should -Be $before
+    }
+    It 'Get-CprActiveTeeLevelInfo reads the Level marker and the Custom opt-out' {
+        $p = Join-Path $TestDrive 'info.psd1'
+        Set-Content $p "@{ Level = 5; ProfileVersion = 'v'; Custom = `$true; Events = @{} }" -Encoding UTF8
+        $i = Get-CprActiveTeeLevelInfo -ActivePath $p
+        $i.Level | Should -Be 5
+        $i.Custom | Should -BeTrue
+        (Get-CprActiveTeeLevelInfo -ActivePath (Join-Path $TestDrive 'nope.psd1')).Exists | Should -BeFalse
+    }
+}
+
+Describe 'cpr_tee_<N>.flag handler' {
+    BeforeAll {
+        $script:root = Split-Path -Parent $PSScriptRoot
+        . (Join-Path $script:root 'main\Main.TeeFlag.ps1')
+    }
+    BeforeEach {
+        $script:flagDir = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $script:flagDir | Out-Null
+        $script:TeeFlagEnabled = $true; $script:TeeFlagDir = $script:flagDir
+        $script:TeeSetScript = Join-Path $script:root 'WW_set_tee_level.ps1'
+        $script:TeeMasterFile = Join-Path $script:root 'WW_tee_master.psd1'
+        $script:TeeEventsFile = Join-Path $script:flagDir 'active.psd1'
+        $script:TeeRevertStateFile = Join-Path $script:flagDir 'revert.json'
+        $script:TeeDefaultLevel = 1; $script:TeeFlagCooldownMinutes = 10; $script:TeeFlagRevertHours = 72
+        $script:TeeFlagFailedMaxAgeDays = 7; $script:WhatIf = $false
+        $script:teeEvents = @()
+        function Write-Log { param($m,$l) }
+        function Write-TeeLog { param($Tag,$Data) $script:teeEvents += ,@{ Tag = $Tag; Data = $Data } }
+        . $script:TeeSetScript
+        $null = Set-CprTeeLevel -Level 1 -MasterPath $script:TeeMasterFile -ActivePath $script:TeeEventsFile
+    }
+    It 'applies a valid flag, deletes it, records the previous level and tees the change' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_5.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 5
+        Test-Path (Join-Path $script:flagDir 'cpr_tee_5.flag') | Should -BeFalse
+        (Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json).previous_level | Should -Be 1
+        ($script:teeEvents | Where-Object { $_.Tag -eq 'tee_level_set' -and $_.Data.result -eq 'applied' }).Count | Should -Be 1
+    }
+    It 'ignores file CONTENT: a flag with junk inside is treated the same' {
+        Set-Content (Join-Path $script:flagDir 'cpr_tee_3.flag') '& calc.exe; level=99'
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 3
+    }
+    It 'renames an invalid flag name to .failed and changes nothing' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_9.flag') -ItemType File | Out-Null
+        New-Item (Join-Path $script:flagDir 'cpr_tee_0.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 1
+        Test-Path (Join-Path $script:flagDir 'cpr_tee_9.failed') | Should -BeTrue
+        Test-Path (Join-Path $script:flagDir 'cpr_tee_0.failed') | Should -BeTrue
+    }
+    It 'with several flags the highest level wins and all are consumed' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_2.flag') -ItemType File | Out-Null
+        New-Item (Join-Path $script:flagDir 'cpr_tee_4.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 4
+        @(Get-ChildItem $script:flagDir -Filter 'cpr_tee_*.flag').Count | Should -Be 0
+    }
+    It 'cooldown: a second flag right after a change waits and is left in place' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_5.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        New-Item (Join-Path $script:flagDir 'cpr_tee_2.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 5
+        Test-Path (Join-Path $script:flagDir 'cpr_tee_2.flag') | Should -BeTrue
+    }
+    It 'reverts to the previous level after the revert time and tees it' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_5.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        $st = Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json
+        $st.expires_at = (Get-Date).AddHours(-1).ToString('o')
+        $st | ConvertTo-Json | Set-Content $script:TeeRevertStateFile
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 1
+        Test-Path $script:TeeRevertStateFile | Should -BeFalse
+        ($script:teeEvents | Where-Object { $_.Data.result -eq 'reverted' }).Count | Should -Be 1
+    }
+    It 'does not revert when someone else changed the level meanwhile' {
+        New-Item (Join-Path $script:flagDir 'cpr_tee_5.flag') -ItemType File | Out-Null
+        Invoke-TeeLevelFlagCheck
+        $null = Set-CprTeeLevel -Level 2 -MasterPath $script:TeeMasterFile -ActivePath $script:TeeEventsFile
+        $st = Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json
+        $st.expires_at = (Get-Date).AddHours(-1).ToString('o')
+        $st | ConvertTo-Json | Set-Content $script:TeeRevertStateFile
+        Invoke-TeeLevelFlagCheck
+        (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 2
+    }
+    It 'sweeps stale .failed flags but keeps fresh ones' {
+        $old = New-Item (Join-Path $script:flagDir 'cpr_tee_5.failed') -ItemType File
+        $old.LastWriteTime = (Get-Date).AddDays(-30)
+        $new = New-Item (Join-Path $script:flagDir 'cpr_update_dev.failed') -ItemType File
+        Invoke-TeeLevelFlagCheck
+        Test-Path $old.FullName | Should -BeFalse
+        Test-Path $new.FullName | Should -BeTrue
+    }
+    It 'is called from the run finally block, before the end-of-run recheck' {
+        $e = Get-Content (Join-Path $script:root 'main\Main.Entry.ps1') -Raw
+        $e.IndexOf('Invoke-TeeLevelFlagCheck') | Should -BeGreaterThan 0
+        $e.IndexOf('Invoke-TeeLevelFlagCheck') | Should -BeLessThan $e.IndexOf('Invoke-EndRunNetworkRecheck')
+        (Get-Content (Join-Path $script:root 'WW_main.ps1') -Raw) | Should -Match "Main\.TeeFlag\.ps1"
+    }
+}
+
+Describe 'Installer tee profile handling' {
+    BeforeAll {
+        $script:inst = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'install.ps1') -Raw
+    }
+    It 'deploys the master and the tool and regenerates the profile from them' {
+        $inst | Should -Match 'WW_tee_master\.psd1'
+        $inst | Should -Match 'WW_set_tee_level\.ps1'
+        $inst | Should -Match 'function Update-TeeProfile'
+        $inst | Should -Match 'Set-CprTeeLevel -Level \$level'
+        $inst | Should -Not -Match 'Copy-TeeEventsIfMissing'
+    }
+    It 'honours the Custom opt-out and the default level' {
+        $inst | Should -Match '\$info\.Custom'
+        $inst | Should -Match '\$TeeDefaultLevel\s*=\s*1'
+    }
+    It 'default level matches between installer and configuration' {
+        $cfg = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.Configuration.ps1') -Raw
+        $cfg | Should -Match '\$TeeDefaultLevel\s*=\s*1'
     }
 }

@@ -1138,6 +1138,9 @@ function Invoke-WhiteWalkerMain {
                 try { Invoke-MaintenanceStage -ExitReason "$($script:exitReason)" -Skip $maintSkip }
                 catch { Write-Log "Maintenance stage error: $_" "WARN" }
 
+                # Tee level flag (user-touchable cpr_tee_<N>.flag) + revert timer: cheap, always runs.
+                try { Invoke-TeeLevelFlagCheck } catch { Write-Log "TeeFlag error: $_" "WARN" }
+
                 # End-of-run network re-check: last step before exit - did the network flip while we worked?
                 $recheck = $null
                 if (Test-Path variable:networkInfo) {

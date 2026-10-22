@@ -1625,20 +1625,20 @@ Describe "DHCP lease duration capture (RC1.24)" {
 # network_state tee event - lease_sec field (RC1.24)
 # =============================================================================
 Describe "network_state tee event field list (RC1.24)" {
+    BeforeAll { . (Join-Path $PSScriptRoot 'WW_set_tee_level.ps1') }
 
-    It "Should include lease_sec in WW_tee_events.psd1" {
-        $events = Import-PowerShellDataFile (Join-Path $PSScriptRoot 'WW_tee_events.psd1')
-        $events.Events.network_state.fields | Should -Contain 'lease_sec'
+    It "Should include lease_sec in the master's network_state tag" {
+        $p = Get-CprTeeLevelProfile -Level 2 -MasterPath (Join-Path $PSScriptRoot 'WW_tee_master.psd1')
+        $p.Events.network_state.fields | Should -Contain 'lease_sec'
     }
 
-    It "Should include lease_sec in every tee profile that defines network_state" {
-        $profiles = Get-ChildItem (Join-Path $PSScriptRoot 'tee_profiles') -Filter '*.psd1'
+    It "Should include lease_sec in every level that defines network_state" {
         $found = $false
-        foreach ($p in $profiles) {
-            $data = Import-PowerShellDataFile $p.FullName
-            if ($data.Events.ContainsKey('network_state')) {
+        foreach ($level in 1..5) {
+            $p = Get-CprTeeLevelProfile -Level $level -MasterPath (Join-Path $PSScriptRoot 'WW_tee_master.psd1')
+            if ($p.Events.ContainsKey('network_state')) {
                 $found = $true
-                $data.Events.network_state.fields | Should -Contain 'lease_sec'
+                $p.Events.network_state.fields | Should -Contain 'lease_sec'
             }
         }
         $found | Should -Be $true

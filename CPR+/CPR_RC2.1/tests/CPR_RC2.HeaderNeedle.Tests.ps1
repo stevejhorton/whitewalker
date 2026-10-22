@@ -420,9 +420,9 @@ Describe 'Invoke-HeaderNeedleCheck - send interval gating' {
 
 Describe 'HEADER telemetry registration' {
     It 'registers haystack_header_fields in tee profiles level 2 and above' {
+        . (Join-Path $script:ReleaseRoot 'WW_set_tee_level.ps1')
         foreach ($level in 2..5) {
-            $profilePath = Join-Path $script:ReleaseRoot "tee_profiles/tee_level_$level.psd1"
-            $data = Import-PowerShellDataFile -Path $profilePath
+            $data = Get-CprTeeLevelProfile -Level $level -MasterPath (Join-Path $script:ReleaseRoot 'WW_tee_master.psd1')
             $data.Events.ContainsKey('haystack_header_fields') | Should -BeTrue
         }
     }
