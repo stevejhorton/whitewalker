@@ -1038,6 +1038,62 @@ function Get-WWWatchStreamChoices {
     return $choices
 }
 
+function Get-WWBrowseLogFiles {
+    # Every log-like file under logs\ (top level + spool\), newest first.
+    $root  = $script:WWLogDir
+    $found = @()
+    foreach ($dir in @($root, (Join-Path $root 'spool'))) {
+        if (-not (Test-Path -LiteralPath $dir -PathType Container)) { continue }
+        $found += @(Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -in @('.log', '.txt', '.jsonl', '.json', '.bak') })
+    }
+    return @($found | Sort-Object LastWriteTime -Descending)
+}
+
+function Invoke-WWBrowseLogs {
+    <#
+    Pick ANY file under logs\ (not just the curated streams): tail it live, view
+    its last 200 lines, or open it in Notepad. Type text instead of a number to
+    filter the list. Runs inside Invoke-WWWatchLog, so Show-WWLogStream is
+    already loaded. Read-only: it never changes a log.
+    #>
+    $root = $script:WWLogDir
+    $all  = @(Get-WWBrowseLogFiles)
+    if ($all.Count -eq 0) { Write-Host "No log files found under $root" -ForegroundColor Red; return }
+    $view = $all
+    while ($true) {
+        $shown = @($view | Select-Object -First 40)
+        Write-Host ("`nFiles under {0} (newest first, {1} shown of {2}):" -f $root, $shown.Count, $view.Count) -ForegroundColor Cyan
+        for ($i = 0; $i -lt $shown.Count; $i++) {
+            $rel = $shown[$i].FullName.Substring($root.Length + 1)
+            Write-Host ("  {0,2}. {1,-48} {2,8} KB  {3:MM-dd HH:mm}" -f ($i + 1), $rel, [math]::Ceiling($shown[$i].Length / 1KB), $shown[$i].LastWriteTime)
+        }
+        $sel = Read-Host "Number to open, text to filter the list, or Enter to cancel"
+        if ([string]::IsNullOrWhiteSpace($sel)) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+        $n = 0
+        if ([int]::TryParse($sel, [ref]$n)) {
+            if ($n -lt 1 -or $n -gt $shown.Count) { Write-Host "Invalid selection." -ForegroundColor Red; continue }
+            $file = $shown[$n - 1]
+            $rel  = $file.FullName.Substring($root.Length + 1)
+            $mode = Read-Host "[T]ail live, [V]iew last 200 lines, [O]pen in Notepad (Enter cancels)"
+            $def  = [pscustomobject]@{ Name = $rel; File = $rel; Description = ''; Json = ($file.Extension -eq '.jsonl') }
+            switch -Regex ($mode) {
+                '^[Tt]' { Write-WWAdminLog "BrowseLogs: tailing $rel"; Show-WWLogStream -Definition $def -Count 50 -Match $null -Follow -AllowExitKey; return }
+                '^[Vv]' { Write-WWAdminLog "BrowseLogs: viewing $rel"; Show-WWLogStream -Definition $def -Count 200 -Match $null; return }
+                '^[Oo]' {
+                    Write-WWAdminLog "BrowseLogs: opening $rel in Notepad"
+                    try { Start-Process -FilePath 'notepad.exe' -ArgumentList ('"{0}"' -f $file.FullName) -ErrorAction Stop }
+                    catch { Write-Host "Could not open Notepad: $($_.Exception.Message)" -ForegroundColor Red }
+                    return
+                }
+                default { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+            }
+        }
+        $match = @($all | Where-Object { $_.Name -like "*$sel*" })
+        if ($match.Count -eq 0) { Write-Host "No file name contains '$sel'." -ForegroundColor Yellow; $view = $all } else { $view = $match }
+    }
+}
+
 function Invoke-WWWatchLog {
     <#
     Runs the existing admin\Watch-WhiteWalkerLog.ps1 viewer IN-PROCESS so the
@@ -1067,8 +1123,10 @@ function Invoke-WWWatchLog {
     for ($i = 0; $i -lt $choices.Count; $i++) {
         Write-Host ("  {0,2}. {1,-15} {2}" -f ($i + 1), $choices[$i].Name, $choices[$i].Description)
     }
-    $selection = Read-Host "Select a log to tail (or press Enter to cancel)"
+    Write-Host "   A. Browse ALL files under logs\ (tail, view, or open in Notepad)"
+    $selection = Read-Host "Select a log to tail, A for all files (or press Enter to cancel)"
     if ([string]::IsNullOrWhiteSpace($selection)) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+    if ($selection -in @('A', 'a')) { Invoke-WWBrowseLogs; return }
 
     $index = 0
     if (-not [int]::TryParse($selection, [ref]$index) -or $index -lt 1 -or $index -gt $choices.Count) {
@@ -1114,7 +1172,7 @@ function Show-WWMainMenu {
     Write-Host "  T. Refresh Active Tee Profile (keeps your selected level)"
     Write-Host "  8. Diagnostics & Test Tools Launcher"
     Write-Host "  9. Quick Actions"
-    Write-Host "  W. Watch a WhiteWalker log (Q or Esc returns here)"
+    Write-Host "  W. Watch / browse WhiteWalker logs (Q or Esc returns here)"
     Write-Host "  0. Exit"
 }
 

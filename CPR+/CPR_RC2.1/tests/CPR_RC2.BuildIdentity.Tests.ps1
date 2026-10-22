@@ -466,3 +466,19 @@ Describe 'Test tools follow the production message convention' {
         (Get-Content (Join-Path $script:t $f) -Raw) | Should -Match "\`$MachineName\s*=\s*'CPR_TESTER'"
     }
 }
+
+Describe 'Admin console log browser' {
+    BeforeAll { $script:adm = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'admin\Invoke-WhiteWalkerAction.ps1') -Raw }
+    It 'offers A (all files) in the Watch menu and routes it to the browser' {
+        $script:adm | Should -Match "-in @\('A', 'a'\)\) \{ Invoke-WWBrowseLogs; return \}"
+    }
+    It 'lists logs\ and logs\spool, and offers tail, view and Notepad' {
+        $script:adm | Should -Match "Join-Path \`$root 'spool'"
+        $script:adm | Should -Match 'Show-WWLogStream -Definition \$def -Count 50'
+        $script:adm | Should -Match "notepad\.exe"
+    }
+    It 'never writes to the files it browses' {
+        $b = [regex]::Match($script:adm, 'function Invoke-WWBrowseLogs.*?function Invoke-WWWatchLog', 'Singleline').Value
+        $b | Should -Not -Match 'Set-Content|Add-Content|Remove-Item|Out-File'
+    }
+}
