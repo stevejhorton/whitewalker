@@ -514,3 +514,33 @@ Describe 'Self-update retry counter' {
         ([regex]::Matches($script:su, '(?m)^\s+function ')).Count | Should -Be 1
     }
 }
+
+Describe 'Syslog queue drain does not lose entries appended mid-drain' {
+    BeforeAll {
+        $src = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'haystack_action.ps1') -Raw
+        $script:drain = [regex]::Match($src, 'function Drain-SyslogQueue.*?function Invoke-SyslogSend', 'Singleline').Value
+    }
+    It 'claims the queue by atomic rename and works on the claimed copy' {
+        $script:drain | Should -Match '\$workFile\s*=\s*"\$SyslogQueueFile\.draining"'
+        $script:drain | Should -Match 'Move-Item -LiteralPath \$SyslogQueueFile -Destination \$workFile'
+        $script:drain | Should -Match 'Get-Content -LiteralPath \$workFile'
+    }
+    It 'never deletes or overwrites the live queue file' {
+        $script:drain | Should -Not -Match 'Remove-Item[^\r\n]*\$SyslogQueueFile'
+        $script:drain | Should -Not -Match 'Set-Content[^\r\n]*\$SyslogQueueFile'
+    }
+    It 'puts failed entries back by appending, then removes only the claimed file' {
+        $script:drain | Should -Match 'Add-Content -LiteralPath \$SyslogQueueFile -Value \$keep'
+        $script:drain | Should -Match 'Remove-Item -LiteralPath \$workFile'
+    }
+    It 'skips while another drain is active and recovers a stale claim' {
+        $script:drain | Should -Match '\$claimAge -lt 5'
+        $script:drain | Should -Match 'recovering a stale claimed queue'
+    }
+    It 'logs one line per sent entry with its action' {
+        $script:drain | Should -Match 'SyslogQueue: sent action=\$sentAction'
+    }
+    It 'still ingests the spool first' {
+        $script:drain.IndexOf('Import-SyslogSpool') | Should -BeLessThan $script:drain.IndexOf('$workFile')
+    }
+}
