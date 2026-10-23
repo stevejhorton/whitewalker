@@ -558,3 +558,40 @@ Describe 'Main log writer does not drop lines silently' {
         $script:fn | Should -Match 'run=\{1\}'
     }
 }
+
+Describe 'Combined update + tee flag' {
+    BeforeAll {
+        $script:su = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.SelfUpdate.ps1') -Raw
+        $script:rx = [regex]::Match($script:su, "-match '(\^cpr_update_[^']+)'").Groups[1].Value
+    }
+    It 'uses one strict name pattern for the update flag' {
+        $script:rx | Should -Be '^cpr_update_(dev|prod)(_tee_([1-5])(_keep)?)?\.flag$'
+    }
+    It 'accepts the plain and combined names' {
+        foreach ($n in 'cpr_update_dev.flag', 'cpr_update_prod.flag', 'cpr_update_dev_tee_5.flag', 'cpr_update_prod_tee_2_keep.flag') {
+            $n | Should -Match $script:rx
+        }
+    }
+    It 'rejects bad names' {
+        foreach ($n in 'cpr_update_dev_tee5.flag', 'cpr_update_dev_tee_6.flag', 'cpr_update_dev_tee_0.flag', 'cpr_update_dev_keep.flag', 'cpr_update_qa.flag', 'cpr_update_dev_tee_5_keep.flag.txt') {
+            $n | Should -Not -Match $script:rx
+        }
+    }
+    It 'renames invalid names to .failed instead of retrying them forever' {
+        $script:su | Should -Match "-replace '\\\.flag\$', '\.failed'"
+        $script:su | Should -Match 'invalid_flag_name'
+    }
+    It 'drops the tee flag only in the success branch, after the installer exit-code check' {
+        $iExit = $script:su.IndexOf('installer_nonzero_exit')
+        $iTee  = $script:su.IndexOf('cpr_tee_{0}{1}.flag')
+        $iExit | Should -BeGreaterThan 0
+        $iTee  | Should -BeGreaterThan $iExit
+        $iTee  | Should -BeLessThan $script:su.IndexOf('} catch {', $iTee + 1)
+    }
+    It 'never lets a tee flag problem fail the update' {
+        $script:su | Should -Match 'update succeeded but the tee flag could not be created'
+    }
+    It 'uninstall removes every cpr_update_*.flag' {
+        (Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'install.ps1') -Raw) | Should -Match "-Filter 'cpr_update_\*\.flag'"
+    }
+}

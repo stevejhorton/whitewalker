@@ -1245,8 +1245,8 @@ function Uninstall-WhiteWalker {
     if (-not (Remove-CprTaskFolder)) { $ok = $false }
 
     # Self-update flags and the pending install-event dir are ours too.
-    foreach ($f in @("C:\Windows\Temp\cpr_update_dev.flag", "C:\Windows\Temp\cpr_update_prod.flag")) {
-        if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue }
+    foreach ($f in @(Get-ChildItem -LiteralPath 'C:\Windows\Temp' -Filter 'cpr_update_*.flag' -File -ErrorAction SilentlyContinue)) {
+        Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue
     }
 
     if (-not (Remove-InstallDirectory)) { $ok = $false }
