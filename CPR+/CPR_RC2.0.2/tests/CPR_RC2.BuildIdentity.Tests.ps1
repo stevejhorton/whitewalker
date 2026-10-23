@@ -610,7 +610,7 @@ Describe 'vpncli calls are time-bounded' {
     BeforeEach { $script:logged = @(); $script:VpnDisconnectsThisRun = 0 }
 
     It 'returns the stdout of a call that finishes in time' {
-        $out = Invoke-VpnCliBounded -Arguments '/c echo >> state: Disconnected' -TimeoutSec 5
+        $out = Invoke-VpnCliBounded -Arguments '/c echo state: Disconnected' -TimeoutSec 5
         $out | Should -Match 'state: Disconnected'
     }
     It 'kills a hung call, returns empty and logs vpncli_timeout' {
