@@ -274,7 +274,7 @@ function Invoke-BlackholeAction {
             if ($postBhVpnState -ne 'Disconnected') {
                 Write-Log "Blackhole -add complete - VPN still active ($postBhVpnState) - disconnecting" "INFO"
                 try {
-                    & $vpn_cmd disconnect | Out-Null
+                    Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
                     Start-Sleep -Seconds 2
                     $finalVpnState = Get-VpnState
                     Write-Log "VPN disconnected - on-prem sinkhole enforced (final state: $finalVpnState)" "INFO"

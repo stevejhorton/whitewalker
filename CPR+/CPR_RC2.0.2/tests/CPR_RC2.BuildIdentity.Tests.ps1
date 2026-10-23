@@ -595,3 +595,46 @@ Describe 'Combined update + tee flag' {
         (Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'install.ps1') -Raw) | Should -Match "-Filter 'cpr_update_\*\.flag'"
     }
 }
+
+Describe 'vpncli calls are time-bounded' {
+    BeforeAll {
+        $script:root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $script:root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        $def = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-VpnCliBounded' }, $true)[0]
+        . ([scriptblock]::Create($def.Extent.Text))
+        function Write-Log { param($m, $l) $script:logged += "$m" }
+        $script:vpn_cmd = Join-Path $env:SystemRoot 'System32\cmd.exe'
+        $script:VpnCliTimeoutSec = 8
+        $script:VpnCliDisconnectTimeoutSec = 20
+    }
+    BeforeEach { $script:logged = @(); $script:VpnDisconnectsThisRun = 0 }
+
+    It 'returns the stdout of a call that finishes in time' {
+        $out = Invoke-VpnCliBounded -Arguments '/c echo >> state: Disconnected' -TimeoutSec 5
+        $out | Should -Match 'state: Disconnected'
+    }
+    It 'kills a hung call, returns empty and logs vpncli_timeout' {
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $out = Invoke-VpnCliBounded -Arguments '/c ping -n 30 127.0.0.1 >nul' -TimeoutSec 1
+        $sw.Elapsed.TotalSeconds | Should -BeLessThan 6
+        $out | Should -Be ''
+        ($script:logged -join "`n") | Should -Match 'vpncli_timeout'
+    }
+    It 'counts disconnect calls for the run' {
+        $null = Invoke-VpnCliBounded -Arguments 'disconnect' -TimeoutSec 5
+        $script:VpnDisconnectsThisRun | Should -Be 1
+    }
+    It 'no main script calls vpncli directly any more' {
+        $direct = Get-ChildItem (Join-Path $script:root 'main') -Filter *.ps1 | Select-String -Pattern '& \$vpn_cmd'
+        @($direct).Count | Should -Be 0
+    }
+    It 'retry-disconnect only fires after WW itself cut the VPN, and is capped' {
+        $src = Get-Content (Join-Path $script:root 'main\Main.VpnState.ps1') -Raw
+        $src | Should -Match '\$script:VpnDisconnectsThisRun -gt 0'
+        $src | Should -Match '\$script:VpnPostDisconnectRetries -lt \[int\]\$VpnPostDisconnectRetryMax'
+    }
+    It 'has config knobs for the timeouts and the retry cap' {
+        $cfg = Get-Content (Join-Path $script:root 'main\Main.Configuration.ps1') -Raw
+        foreach ($n in 'VpnCliTimeoutSec', 'VpnCliDisconnectTimeoutSec', 'VpnPostDisconnectRetryMax') { $cfg | Should -Match "\`$$n\s*=" }
+    }
+}

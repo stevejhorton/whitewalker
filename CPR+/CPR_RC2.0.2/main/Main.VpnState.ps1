@@ -172,13 +172,53 @@ function Test-RecentWakeFromSleep {
   }
 }
 
+# Every vpncli call goes through here so a busy Secure Client agent (it blocks vpncli for minutes while it
+# retries a failed connect, e.g. DNS failure on a guest network) can never hang the run. Returns the stdout
+# text. On timeout the child process is killed, a WARN is logged and '' is returned, which callers already
+# treat as "state unknown". A launch failure is NOT swallowed, so existing try/catch blocks still see it.
+function Invoke-VpnCliBounded {
+  param(
+    [Parameter(Mandatory = $true)][string]$Arguments,
+    [int]$TimeoutSec = 0
+  )
+  if ($Arguments -match '^\s*disconnect\b') { $script:VpnDisconnectsThisRun = [int]$script:VpnDisconnectsThisRun + 1 }
+  if ($TimeoutSec -le 0) {
+    $TimeoutSec = if ($Arguments -match '^\s*disconnect\b') { [int]$VpnCliDisconnectTimeoutSec } else { [int]$VpnCliTimeoutSec }
+    if ($TimeoutSec -le 0) { $TimeoutSec = 8 }
+  }
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName               = $vpn_cmd
+  $psi.Arguments              = $Arguments
+  $psi.UseShellExecute        = $false
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError  = $true
+  $psi.CreateNoWindow         = $true
+  $proc = $null
+  $startedAt = Get-Date
+  try {
+    $proc = [System.Diagnostics.Process]::Start($psi)
+    $outTask = $proc.StandardOutput.ReadToEndAsync()
+    $null    = $proc.StandardError.ReadToEndAsync()
+    if ($proc.WaitForExit($TimeoutSec * 1000)) {
+      $proc.WaitForExit()   # flush the async readers
+      return [string]$outTask.Result
+    }
+    Write-Log ("vpncli_timeout cmd='{0}' waited_ms={1} - child killed, treating output as empty" -f `
+      $Arguments, [math]::Round(((Get-Date) - $startedAt).TotalMilliseconds)) "WARN"
+    try { $proc.Kill() } catch { }
+    return ''
+  } finally {
+    if ($proc) { try { $proc.Dispose() } catch { } }
+  }
+}
+
 function Get-VpnState {
   try {
     $statsText = ""
     $stateText = ""
     
-    try { $statsText = (& $vpn_cmd stats 2>$null | Out-String) } catch { }
-    try { $stateText = (& $vpn_cmd state 2>$null | Out-String) } catch { }
+    try { $statsText = (Invoke-VpnCliBounded -Arguments 'stats') } catch { }
+    try { $stateText = (Invoke-VpnCliBounded -Arguments 'state') } catch { }
     
     $combined = "$statsText`n$stateText"
     
@@ -255,6 +295,18 @@ function Get-VpnStateStable {
     
     $intermediateStates = @('Reconnecting', 'Connecting', 'Unknown', 'Disconnecting')
     if ($intermediateStates -contains $state) {
+      # Secure Client re-fires a connect attempt right after our disconnect (it retries a cached headend, and on a
+      # guest network that fails with DNS errors). If WW already cut the VPN this run and it re-entered
+      # Connecting/Reconnecting, cut it again - capped, so a client that never stops retrying cannot trap the run.
+      if (@('Connecting', 'Reconnecting') -contains $state -and [int]$script:VpnDisconnectsThisRun -gt 0 -and
+          [int]$script:VpnPostDisconnectRetries -lt [int]$VpnPostDisconnectRetryMax) {
+        $script:VpnPostDisconnectRetries = [int]$script:VpnPostDisconnectRetries + 1
+        Write-Log ("VPN re-entered {0} after our disconnect (retry {1} of {2}) - disconnecting again" -f `
+          $state, $script:VpnPostDisconnectRetries, $VpnPostDisconnectRetryMax) "WARN"
+        try { Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null } catch { Write-Log "Retry disconnect error: $_" "WARN" }
+        Start-Sleep -Seconds 2
+        continue
+      }
       if ($null -eq $intermediateStart) {
         $intermediateStart = Get-Date
         
@@ -282,7 +334,7 @@ function Get-VpnStateStable {
             Write-Log "Laptop wake detected - VPN likely trying to reconnect to wrong headend" "WARN"
             Write-Log "This blocks ALL traffic including 802.1x and captive portals - forcing disconnect" "WARN"
             try {
-              & $vpn_cmd disconnect | Out-Null
+              Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
               Write-Log "Wake-based VPN disconnect completed - local network auth can now proceed" "INFO"
               Start-Sleep -Seconds 2
               Write-Log "vpncli state (stable after wake-based disconnect): Disconnected" "INFO"
@@ -304,7 +356,7 @@ function Get-VpnStateStable {
       if ($intermediateElapsed -ge $VpnIntermediateMaxWait) {
         Write-Log "VPN stuck in intermediate state ($state) for ${intermediateElapsed}s - forcing timeout disconnect" "WARN"
         try {
-          & $vpn_cmd disconnect | Out-Null
+          Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
           Write-Log "Timeout-based VPN disconnect completed" "INFO"
           Start-Sleep -Seconds 2
           Write-Log "vpncli state (stable after timeout disconnect): Disconnected" "INFO"
@@ -327,8 +379,8 @@ function Get-VpnStateStable {
 function Get-VpnTunnelFlavor {
   $statsText  = ""
   $statusText = ""
-  try { $statsText  = (& $vpn_cmd stats  2>$null | Out-String) }  catch { Write-Log "Get-VpnTunnelFlavor: stats error: $_" }
-  try { $statusText = (& $vpn_cmd status 2>$null | Out-String) }  catch { Write-Log "Get-VpnTunnelFlavor: status error: $_" }
+  try { $statsText  = (Invoke-VpnCliBounded -Arguments 'stats') }  catch { Write-Log "Get-VpnTunnelFlavor: stats error: $_" }
+  try { $statusText = (Invoke-VpnCliBounded -Arguments 'status') }  catch { Write-Log "Get-VpnTunnelFlavor: status error: $_" }
 
   if ($WWDebug) { Write-Log "DEBUG: classifying tunnel flavor from vpncli stats/status." }
   Write-DebugBlock -Label 'vpncli stats'  -Text $statsText
@@ -468,7 +520,7 @@ function Invoke-EarlyVpnDisconnect {
     Write-Log "Early VPN gate: disconnecting VPN now (reason=$Reason, state=$VpnStateWas)" "WARN"
     if ($WhatIf) { Write-Log "WHATIF: Would run vpncli disconnect" "INFO"; return $false }
     try {
-        & $vpn_cmd disconnect | Out-Null
+        Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
         $deadline = (Get-Date).AddSeconds($EarlyGateDisconnectWaitSec)
         do {
             Start-Sleep -Milliseconds 500

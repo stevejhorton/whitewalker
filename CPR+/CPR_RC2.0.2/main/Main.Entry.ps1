@@ -541,7 +541,7 @@ function Invoke-WhiteWalkerMain {
                         if (Test-VPNBlockingNetwork -VPNState $currentVPNState -RedirectDetected $true) {
                             Write-Log "VPN blocking network auth - forcing disconnect" "WARN"
                             try {
-                                & $vpn_cmd disconnect | Out-Null
+                                Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
                                 Start-Sleep -Seconds 2
                                 Write-Log "VPN disconnected to allow network authentication" "INFO"
                             } catch {
@@ -786,7 +786,7 @@ function Invoke-WhiteWalkerMain {
                         if ($currentVPNState -notin @("Disconnected", "Connected")) {
                             Write-Log "VPN in intermediate state: $currentVPNState (blocks all traffic) - forcing disconnect" "WARN"
                             try {
-                                & $vpn_cmd disconnect | Out-Null
+                                Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
                                 Start-Sleep -Seconds 3
                                 Write-Log "VPN disconnect issued - waiting for state to settle" "INFO"
                                 $currentVPNState = Get-VpnState
@@ -889,7 +889,7 @@ function Invoke-WhiteWalkerMain {
                         if (Test-VPNBlockingNetwork -VPNState $vpnStateForBlockCheck -RedirectDetected $false) {
                             Write-Log "VPN client is blocking network access (state: $vpnStateForBlockCheck) - force-disconnecting before walled-garden test" "WARN"
                             try {
-                                & $vpn_cmd disconnect | Out-Null
+                                Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
                                 Start-Sleep -Seconds 2
                                 $vpnStateForBlockCheck = Get-VpnState
                                 Write-Log "VPN state after forced disconnect: $vpnStateForBlockCheck" "INFO"

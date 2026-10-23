@@ -49,6 +49,9 @@ $PostureComplianceTimeout = 20   # seconds to wait for posture compliance after 
 $VpnStateMaxWaitSeconds = 12     # how long to wait for vpncli to settle to Connected/Disconnected
 $VpnIntermediateMaxWait = 30     # force disconnect if stuck in Reconnecting/Connecting/Unknown >30s
 $VpnWakeDetection = $true        # detect wake from sleep and disconnect blocking VPN (smart disconnect)
+$VpnCliTimeoutSec = 8            # max wait for one vpncli stats/state/status call; a busy Secure Client agent can block it for minutes. On timeout the child is killed and the output treated as empty
+$VpnCliDisconnectTimeoutSec = 20 # max wait for a vpncli disconnect call (it legitimately takes ~10s+ on a busy agent)
+$VpnPostDisconnectRetryMax = 2   # after WW cut the VPN this run, extra disconnects allowed if Secure Client re-enters Connecting/Reconnecting while we stabilize
 $VpnWakeTimeWindow = 120         # seconds - if wake event within this window, consider it a wake scenario
 
 # RC2.1 early VPN gate - runs at the TOP of every run, before any wait/sleep/preflight

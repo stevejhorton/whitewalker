@@ -1549,7 +1549,7 @@ function Invoke-CaptivePortalRemediation {
     try {
         if (Test-VPNBlockingNetwork -VPNState $vpnState -RedirectDetected $true) {
             Write-Log "VPN in blocking state ($vpnState) - forcing disconnect to allow captive portal/ISE traffic" "WARN"
-            & $vpn_cmd disconnect | Out-Null
+            Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
             Start-Sleep -Seconds 2
             try {
                 $vpnState = Get-VpnState
