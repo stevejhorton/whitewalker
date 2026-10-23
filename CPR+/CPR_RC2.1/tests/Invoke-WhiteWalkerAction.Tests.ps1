@@ -263,7 +263,7 @@ Describe 'Invoke-WhiteWalkerAction - flag-touch logic (VPN restore / self-update
     }
 
     It 'touches the DEV self-update flag when channel 1 is chosen and confirmed' {
-        $answers = [System.Collections.Generic.Queue[string]]::new([string[]]@('1','y'))
+        $answers = [System.Collections.Generic.Queue[string]]::new([string[]]@('1','','y'))
         Mock Read-Host { $answers.Dequeue() }
 
         Invoke-WWSelfUpdateTrigger
@@ -273,13 +273,41 @@ Describe 'Invoke-WhiteWalkerAction - flag-touch logic (VPN restore / self-update
     }
 
     It 'touches the PROD self-update flag when channel 2 is chosen and confirmed' {
-        $answers = [System.Collections.Generic.Queue[string]]::new([string[]]@('2','y'))
+        $answers = [System.Collections.Generic.Queue[string]]::new([string[]]@('2','','y'))
         Mock Read-Host { $answers.Dequeue() }
 
         Invoke-WWSelfUpdateTrigger
 
         Test-Path -LiteralPath $script:SelfUpdateProdFlag | Should -Be $true
         Test-Path -LiteralPath $script:SelfUpdateDevFlag  | Should -Be $false
+    }
+
+    It 'creates a combined update+tee flag (keep) when a tee level and keep are chosen' {
+        $answers = [System.Collections.Generic.Queue[string]]::new([string[]]@('1','5','y','y'))
+        Mock Read-Host { $answers.Dequeue() }
+
+        Invoke-WWSelfUpdateTrigger
+
+        Test-Path -LiteralPath (Join-Path $TestDrive 'cpr_update_dev_tee_5_keep.flag') | Should -Be $true
+        Test-Path -LiteralPath $script:SelfUpdateDevFlag | Should -Be $false
+    }
+
+    It 'creates a combined flag without _keep when keep is declined' {
+        $answers = [System.Collections.Generic.Queue[string]]::new([string[]]@('2','3','n','y'))
+        Mock Read-Host { $answers.Dequeue() }
+
+        Invoke-WWSelfUpdateTrigger
+
+        Test-Path -LiteralPath (Join-Path $TestDrive 'cpr_update_prod_tee_3.flag') | Should -Be $true
+    }
+
+    It 'rejects a bad tee level and creates nothing' {
+        $answers = [System.Collections.Generic.Queue[string]]::new([string[]]@('1','9'))
+        Mock Read-Host { $answers.Dequeue() }
+
+        Invoke-WWSelfUpdateTrigger
+
+        @(Get-ChildItem -LiteralPath $TestDrive -Filter 'cpr_update_*.flag').Count | Should -Be 0
     }
 }
 

@@ -377,6 +377,16 @@ function Invoke-WWSelfUpdateTrigger {
     }
     if (-not $flagPath) { Write-Host "Invalid selection." -ForegroundColor Red; return }
 
+    # Optional: also set the tee level once the update has SUCCEEDED (cpr_update_<ch>_tee_<N>[_keep].flag).
+    # "keep" = the level sticks; without it the level reverts on its own after the normal flag revert time.
+    $teeAns = (Read-Host "Tee level to set after a successful update, 1-5 (Enter = leave the level alone)").Trim()
+    if ($teeAns -ne '') {
+        if ($teeAns -notmatch '^[1-5]$') { Write-Host "Invalid tee level '$teeAns' - use 1-5 or Enter." -ForegroundColor Red; return }
+        $keepAns = (Read-Host "Keep that level (no automatic revert)? [y/N]").Trim()
+        $suffix  = "_tee_$teeAns" + $(if ($keepAns -match '^(?i)y(es)?$') { '_keep' } else { '' })
+        $flagPath = $flagPath -replace '\.flag$', "$suffix.flag"
+    }
+
     Write-Host "`nThis touches the flag: $flagPath" -ForegroundColor Cyan
     if (-not (Confirm-WWAction "Trigger a self-update on this channel?")) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
 
