@@ -4,7 +4,7 @@
 WhiteWalker Installation Script
 
 .DESCRIPTION
-Version: RC2.0.1  (see $WW_Version in script body - update that, not this)
+Version: RC2.0.2  (see $WW_Version in script body - update that, not this)
 Author: steve.horton@optum.com
 Date: 23-Jun-2026
 
@@ -82,7 +82,7 @@ Performs clean installation of WhiteWalker framework:
   RC1.25: haystack_msg_schema.psd1 is now ALSO deployed to support_files\ (the layout Get-HaystackMsgSchema
   probes first), and Test-RequiredHelperDeployment warns when any required telemetry helper is missing.
   Also deploys diagnostics\New-DefenderNeedlePreview.ps1 for read-only MDM firewall rule discovery.
-- Deploys Log-and-Tee subsystem: WW_tee.ps1, WW_tee_events.psd1 (create-only), tee_profiles\ (NEW in RC1.20)
+- Deploys Log-and-Tee subsystem: WW_tee.ps1, WW_tee_events.psd1 (create-only), WW_tee_master.psd1 + WW_set_tee_level.ps1 (single-file tee levels)
 - Registers Task Scheduler jobs (including WW_notify)
 - Validates installation
 
@@ -96,7 +96,7 @@ Uninstall usage:
 
 param(
     # Uninstalls WhiteWalker: removes scheduled tasks, deployed scripts, configs,
-    # schemas, and mirrored subdirs (docs/tests/triggers/tee_profiles). Logs and
+    # schemas, and mirrored subdirs (docs/tests/triggers). Logs and
     # diagnostics are preserved. Aliased so ./install.ps1 -rm or -Remove also work.
     [Alias('rm','Remove')]
     [switch]$Uninstall
@@ -105,7 +105,7 @@ param(
 # =============================================================================
 # Version - update this ONE place on each release
 # =============================================================================
-$WW_Version = "RC2.0.1"
+$WW_Version = "RC2.0.2"
 
 # Task Scheduler folder for ALL CPR jobs. KEEP IN SYNC with $CprTaskFolder in
 # main\Main.Configuration.ps1 and $TsTaskPath in haystack.ps1 (a Pester test enforces it).
@@ -154,11 +154,6 @@ $SubDirsToMirror = @(
     # (action console). Mirrored in full like main/ so techs always have the current
     # set of admin tools without needing an explicit $ScriptFiles entry per script.
     @{ Source = "$ScriptRoot\admin";       Dest = "C:\ProgramData\WhiteWalker\admin";       Label = "admin" }
-    # tee_profiles - the tee volume-knob profiles (level_0 through level_5). Always mirrored
-    # in full on every install/upgrade so techs always have the current full set to choose
-    # from. This is SEPARATE from WW_tee_events.psd1 (the ACTIVE profile), which is
-    # deliberately create-only - see Copy-TeeEventsIfMissing below.
-    @{ Source = "$ScriptRoot\tee_profiles"; Dest = "C:\ProgramData\WhiteWalker\tee_profiles"; Label = "tee_profiles" }
     # archive  - dev artifact, never deployed
     # logs     - runtime generated, never touched by installer
 )
@@ -181,6 +176,9 @@ $ScriptFiles = @(
     @{ Name = "Set-VpnHostsEntry.ps1";    Source = "$ScriptRoot\Set-VpnHostsEntry.ps1";    Dest = $MainScriptDeployDir }
     @{ Name = "WW_csc_client_info.ps1";   Source = "$ScriptRoot\WW_csc_client_info.ps1";   Dest = $MainScriptDeployDir }
     @{ Name = "WW_tee.ps1";               Source = "$ScriptRoot\WW_tee.ps1";               Dest = $MainScriptDeployDir }
+    # Single-file tee levels: the master defines every level, the tool writes the active profile.
+    @{ Name = "WW_tee_master.psd1";       Source = "$ScriptRoot\WW_tee_master.psd1";       Dest = $MainScriptDeployDir }
+    @{ Name = "WW_set_tee_level.ps1";     Source = "$ScriptRoot\WW_set_tee_level.ps1";     Dest = $MainScriptDeployDir }
     
 
     # === Notification script (from v4.0.1) ===
@@ -241,13 +239,14 @@ $ConfigFiles = @(
     @{ Name = "WW_flaregun_config.json"; Source = "$ScriptRoot\WW_flaregun_config.json"; Dest = $ConfigDeployDir }
 )
 
-# WW_tee_events.psd1 is the ACTIVE tee profile - it is a LIVE, tech-editable config,
-# not a static asset. Unlike everything else in $ScriptFiles, this must NEVER be
-# force-overwritten on upgrade, or a tech's chosen logging level (e.g. tee_level_3
-# during an active investigation) would silently reset to whatever ships in the repo
-# on every reinstall/upgrade. Copy-TeeEventsIfMissing (below) only deploys the repo's
-# default copy if the file does not already exist on the box.
-$TeeEventsDefaultFile = @{ Name = "WW_tee_events.psd1"; Source = "$ScriptRoot\WW_tee_events.psd1"; Dest = $MainScriptDeployDir }
+# WW_tee_events.psd1 is the ACTIVE tee profile. It is GENERATED on every install/upgrade by
+# WW_set_tee_level.ps1 from WW_tee_master.psd1 (see Update-TeeProfile below):
+#   - active profile has a Level marker -> that level is rebuilt from the NEW master (so new
+#     tags always arrive and unsupported ones disappear; the previous file is kept as .bak)
+#   - active profile has Custom = $true -> left untouched (a deliberate hand-edited profile)
+#   - no marker / no file (RC1.24 and older, fresh install) -> $TeeDefaultLevel
+$TeeEventsDefaultFile = @{ Name = "WW_tee_events.psd1"; Dest = $MainScriptDeployDir }
+$TeeDefaultLevel      = 1     # KEEP IN SYNC with $TeeDefaultLevel in main\Main.Configuration.ps1
 
 # Schema files to deploy. TaskScheduler.xsd/AnyConnectProfile.xsd are reference-only
 # (not actively used in validation). haystack_msg_schema.psd1 (NEW in RC1.24's install
@@ -283,6 +282,8 @@ $RequiredRuntimeHelpers = @(
     @{ Name = "WW_tee.ps1";               Path = (Join-Path $MainScriptDeployDir "WW_tee.ps1") }
     @{ Name = "WW_haystack_schema.ps1";   Path = (Join-Path $MainScriptDeployDir "WW_haystack_schema.ps1") }
     @{ Name = "WW_tee_events.psd1";       Path = (Join-Path $MainScriptDeployDir "WW_tee_events.psd1") }
+    @{ Name = "WW_tee_master.psd1";       Path = (Join-Path $MainScriptDeployDir "WW_tee_master.psd1") }
+    @{ Name = "WW_set_tee_level.ps1";     Path = (Join-Path $MainScriptDeployDir "WW_set_tee_level.ps1") }
     @{ Name = "haystack_msg_schema.psd1"; Path = (Join-Path $SupportFilesDeployDir "haystack_msg_schema.psd1") }
 )
 
@@ -754,38 +755,64 @@ function Initialize-TelemetrySpool {
     }
 }
 
-function Copy-TeeEventsIfMissing {
+function Update-TeeProfile {
     <#
     .SYNOPSIS
-    Deploys the repo's default WW_tee_events.psd1 ONLY if one does not already
-    exist on the box. This is a create-only copy - unlike Copy-ScriptFiles,
-    it never overwrites, so a tech's chosen active tee profile (e.g. swapped
-    to tee_level_3 for an investigation) survives every upgrade/reinstall.
+    (Re)generates the ACTIVE tee profile from WW_tee_master.psd1 using WW_set_tee_level.ps1.
 
-    First-ever install: file doesn't exist yet -> deploy repo default (level_1/core).
-    Every subsequent upgrade: file already exists -> leave it alone, log and skip.
+    .DESCRIPTION
+    Level marker present   -> same level, rebuilt from the NEW master (no stale / unsupported tags).
+    Custom = $true         -> left untouched.
+    No marker / no file    -> $TeeDefaultLevel.
+    The previous active file is kept as WW_tee_events.psd1.bak. A failure never removes an
+    existing active profile. Also removes the legacy tee_profiles\ directory (pre-master layout).
     #>
-    Write-InstallLog "=== Deploying Active Tee Profile (create-only) ===" "INFO"
+    Write-InstallLog "=== Updating Active Tee Profile (from master) ===" "INFO"
+    $activePath = Join-Path $TeeEventsDefaultFile.Dest $TeeEventsDefaultFile.Name
+    $masterPath = Join-Path $MainScriptDeployDir "WW_tee_master.psd1"
+    $toolPath   = Join-Path $MainScriptDeployDir "WW_set_tee_level.ps1"
 
-    $destPath = Join-Path $TeeEventsDefaultFile.Dest $TeeEventsDefaultFile.Name
-
-    if (Test-Path $destPath) {
-        Write-InstallLog "WW_tee_events.psd1 already present - leaving existing active profile untouched: $destPath" "INFO"
-        return $true
+    $legacyDir = Join-Path $MainScriptDeployDir "tee_profiles"
+    if (Test-Path -LiteralPath $legacyDir) {
+        Remove-Item -LiteralPath $legacyDir -Recurse -Force -ErrorAction SilentlyContinue
+        Write-InstallLog "Removed legacy tee_profiles\ (levels now come from WW_tee_master.psd1)" "INFO"
     }
 
-    if (-not (Test-Path $TeeEventsDefaultFile.Source)) {
-        Write-InstallLog "ERROR: Default WW_tee_events.psd1 not found in repo: $($TeeEventsDefaultFile.Source)" "ERROR"
-        return $false
+    if (-not (Test-Path -LiteralPath $masterPath) -or -not (Test-Path -LiteralPath $toolPath)) {
+        Write-InstallLog "ERROR: tee master or tool missing after copy ($masterPath / $toolPath)" "ERROR"
+        return (Test-Path -LiteralPath $activePath)
     }
 
     try {
-        Copy-Item -Path $TeeEventsDefaultFile.Source -Destination $destPath -Force -ErrorAction Stop
-        Write-InstallLog "First install detected - deployed default WW_tee_events.psd1 (core profile) -> $destPath" "SUCCESS"
-        return $true
+        . $toolPath   # function scope: defines Set-CprTeeLevel / Get-CprActiveTeeLevelInfo only here
+        $info = Get-CprActiveTeeLevelInfo -ActivePath $activePath
+        if ($info.Exists -and $info.Custom) {
+            Write-InstallLog "Active tee profile is marked Custom - leaving it untouched" "INFO"
+            return $true
+        }
+        $level  = if ($null -ne $info.Level) { [int]$info.Level } else { [int]$TeeDefaultLevel }
+        $reasonKey = if ($null -ne $info.Level) { 'upgrade_kept_level' } elseif ($info.Exists) { 'legacy_profile_default' } else { 'first_install_default' }
+        $reason = if ($null -ne $info.Level) { "kept level $level (was ProfileVersion '$($info.ProfileVersion)')" }
+                  elseif ($info.Exists)      { "no Level marker (legacy profile) - using default level $level" }
+                  else                       { "first install - using default level $level" }
+        $r = Set-CprTeeLevel -Level $level -MasterPath $masterPath -ActivePath $activePath -GeneratedBy 'install.ps1' -Reason $reasonKey
+        if ($r.Success) {
+            # Trust but verify: read back the REAL active file, not whatever path the writer reported.
+            $realPath = Join-Path $TeeEventsDefaultFile.Dest $TeeEventsDefaultFile.Name
+            $back = Get-CprActiveTeeLevelInfo -ActivePath $realPath
+            if ($back.Level -ne $level) {
+                Write-InstallLog "ERROR: tee profile write reported success at '$($r.Path)' but $realPath reads Level='$($back.Level)' (expected $level)" "ERROR"
+                return $false
+            }
+            $script:TeeLevelFinal = $level
+            Write-InstallLog "Tee profile written: level $level - $reason" "SUCCESS"
+            return $true
+        }
+        Write-InstallLog "WARN: could not write tee profile ($($r.Error)); existing profile (if any) left in place" "WARN"
+        return (Test-Path -LiteralPath $activePath)
     } catch {
-        Write-InstallLog "ERROR copying default WW_tee_events.psd1: $_" "ERROR"
-        return $false
+        Write-InstallLog "WARN: tee profile update failed: $_" "WARN"
+        return (Test-Path -LiteralPath $activePath)
     }
 }
 
@@ -1218,8 +1245,8 @@ function Uninstall-WhiteWalker {
     if (-not (Remove-CprTaskFolder)) { $ok = $false }
 
     # Self-update flags and the pending install-event dir are ours too.
-    foreach ($f in @("C:\Windows\Temp\cpr_update_dev.flag", "C:\Windows\Temp\cpr_update_prod.flag")) {
-        if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction SilentlyContinue }
+    foreach ($f in @(Get-ChildItem -LiteralPath 'C:\Windows\Temp' -Filter 'cpr_update_*.flag' -File -ErrorAction SilentlyContinue)) {
+        Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue
     }
 
     if (-not (Remove-InstallDirectory)) { $ok = $false }
@@ -1286,7 +1313,7 @@ try {
     $schemasOK = Copy-SchemaFiles
     $scriptsOK = Copy-ScriptFiles
     $configsOK = Copy-ConfigFiles
-    $teeEventsOK = Copy-TeeEventsIfMissing
+    $teeEventsOK = Update-TeeProfile   # master + tool were just copied by Copy-ScriptFiles
     $null = Initialize-TelemetrySpool
     Copy-InstallerSelfForUninstall
     # Mirror all subdirectories from repo into deploy dir
@@ -1347,9 +1374,10 @@ try {
         Write-InstallLog "  Tail log:         .\tail_haystack_log.ps1" "INFO"
         Write-InstallLog "" "INFO"
         Write-InstallLog "Log-and-Tee subsystem deployed to: $MainScriptDeployDir" "INFO"
-        Write-InstallLog "  WW_tee_events.psd1 - ACTIVE profile (create-only, never overwritten on upgrade)" "INFO"
-        Write-InstallLog "  tee_profiles\      - level_0 (silent) through level_5 (debug) - swap via copy" "INFO"
-        Write-InstallLog "  Example: cp tee_profiles\tee_level_3.psd1 WW_tee_events.psd1" "INFO"
+        Write-InstallLog "  WW_tee_events.psd1 - ACTIVE profile (generated from WW_tee_master.psd1; its Level is kept on upgrade)" "INFO"
+        $teeLvlText = if ($null -ne $script:TeeLevelFinal) { "level $($script:TeeLevelFinal)" } else { "level not changed by this install" }
+        Write-InstallLog "  Tee level now: $teeLvlText" "INFO"
+        Write-InstallLog "  Change level: WW_set_tee_level.ps1 -Level N, the admin console, or touch C:\Windows\Temp\cpr_tee_<1-5>.flag (no admin needed)" "INFO"
         Write-InstallLog "" "INFO"
         Write-InstallLog "Logs: $LogDir" "INFO"
         Write-InstallLog "Diagnostics: $DiagDir" "INFO"

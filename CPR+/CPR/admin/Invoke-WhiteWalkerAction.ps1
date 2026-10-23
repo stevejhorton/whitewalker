@@ -44,7 +44,8 @@ $script:SelfUpdateInstallLog = Join-Path $script:WWLogDir "white_walker_install.
 
 $script:HaystackScript     = Join-Path $script:WWRoot "haystack.ps1"
 $script:NeedlesLocalFile   = Join-Path $script:WWRoot "needles_local.cfg"
-$script:TeeProfilesDir     = Join-Path $script:WWRoot "tee_profiles"
+$script:TeeMasterFile      = Join-Path $script:WWRoot "WW_tee_master.psd1"
+$script:TeeSetScript       = Join-Path $script:WWRoot "WW_set_tee_level.ps1"
 $script:ActiveTeeProfile   = Join-Path $script:WWRoot "WW_tee_events.psd1"
 
 $script:WWMainScript       = Join-Path $script:WWRoot "WW_main.ps1"
@@ -59,6 +60,7 @@ $script:DiagToolInventory = @(
     [pscustomobject]@{ Path = "diagnostics\Get-CapPortalDiag.ps1";                     Description = "Consolidated captive-portal telemetry diagnostic (Haystack/Tee config, queue, state.json, HayStack_Monitor task)." }
     [pscustomobject]@{ Path = "diagnostics\New-NeedlePreview.ps1";                     Description = "Read-only: preview a NEEDLE candidate against real Event Log data before committing it." }
     [pscustomobject]@{ Path = "diagnostics\New-DefenderNeedlePreview.ps1";             Description = "Read-only: list MDM firewall rules and generate a ready-to-paste DEFENDER needle line." }
+    [pscustomobject]@{ Path = "diagnostics\Test-CprSyslogPath.ps1";                  Description = "Read-only: can this box reach the syslog VIP? (state, DNS, route, queue). Quick Actions option 5 also sends a CPR_TESTER test message." }
     [pscustomobject]@{ Path = "diagnostics\Test-DefenderFwRuleExists.ps1";             Description = "Read-only: check whether a specific MDM-delivered firewall rule exists in the registry." }
     [pscustomobject]@{ Path = "diagnostics\browser_test.ps1";                         Description = "Launches a test browser session the same way CPR does from SYSTEM context." }
     [pscustomobject]@{ Path = "diagnostics\get_webview2_ver.ps1";                      Description = "Quick check of the installed WebView2 runtime version/path." }
@@ -374,6 +376,16 @@ function Invoke-WWSelfUpdateTrigger {
         default { $null }
     }
     if (-not $flagPath) { Write-Host "Invalid selection." -ForegroundColor Red; return }
+
+    # Optional: also set the tee level once the update has SUCCEEDED (cpr_update_<ch>_tee_<N>[_keep].flag).
+    # "keep" = the level sticks; without it the level reverts on its own after the normal flag revert time.
+    $teeAns = (Read-Host "Tee level to set after a successful update, 1-5 (Enter = leave the level alone)").Trim()
+    if ($teeAns -ne '') {
+        if ($teeAns -notmatch '^[1-5]$') { Write-Host "Invalid tee level '$teeAns' - use 1-5 or Enter." -ForegroundColor Red; return }
+        $keepAns = (Read-Host "Keep that level (no automatic revert)? [y/N]").Trim()
+        $suffix  = "_tee_$teeAns" + $(if ($keepAns -match '^(?i)y(es)?$') { '_keep' } else { '' })
+        $flagPath = $flagPath -replace '\.flag$', "$suffix.flag"
+    }
 
     Write-Host "`nThis touches the flag: $flagPath" -ForegroundColor Cyan
     if (-not (Confirm-WWAction "Trigger a self-update on this channel?")) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
@@ -706,125 +718,101 @@ function Invoke-WWNewNeedleWizard {
 # =============================================================================
 # 7. Tee Log Level Picker
 # =============================================================================
+function Get-WWTeeMaster {
+    <# Reads the single tee master. Returns $null if missing/unreadable. #>
+    if (-not (Test-Path -LiteralPath $script:TeeMasterFile)) { return $null }
+    try { return (Import-PowerShellDataFile -LiteralPath $script:TeeMasterFile -ErrorAction Stop) } catch { return $null }
+}
+
 function Get-WWTeeLevelFiles {
-    if (-not (Test-Path -LiteralPath $script:TeeProfilesDir)) { return @() }
-    $files = @(Get-ChildItem -LiteralPath $script:TeeProfilesDir -Filter 'tee_level_*.psd1' -File -ErrorAction SilentlyContinue |
-        Sort-Object Name)
+    <# Levels 0-5 as defined by WW_tee_master.psd1 (name kept for the picker/tests). #>
+    $master = Get-WWTeeMaster
+    if ($null -eq $master) { return @() }
     $results = [System.Collections.Generic.List[object]]::new()
-    foreach ($file in $files) {
-        $description = $null
-        try {
-            $lines = Get-Content -LiteralPath $file.FullName -TotalCount 10 -ErrorAction Stop
-            foreach ($line in $lines) {
-                if ($line -match '^\s*#\s*(.+?-.+)$' -and -not $description) {
-                    $candidate = $matches[1].Trim()
-                    if ($candidate -notmatch '^={3,}$') { $description = $candidate }
-                }
-            }
-        } catch { }
-        if (-not $description) { $description = $file.BaseName }
-        $results.Add([pscustomobject]@{ Name = $file.BaseName; Path = $file.FullName; Description = $description })
+    for ($n = 0; $n -le 5; $n++) {
+        $desc = if ($master.LevelDescriptions -and $master.LevelDescriptions["L$n"]) { [string]$master.LevelDescriptions["L$n"] } else { "level $n" }
+        $results.Add([pscustomobject]@{ Name = "tee_level_$n"; Level = $n; Path = $script:TeeMasterFile; Description = $desc })
     }
     return $results
 }
 
 function Get-WWActiveTeeProfileName {
     <#
-    RC2.1 (Required H): the explicit Level marker is authoritative, because the
-    legacy SHA256 comparison reports "unknown/custom" the moment the deployed
-    reference gains a new tag - which is exactly when the active copy is stale
-    and most needs identifying. The hash comparison is kept as a fallback for a
-    pre-RC2.1 active profile that carries no marker.
+    The explicit Level marker in the active profile is authoritative (profiles are generated by
+    WW_set_tee_level.ps1 and always carry it). A profile with no marker (pre-RC2.1 or hand-made)
+    reports $null - callers must not guess.
     #>
     if (-not (Test-Path -LiteralPath $script:ActiveTeeProfile)) { return $null }
-
     try {
         $active = Import-PowerShellDataFile -LiteralPath $script:ActiveTeeProfile -ErrorAction Stop
         if ($null -ne $active.Level) {
-            $name = "tee_level_$([int]$active.Level)"
-            if (Get-WWTeeLevelFiles | Where-Object { $_.Name -eq $name }) { return $name }
+            $n = 0
+            if ([int]::TryParse([string]$active.Level, [ref]$n) -and $n -ge 0 -and $n -le 5) { return "tee_level_$n" }
         }
     } catch { }
-
-    try {
-        $activeHash = (Get-FileHash -LiteralPath $script:ActiveTeeProfile -Algorithm SHA256 -ErrorAction Stop).Hash
-    } catch { return $null }
-    foreach ($level in Get-WWTeeLevelFiles) {
-        try {
-            if ((Get-FileHash -LiteralPath $level.Path -Algorithm SHA256 -ErrorAction Stop).Hash -eq $activeHash) {
-                return $level.Name
-            }
-        } catch { continue }
-    }
     return $null
 }
 
 function Test-WWTeeProfileStale {
     <#
     .SYNOPSIS
-    Reports whether the ACTIVE tee profile is out of date (Required H).
+    Reports whether the ACTIVE tee profile is out of date versus the master.
 
     .DESCRIPTION
-    The active WW_tee_events.psd1 is deployed create-only, so a CPR upgrade that
-    adds new tags (flare_runner_started, cap_portal_preflight_observation, ...)
-    leaves the endpoint silently dropping them with reason=tag_not_in_profile.
-    This compares the active copy against the deployed reference for the SAME
-    selected level and reports the missing tags. It NEVER guesses the level: if
-    the level cannot be determined the result is reported as 'unknown_level' and
-    the caller must leave the profile unchanged.
+    Compares the active profile's tags to what the master defines for the SAME selected level:
+    missing tags (new in this build), extra tags (no longer supported), and a ProfileVersion that
+    differs from the master's MasterVersion. It NEVER guesses the level: if the level cannot be
+    determined the result is 'unknown_level' and the profile is left unchanged.
     #>
     $result = [pscustomobject]@{
         Active = $script:ActiveTeeProfile; Level = $null; Stale = $false
-        Reason = 'not_installed'; MissingTags = @(); ReferencePath = $null
+        Reason = 'not_installed'; MissingTags = @(); ExtraTags = @(); ReferencePath = $script:TeeMasterFile
     }
     if (-not (Test-Path -LiteralPath $script:ActiveTeeProfile)) { return $result }
 
     $levelName = Get-WWActiveTeeProfileName
-    if (-not $levelName) {
-        $result.Reason = 'unknown_level'
-        return $result
-    }
+    if (-not $levelName) { $result.Reason = 'unknown_level'; return $result }
     $result.Level = $levelName
 
-    $reference = Get-WWTeeLevelFiles | Where-Object { $_.Name -eq $levelName } | Select-Object -First 1
-    if (-not $reference) { $result.Reason = 'reference_missing'; return $result }
-    $result.ReferencePath = $reference.Path
-
+    if (-not (Test-Path -LiteralPath $script:TeeSetScript) -or -not (Test-Path -LiteralPath $script:TeeMasterFile)) {
+        $result.Reason = 'reference_missing'; return $result
+    }
     try {
+        . $script:TeeSetScript   # function scope only
+        $n = [int]($levelName -replace '^tee_level_', '')
+        $expected   = Get-CprTeeLevelProfile -Level $n -MasterPath $script:TeeMasterFile
         $activeData = Import-PowerShellDataFile -LiteralPath $script:ActiveTeeProfile -ErrorAction Stop
-        $refData    = Import-PowerShellDataFile -LiteralPath $reference.Path -ErrorAction Stop
     } catch {
         $result.Reason = 'unreadable'
         return $result
     }
 
-    $activeTags = @($activeData.Events.Keys)
-    $missing = @($refData.Events.Keys | Where-Object { $activeTags -notcontains $_ })
-    if ($missing.Count -gt 0) {
-        $result.Stale = $true
-        $result.Reason = 'missing_tags'
-        $result.MissingTags = $missing
-    } else {
-        $result.Reason = 'current'
-    }
+    $activeTags   = @($activeData.Events.Keys)
+    $expectedTags = @($expected.Events.Keys)
+    $result.MissingTags = @($expectedTags | Where-Object { $activeTags -notcontains $_ })
+    $result.ExtraTags   = @($activeTags | Where-Object { $expectedTags -notcontains $_ })
+    if ($result.MissingTags.Count -gt 0) { $result.Stale = $true; $result.Reason = 'missing_tags' }
+    elseif ($result.ExtraTags.Count -gt 0) { $result.Stale = $true; $result.Reason = 'extra_tags' }
+    elseif ([string]$activeData.ProfileVersion -ne [string]$expected.MasterVersion) { $result.Stale = $true; $result.Reason = 'version_mismatch' }
+    else { $result.Reason = 'current' }
     return $result
 }
 
 function Invoke-WWTeeProfileRefresh {
     <#
     .SYNOPSIS
-    One-step repair: refresh the ACTIVE tee profile from its OWN selected level.
+    One-step repair: regenerate the ACTIVE tee profile at its OWN selected level from the master.
 
     .DESCRIPTION
-    RC2.1 (Required H). Copies the latest deployed reference for the level the
-    operator already chose, so new tags become available WITHOUT changing the
-    selected volume knob. If the level cannot be reliably determined it reports
-    the problem and leaves the profile untouched rather than guessing.
+    New tags become available and unsupported ones disappear WITHOUT changing the selected volume
+    knob. If the level cannot be reliably determined it reports the problem and leaves the
+    profile untouched rather than guessing.
     #>
     param([switch]$Force)
 
     $status = Test-WWTeeProfileStale
-    Write-Host "`nActive tee profile: $($status.Active)" -ForegroundColor Cyan
+    Write-Host "`
+Active tee profile: $($status.Active)" -ForegroundColor Cyan
     Write-Host "Selected level    : $(if ($status.Level) { $status.Level } else { 'UNKNOWN' })" -ForegroundColor Cyan
     Write-Host "Status            : $($status.Reason)" -ForegroundColor $(if ($status.Stale) { 'Yellow' } else { 'Green' })
 
@@ -835,21 +823,23 @@ function Invoke-WWTeeProfileRefresh {
         return $false
     }
     if (-not $status.Stale -and -not $Force) {
-        Write-Host "Active profile already contains every tag from $($status.Level) - nothing to do." -ForegroundColor Green
+        Write-Host "Active profile already matches the master for $($status.Level) - nothing to do." -ForegroundColor Green
         return $true
     }
-    if ($status.MissingTags.Count -gt 0) {
-        Write-Host "Missing tags: $($status.MissingTags -join ', ')" -ForegroundColor Yellow
-    }
-    if (-not $Force -and -not (Confirm-WWAction "Refresh the active profile from $($status.Level) (selected level is preserved)?")) {
+    if ($status.MissingTags.Count -gt 0) { Write-Host "Missing tags: $($status.MissingTags -join ', ')" -ForegroundColor Yellow }
+    if ($status.ExtraTags.Count -gt 0)   { Write-Host "Unsupported tags: $($status.ExtraTags -join ', ')" -ForegroundColor Yellow }
+    if (-not $Force -and -not (Confirm-WWAction "Regenerate the active profile at $($status.Level) from the master (selected level is preserved)?")) {
         Write-Host "Cancelled." -ForegroundColor Yellow
         return $false
     }
 
     try {
-        Copy-Item -LiteralPath $status.ReferencePath -Destination $script:ActiveTeeProfile -Force -ErrorAction Stop
-        Write-WWAdminLog "Refreshed active tee profile from '$($status.Level)' (selected level preserved)"
-        Write-Host "Done. Active profile refreshed from $($status.Level); the selected level is unchanged." -ForegroundColor Green
+        . $script:TeeSetScript   # function scope only
+        $n = [int]($status.Level -replace '^tee_level_', '')
+        $r = Set-CprTeeLevel -Level $n -MasterPath $script:TeeMasterFile -ActivePath $script:ActiveTeeProfile -GeneratedBy 'admin_console_refresh' -Reason 'console_refresh'
+        if (-not $r.Success) { throw $r.Error }
+        Write-WWAdminLog "Refreshed active tee profile at '$($status.Level)' from master (selected level preserved)"
+        Write-Host "Done. Active profile regenerated at $($status.Level); the selected level is unchanged." -ForegroundColor Green
         return $true
     } catch {
         Write-Host "Refresh failed: $_" -ForegroundColor Red
@@ -861,15 +851,15 @@ function Invoke-WWTeeProfileRefresh {
 function Invoke-WWTeeLevelPicker {
     $levels = @(Get-WWTeeLevelFiles)
     if ($levels.Count -eq 0) {
-        Write-Host "No tee_level_*.psd1 files found under $script:TeeProfilesDir" -ForegroundColor Red
+        Write-Host "Tee master not found or unreadable: $script:TeeMasterFile" -ForegroundColor Red
         return
     }
 
     $activeName = Get-WWActiveTeeProfileName
     $staleStatus = Test-WWTeeProfileStale
     if ($staleStatus.Stale) {
-        Write-Host "WARNING: the active profile is STALE - missing tag(s): $($staleStatus.MissingTags -join ', ')" -ForegroundColor Yellow
-        Write-Host "         Use 'Refresh active tee profile' to add them without changing your selected level." -ForegroundColor Yellow
+        Write-Host "WARNING: the active profile is STALE ($($staleStatus.Reason))." -ForegroundColor Yellow
+        Write-Host "         Use 'Refresh active tee profile' to rebuild it without changing your selected level." -ForegroundColor Yellow
     }
     Write-Host "`nCurrently active profile: $(if ($activeName) { $activeName } else { 'unknown/custom' })" -ForegroundColor Cyan
     Write-Host "Available tee log levels:" -ForegroundColor Cyan
@@ -886,14 +876,19 @@ function Invoke-WWTeeLevelPicker {
     }
     $chosen = $levels[$index - 1]
 
-    Write-Host "`nThis will overwrite the ACTIVE profile ($script:ActiveTeeProfile) with $($chosen.Name)." -ForegroundColor Yellow
+    Write-Host "`nThis will regenerate the ACTIVE profile ($script:ActiveTeeProfile) at $($chosen.Name)." -ForegroundColor Yellow
     if (-not (Confirm-WWAction "Overwrite the active tee profile now?")) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
 
-    # Always copies the LATEST deployed reference file (install.ps1 mirrors
-    # tee_profiles/ on every upgrade), so activating a level can never install
-    # an outdated tag set.
-    Copy-Item -LiteralPath $chosen.Path -Destination $script:ActiveTeeProfile -Force
-    Write-WWAdminLog "Activated tee profile '$($chosen.Name)' -> $script:ActiveTeeProfile"
+    try {
+        . $script:TeeSetScript   # function scope only
+        $r = Set-CprTeeLevel -Level $chosen.Level -MasterPath $script:TeeMasterFile -ActivePath $script:ActiveTeeProfile -GeneratedBy 'admin_console' -Reason 'console_pick'
+        if (-not $r.Success) { throw $r.Error }
+    } catch {
+        Write-Host "Failed to activate $($chosen.Name): $_" -ForegroundColor Red
+        Write-WWAdminLog "Tee level activation FAILED ($($chosen.Name)): $_"
+        return
+    }
+    Write-WWAdminLog "Activated tee level '$($chosen.Name)' -> $script:ActiveTeeProfile (generated from master)"
     Write-Host "`nDone. Active profile is now $($chosen.Name)." -ForegroundColor Green
 }
 
@@ -1004,18 +999,31 @@ function Invoke-WWQuickClearVpnHosts {
     Write-Host "`nDone." -ForegroundColor Green
 }
 
+function Invoke-WWQuickSyslogPathTest {
+    Write-Host "`nThis checks the path to the syslog VIP (state, DNS, route, queue) and sends ONE UDP test message" -ForegroundColor Cyan
+    Write-Host "(machine=CPR_TESTER Label=cpr_syslog_path_test) that you can search for in Splunk." -ForegroundColor Cyan
+    if (-not (Confirm-WWAction "Run the syslog path test and send one test message?")) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+    $syslogTest = Join-Path $script:WWRoot "diagnostics\Test-CprSyslogPath.ps1"
+    if (-not (Test-Path -LiteralPath $syslogTest)) { Write-Host "Test-CprSyslogPath.ps1 not found at $syslogTest" -ForegroundColor Red; return }
+    & $syslogTest -Send
+    Write-WWAdminLog "Ran syslog path test (sent 1 CPR_TESTER message) via: $syslogTest -Send"
+    Write-Host "`nDone." -ForegroundColor Green
+}
+
 function Invoke-WWQuickActionsMenu {
     Write-Host "`nQuick Actions:" -ForegroundColor Cyan
     Write-Host "  1. Force HayStack reroll"
     Write-Host "  2. Clear stale flag files"
     Write-Host "  3. Force an immediate WW_main run"
     Write-Host "  4. Clear Blackhole VPN hosts entries"
+    Write-Host "  5. Syslog path test (checks the route to the syslog VIP, sends one CPR_TESTER message)"
     $choice = Read-Host "Select a quick action (or press Enter to cancel)"
     switch ($choice) {
         '1' { Invoke-WWAction -Name 'QuickAction:HaystackReroll' -Action { Invoke-WWQuickHaystackReroll } }
         '2' { Invoke-WWAction -Name 'QuickAction:ClearStaleFlags' -Action { Invoke-WWQuickClearStaleFlags } }
         '3' { Invoke-WWAction -Name 'QuickAction:ForceMainRun' -Action { Invoke-WWQuickForceMainRun } }
         '4' { Invoke-WWAction -Name 'QuickAction:ClearVpnHosts' -Action { Invoke-WWQuickClearVpnHosts } }
+        '5' { Invoke-WWAction -Name 'QuickAction:SyslogPathTest' -Action { Invoke-WWQuickSyslogPathTest } }
         default { Write-Host "Cancelled." -ForegroundColor Yellow }
     }
 }
@@ -1038,6 +1046,62 @@ function Get-WWWatchStreamChoices {
         if ($definition) { $choices += $definition }
     }
     return $choices
+}
+
+function Get-WWBrowseLogFiles {
+    # Every log-like file under logs\ (top level + spool\), newest first.
+    $root  = $script:WWLogDir
+    $found = @()
+    foreach ($dir in @($root, (Join-Path $root 'spool'))) {
+        if (-not (Test-Path -LiteralPath $dir -PathType Container)) { continue }
+        $found += @(Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -in @('.log', '.txt', '.jsonl', '.json', '.bak') })
+    }
+    return @($found | Sort-Object LastWriteTime -Descending)
+}
+
+function Invoke-WWBrowseLogs {
+    <#
+    Pick ANY file under logs\ (not just the curated streams): tail it live, view
+    its last 200 lines, or open it in Notepad. Type text instead of a number to
+    filter the list. Runs inside Invoke-WWWatchLog, so Show-WWLogStream is
+    already loaded. Read-only: it never changes a log.
+    #>
+    $root = $script:WWLogDir
+    $all  = @(Get-WWBrowseLogFiles)
+    if ($all.Count -eq 0) { Write-Host "No log files found under $root" -ForegroundColor Red; return }
+    $view = $all
+    while ($true) {
+        $shown = @($view | Select-Object -First 40)
+        Write-Host ("`nFiles under {0} (newest first, {1} shown of {2}):" -f $root, $shown.Count, $view.Count) -ForegroundColor Cyan
+        for ($i = 0; $i -lt $shown.Count; $i++) {
+            $rel = $shown[$i].FullName.Substring($root.Length + 1)
+            Write-Host ("  {0,2}. {1,-48} {2,8} KB  {3:MM-dd HH:mm}" -f ($i + 1), $rel, [math]::Ceiling($shown[$i].Length / 1KB), $shown[$i].LastWriteTime)
+        }
+        $sel = Read-Host "Number to open, text to filter the list, or Enter to cancel"
+        if ([string]::IsNullOrWhiteSpace($sel)) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+        $n = 0
+        if ([int]::TryParse($sel, [ref]$n)) {
+            if ($n -lt 1 -or $n -gt $shown.Count) { Write-Host "Invalid selection." -ForegroundColor Red; continue }
+            $file = $shown[$n - 1]
+            $rel  = $file.FullName.Substring($root.Length + 1)
+            $mode = Read-Host "[T]ail live, [V]iew last 200 lines, [O]pen in Notepad (Enter cancels)"
+            $def  = [pscustomobject]@{ Name = $rel; File = $rel; Description = ''; Json = ($file.Extension -eq '.jsonl') }
+            switch -Regex ($mode) {
+                '^[Tt]' { Write-WWAdminLog "BrowseLogs: tailing $rel"; Show-WWLogStream -Definition $def -Count 50 -Match $null -Follow -AllowExitKey; return }
+                '^[Vv]' { Write-WWAdminLog "BrowseLogs: viewing $rel"; Show-WWLogStream -Definition $def -Count 200 -Match $null; return }
+                '^[Oo]' {
+                    Write-WWAdminLog "BrowseLogs: opening $rel in Notepad"
+                    try { Start-Process -FilePath 'notepad.exe' -ArgumentList ('"{0}"' -f $file.FullName) -ErrorAction Stop }
+                    catch { Write-Host "Could not open Notepad: $($_.Exception.Message)" -ForegroundColor Red }
+                    return
+                }
+                default { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+            }
+        }
+        $match = @($all | Where-Object { $_.Name -like "*$sel*" })
+        if ($match.Count -eq 0) { Write-Host "No file name contains '$sel'." -ForegroundColor Yellow; $view = $all } else { $view = $match }
+    }
 }
 
 function Invoke-WWWatchLog {
@@ -1069,8 +1133,10 @@ function Invoke-WWWatchLog {
     for ($i = 0; $i -lt $choices.Count; $i++) {
         Write-Host ("  {0,2}. {1,-15} {2}" -f ($i + 1), $choices[$i].Name, $choices[$i].Description)
     }
-    $selection = Read-Host "Select a log to tail (or press Enter to cancel)"
+    Write-Host "   A. Browse ALL files under logs\ (tail, view, or open in Notepad)"
+    $selection = Read-Host "Select a log to tail, A for all files (or press Enter to cancel)"
     if ([string]::IsNullOrWhiteSpace($selection)) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+    if ($selection -in @('A', 'a')) { Invoke-WWBrowseLogs; return }
 
     $index = 0
     if (-not [int]::TryParse($selection, [ref]$index) -or $index -lt 1 -or $index -gt $choices.Count) {
@@ -1116,7 +1182,7 @@ function Show-WWMainMenu {
     Write-Host "  T. Refresh Active Tee Profile (keeps your selected level)"
     Write-Host "  8. Diagnostics & Test Tools Launcher"
     Write-Host "  9. Quick Actions"
-    Write-Host "  W. Watch a WhiteWalker log (Q or Esc returns here)"
+    Write-Host "  W. Watch / browse WhiteWalker logs (Q or Esc returns here)"
     Write-Host "  0. Exit"
 }
 

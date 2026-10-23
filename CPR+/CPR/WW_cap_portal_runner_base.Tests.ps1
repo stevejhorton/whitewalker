@@ -299,7 +299,8 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
             }
 
             It 'registers the observation tags with their exact flat fields in the level 5 profile' {
-                $profile = Import-PowerShellDataFile (Join-Path $PSScriptRoot 'tee_profiles/tee_level_5.psd1')
+                . (Join-Path $PSScriptRoot 'WW_set_tee_level.ps1')
+                $profile = Get-CprTeeLevelProfile -Level 5 -MasterPath (Join-Path $PSScriptRoot 'WW_tee_master.psd1')
                 $profile.Events.cap_portal_preflight_observation.fields | Should -Be @('probe_url','status','http_status','redirect_url','redirect_type','protocol','fqdn','port','duration_ms','attempt','reason','ssid','ip','gw','dns','vpn_state')
                 $profile.Events.cap_portal_webhelper_navigation.fields | Should -Contain 'navigated_url'
                 $profile.Events.cap_portal_webhelper_navigation.fields | Should -Contain 'api_domain'

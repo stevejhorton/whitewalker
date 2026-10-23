@@ -17,6 +17,12 @@ parser.add_argument(
     help="Syslog server"
 )
 
+parser.add_argument(
+    "--machine",
+    default="CPR_TESTER",
+    help="machine= value (default CPR_TESTER)"
+)
+
 args = parser.parse_args()
 
 hostname = socket.gethostname()
@@ -25,10 +31,12 @@ user = getpass.getuser()
 msg = (
     f'<133>{datetime.datetime.now():%b %e %H:%M:%S} '
     f'{hostname} CPR-test: '
-    f'action=test_shot '
-    f'machine="{hostname}" '
+    f'action="test_shot" '
+    f'machine="{args.machine}" '
     f'user="{user}" '
-    f'msg="{args.message}"'
+    f'EvtTime="{datetime.datetime.now().astimezone().isoformat()}" '
+    f'msg="{args.message}" '
+    f'note="src_host={hostname}"'
 )
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

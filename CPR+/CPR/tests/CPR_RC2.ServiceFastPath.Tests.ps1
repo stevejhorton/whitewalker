@@ -160,16 +160,9 @@ Describe 'freshness-safe network snapshot and connection semantics' {
     It 'registers connection_type in the schema and every active network_state profile' {
         $script:schema | Should -Match 'connection_type\s*='
         $script:schema | Should -Match '"ssid", "connection_type", "vpn_state"'
-        foreach ($profile in @(
-            'WW_tee_events.psd1',
-            'tee_profiles/tee_level_2.psd1',
-            'tee_profiles/tee_level_3.psd1',
-            'tee_profiles/tee_level_4.psd1',
-            'tee_profiles/tee_level_5.psd1'
-        )) {
-            (Get-Content (Join-Path $script:root $profile) -Raw) |
-                Should -Match "fields = @\('ip','gw','dns','ssid','connection_type','vpn_state','lease_sec'\)"
-        }
+        # One master now defines network_state once; every level >= 2 inherits it.
+        (Get-Content (Join-Path $script:root 'WW_tee_master.psd1') -Raw) |
+            Should -Match "fields = @\('ip','gw','dns','ssid','connection_type','vpn_state','lease_sec'\)"
     }
 
     It 'uses targeted data access and detailed cold/warm timing evidence' {

@@ -8,6 +8,7 @@ param(
     [switch]$Captive,        # Test captive portal detection
     [switch]$Connectivity,   # Test DC/Gateway connectivity
     [switch]$Flags,          # Test flag file operations
+    [switch]$Syslog,         # Check the path to the syslog VIP (read-only; no test message sent)
     [switch]$Verbose         # Verbose output
 )
 
@@ -111,6 +112,7 @@ function Show-Help {
     Write-Host "  .\WW_diagnostics.ps1 -Captive             Test captive portal detection"
     Write-Host "  .\WW_diagnostics.ps1 -Connectivity        Test DC/Gateway connectivity"
     Write-Host "  .\WW_diagnostics.ps1 -Flags               Test flag file operations"
+    Write-Host "  .\WW_diagnostics.ps1 -Syslog              Check the route to the syslog VIP (diagnostics\Test-CprSyslogPath.ps1 -Send also sends a CPR_TESTER message)"
     Write-Host "  .\WW_diagnostics.ps1 -Captive -Verbose    Run with verbose output"
     Write-Host ""
     Write-Host "DIAGNOSTIC MODES:" -ForegroundColor Yellow
@@ -698,13 +700,14 @@ function Test-TeeProfileHealth {
     The active WW_tee_events.psd1 is deployed create-only, so an upgrade that
     adds tags leaves the endpoint silently dropping them with
     reason=tag_not_in_profile. This compares the active profile against the
-    deployed reference for the SAME selected level (the explicit Level marker),
+    tee master for the SAME selected level (the explicit Level marker),
     and also confirms the telemetry spool directory exists. Read-only.
     #>
     Write-SubHeader "TEE PROFILE / TELEMETRY CHANNEL"
 
     $activeProfile = "C:\ProgramData\WhiteWalker\WW_tee_events.psd1"
-    $profilesDir   = "C:\ProgramData\WhiteWalker\tee_profiles"
+    $masterPath    = "C:\ProgramData\WhiteWalker\WW_tee_master.psd1"
+    $toolPath      = "C:\ProgramData\WhiteWalker\WW_set_tee_level.ps1"
     $spoolDir      = "C:\ProgramData\WhiteWalker\logs\spool"
 
     if (-not (Test-Path $activeProfile)) {
@@ -724,23 +727,28 @@ function Test-TeeProfileHealth {
         Write-Warning "Active tee profile has no Level marker (pre-RC2.1) - staleness cannot be determined without guessing"
     } else {
         Write-Info "Active tee profile level: tee_level_$level (ProfileVersion=$($active.ProfileVersion))"
-        $reference = Join-Path $profilesDir "tee_level_$level.psd1"
-        if (Test-Path $reference) {
+        if ((Test-Path $masterPath) -and (Test-Path $toolPath)) {
             try {
-                $ref = Import-PowerShellDataFile -Path $reference -ErrorAction Stop
+                . $toolPath   # function scope only
+                $expected = Get-CprTeeLevelProfile -Level ([int]$level) -MasterPath $masterPath
                 $activeTags = @($active.Events.Keys)
-                $missing = @($ref.Events.Keys | Where-Object { $activeTags -notcontains $_ })
+                $missing = @($expected.Events.Keys | Where-Object { $activeTags -notcontains $_ })
+                $extra   = @($activeTags | Where-Object { @($expected.Events.Keys) -notcontains $_ })
                 if ($missing.Count -gt 0) {
                     Write-Failure "STALE ACTIVE TEE PROFILE - missing tag(s): $($missing -join ', ')"
                     Write-Info "Repair with: admin\Invoke-WhiteWalkerAction.ps1 -> option 'T' (Refresh Active Tee Profile). Your selected level is preserved."
+                } elseif ($extra.Count -gt 0) {
+                    Write-Warning "Active tee profile has unsupported tag(s): $($extra -join ', ') - refresh with option 'T'"
+                } elseif ([string]$active.ProfileVersion -ne [string]$expected.MasterVersion) {
+                    Write-Warning "Active tee profile version '$($active.ProfileVersion)' differs from master '$($expected.MasterVersion)' - refresh with option 'T'"
                 } else {
                     Write-Success "Active tee profile is current for tee_level_$level"
                 }
             } catch {
-                Write-Warning "Could not compare against reference profile: $_"
+                Write-Warning "Could not compare against the tee master: $_"
             }
         } else {
-            Write-Warning "Reference profile not deployed: $reference"
+            Write-Warning "Tee master/tool not deployed: $masterPath"
         }
     }
 
@@ -752,6 +760,17 @@ function Test-TeeProfileHealth {
         Write-Warning "Telemetry spool missing: $spoolDir - user-context runners will fall back to a direct queue append and may hit access_denied"
         Write-Info "Repair by re-running install.ps1 (Initialize-TelemetrySpool is idempotent)"
     }
+}
+
+function Test-SyslogPathDiag {
+    <# Read-only wrapper: runs diagnostics\Test-CprSyslogPath.ps1 WITHOUT -Send (no test message leaves the box). #>
+    Write-SubHeader "SYSLOG PATH (state / DNS / route / queue)"
+    $tool = Join-Path $PSScriptRoot 'diagnostics\Test-CprSyslogPath.ps1'
+    if (-not (Test-Path -LiteralPath $tool)) {
+        Write-Warning "Test-CprSyslogPath.ps1 not found at $tool - re-run install.ps1"
+        return
+    }
+    & $tool
 }
 
 function Test-AllDiagnostics {
@@ -767,6 +786,7 @@ function Test-AllDiagnostics {
     Test-ConnectivityClassification
     Test-FlagFileOperations
     Test-TeeProfileHealth
+    Test-SyslogPathDiag
     
     Write-Header "FINAL SUMMARY - WHAT WHITEWALKER WOULD DO"
     
@@ -868,13 +888,13 @@ if (-not $isAdmin) {
 }
 
 # Check if any test flag is set
-$anyTestRequested = $All -or $Network -or $VPN -or $Captive -or $Connectivity -or $Flags
+$anyTestRequested = $All -or $Network -or $VPN -or $Captive -or $Connectivity -or $Flags -or $Syslog
 
 if (-not $anyTestRequested) {
     Write-Host ""
     Write-Host "ERROR: No diagnostic test specified" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Usage: .\WW_diagnostics.ps1 [-All|-Network|-VPN|-Captive|-Connectivity|-Flags]" -ForegroundColor Yellow
+    Write-Host "Usage: .\WW_diagnostics.ps1 [-All|-Network|-VPN|-Captive|-Connectivity|-Flags|-Syslog]" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Examples:" -ForegroundColor Cyan
     Write-Host "  .\WW_diagnostics.ps1 -h              Show help"
@@ -908,6 +928,10 @@ if ($All) {
     
     if ($Flags) {
         Test-FlagFileOperations
+    }
+
+    if ($Syslog) {
+        Test-SyslogPathDiag
     }
 }
 

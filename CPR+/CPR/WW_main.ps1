@@ -32,6 +32,7 @@ $mainFiles = @(
   'Main.VpnState.ps1',
   'Main.SsidChange.ps1',
   'Main.SelfUpdate.ps1',
+  'Main.TeeFlag.ps1',
   'Main.Entry.ps1'
 )
 foreach ($mainFile in $mainFiles) {

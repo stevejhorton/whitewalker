@@ -110,15 +110,14 @@ re-spooling the whole log.
 Base mode emits independent passive-preflight and Cisco WebHelper EventID 301
 evidence through `cap_portal_preflight_observation` and
 `cap_portal_webhelper_navigation`.  Both were level-5 pilot events; they are
-now registered from `tee_level_3.psd1` upward together with the FlareGun
+now registered in level 1 (the default) together with the FlareGun
 lifecycle events (`flare_dispatched`, `flare_suppressed`, `flare_failed`,
 `flare_runner_started`, `flare_runner_completed`) so the full Splunk chain
 `dispatched -> runner started -> preflight observation -> webhelper navigation
 -> runner completed` survives at a realistic steady-state tee level.  Flares
 are per-run de-duped and cooldown-gated, so the added volume is small.
-`WW_tee_events.psd1` is create-only during install, so an endpoint with an
-existing profile must explicitly copy the updated
-`tee_profiles\tee_level_*.psd1` profile before validating Splunk ingestion.
+The active `WW_tee_events.psd1` is regenerated from `WW_tee_master.psd1` on every
+install/upgrade (its Level is kept), so new tags arrive without manual steps.
 
 Base also runs its own empirical `gateway.optum.com` probe, polled across the
 observation window, detects ISE's non-standard "HTTP 200 with Location" as a
@@ -251,13 +250,28 @@ retries briefly on concurrent writes, and reports `access_denied` instead of
 losing the event silently.  Queue format and drain behavior are unchanged, and
 telemetry remains fail-soft - it never blocks remediation or dispatch.
 
-Because `WW_tee_events.psd1` is create-only/sticky, an endpoint can run an old
-active profile even after the repository `tee_profiles` are updated.  New tags
-and fields (for example `classification`, `os_name`, `browser_name`,
-`trace_id`, `event_record_id`) only appear in Splunk after the updated
-`tee_profiles\tee_level_*.psd1` is explicitly copied over the live
-`WW_tee_events.psd1`.  Until then the telemetry truthfully reports
-`tag_not_in_profile` rather than appearing to succeed.
+Every tee level is defined in ONE file, `WW_tee_master.psd1` (each level lists only
+what it adds; level N includes every level below it).  `WW_set_tee_level.ps1 -Level N`
+merges levels 1..N into the active `WW_tee_events.psd1` (header: Level,
+ProfileVersion, Generated).  The installer reapplies the active Level from the new
+master on every upgrade (previous file kept as `.bak`); a profile that has no Level
+marker gets the default level (1); `Custom = $true` in a profile opts it out.  New tags
+and fields (for example `classification`, `os_name`, `trace_id`) therefore reach
+endpoints on upgrade; a tag missing from the profile is still reported truthfully
+as `tag_not_in_profile`.
+
+Level 0 is not fully silent: the master's L0 section (`tee_level_info`, `tee_level_set`) is part
+of EVERY level.  `tee_level_info` reports the effective level, the reason it is set (`reason`:
+first_install_default, legacy_profile_default, upgrade_kept_level, flag, flag_keep,
+revert_expired, console_pick, console_refresh), who wrote it, the profile version and any
+pending revert time - once a day and whenever the profile changes.
+
+Changing the level without admin rights: create an empty file
+`C:\Windows\Temp\cpr_tee_<1-5>.flag` (name only - content is ignored).  The next WW_main
+run applies it, deletes the flag, sends a `tee_level_set` event and reverts to the
+previous level after `$TeeFlagRevertHours` (336 hours = 14 days).  Use
+`cpr_tee_<1-5>_keep.flag` to make the level stick (no revert, and it cancels a pending
+revert).  Bad names or failures rename the flag to `.failed` (swept after 7 days).
 
 Examples from `C:\ProgramData\WhiteWalker`:
 
@@ -322,9 +336,9 @@ Menu actions:
    new needle with a `# Added via Invoke-WhiteWalkerAction.ps1 on <ISO-8601
    timestamp>` provenance comment. Write failures are caught, logged to
    `white_walker.admin_actions.log`, and reported instead of claiming success.
-7. **Tee Log Level Picker** - lists the available `tee_profiles\tee_level_N.psd1`
-   files with their descriptions, shows the currently active profile, and
-   copies the chosen one over the live `WW_tee_events.psd1` after confirming.
+7. **Tee Log Level Picker** - lists levels 0-5 from `WW_tee_master.psd1` with their
+   descriptions, shows the currently active profile, and regenerates the live
+   `WW_tee_events.psd1` at the chosen level (via `WW_set_tee_level.ps1`) after confirming.
 8. **Diagnostics & Test Tools Launcher** - a curated (not auto-discovered)
    submenu of the tech-usable scripts from `diagnostics\` and `tests\` (see
    the PR description for the full include/exclude list and reasoning;
@@ -460,7 +474,7 @@ HEADER needles (RC2)
 
   Telemetry: action="haystack_header_fields" with Label=, header_field= (the field name or
   *) and the value(s) as key="value" pairs. The tag must be present in the active
-  WW_tee_events.psd1 profile (tee_level_2 and above ship it) or it is silently dropped by
+  WW_tee_events.psd1 profile (tee level 2 and above ship it) or it is silently dropped by
   the volume knob, exactly like every other tee tag.
 
   HEADER directives are inline-evaluated - they never produce Task Scheduler trigger XML,
@@ -662,19 +676,19 @@ USER-CONTEXT TELEMETRY SPOOL (no broad ACL grants)
   and the direct-append path behaves exactly as before.
 
 ACTIVE TEE PROFILE STALENESS AND REPAIR
-  tee_profiles/tee_level_<n>.psd1 and the active WW_tee_events.psd1 now carry
-  Level and ProfileVersion markers. Get-WWActiveTeeProfileName prefers the Level
-  marker and falls back to a SHA256 comparison.
+  The generated active WW_tee_events.psd1 carries Level and ProfileVersion markers
+  (ProfileVersion = the master's MasterVersion). Get-WWActiveTeeProfileName reads the
+  Level marker only; a profile without one reports unknown_level (no guessing).
   Test-WWTeeProfileStale reports: current, not_installed, unknown_level,
-  reference_missing, unreadable, missing_tags.
+  reference_missing, unreadable, missing_tags, extra_tags, version_mismatch.
   Invoke-WWTeeProfileRefresh refreshes the active profile from the currently
   selected level, preserving the operator's chosen level. If the level cannot be
   determined reliably it refuses to guess and leaves the file unchanged.
   Admin menu: option T (admin/Invoke-WhiteWalkerAction.ps1) is the one-step
   repair. WW_diagnostics.ps1 Test-TeeProfileHealth surfaces staleness and spool
   presence in Test-AllDiagnostics.
-  install.ps1 still copies the active profile create-only; it never overwrites
-  the operator's selection.
+  install.ps1 regenerates the active profile from the master at the SAME Level on
+  every upgrade (previous file kept as WW_tee_events.psd1.bak); Custom = $true skips it.
 
 PRESERVED PREFLIGHT / ISE CONTRACT
   Outside the credible active-WebHelper 301-first branch, gateway.optum.com

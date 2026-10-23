@@ -1,8 +1,10 @@
 # CPR RC2 configuration and feature switches.
+# By:steve.horton@optum.com (with AI assist) 
+# 23oct26
 # Depends on: WW helper scripts loaded by WW_main.ps1.
 
 # ------------------------------- Config ---------------------------------------
-$ver                    = "3.14.0_RC2.1.0"
+$ver                    = "3.14.0_RC2.0.2"
 $initial_sleep          = 3     # seconds after DHCP before checks
 $LogPath                = "C:\ProgramData\WhiteWalker\logs\white_walker.main.log"
 
@@ -306,6 +308,20 @@ $HeaderNeedleFiles              = @(
 # Tee logging (volume-knob event forwarding, routes through Haystack syslog queue)
 $TeeEnabled    = $true
 $TeeEventsFile = "C:\ProgramData\WhiteWalker\WW_tee_events.psd1"
+# Single-file tee levels: WW_tee_master.psd1 defines every level; WW_set_tee_level.ps1 writes the
+# active profile above. A user (no admin needed) can touch C:\Windows\Temp\cpr_tee_<1-5>.flag and the
+# next run applies that level, then reverts it after $TeeFlagRevertHours (or keeps it for cpr_tee_<N>_keep.flag).
+$TeeMasterFile            = "C:\ProgramData\WhiteWalker\WW_tee_master.psd1"
+$TeeSetScript             = "C:\ProgramData\WhiteWalker\WW_set_tee_level.ps1"
+$TeeDefaultLevel          = 1      # KEEP IN SYNC with $TeeDefaultLevel in install.ps1 (no marker / fresh install)
+$TeeFlagEnabled           = $true
+$TeeFlagDir               = "C:\Windows\Temp"
+$TeeFlagCooldownMinutes   = 10     # minimum minutes between flag-applied level changes (extra flags wait)
+$TeeFlagRevertHours       = 336    # cpr_tee_<N>.flag reverts to the previous level after this long (14 days); 0 = never. cpr_tee_<N>_keep.flag never reverts
+$TeeLevelInfoHours        = 24    # tee_level_info (effective level + reason) is re-sent at least this often; also on any change
+$TeeLevelInfoStampFile    = "C:\ProgramData\WhiteWalker\tee_level_info.stamp"
+$TeeFlagFailedMaxAgeDays  = 7      # stale *.failed flags (cpr_tee_*, cpr_update_*) are swept after this long
+$TeeRevertStateFile       = "C:\ProgramData\WhiteWalker\tee_level_revert.json"
 
 # XmlVault subsystem (offline VPN XML backup and island self-heal)
 # Syncs VPN profile XMLs from NETLOGON to local vault; restores from vault on island detection.
@@ -323,6 +339,7 @@ $SelfUpdateDevFlag           = "C:\Windows\Temp\cpr_update_dev.flag"
 $SelfUpdateProdFlag          = "C:\Windows\Temp\cpr_update_prod.flag"
 $SelfUpdateCooldownFlag      = "C:\ProgramData\WhiteWalker\cpr_update_ran.flag"
 $SelfUpdateCooldownMinutes   = 10   # prevent re-trigger loop
+$SelfUpdateMaxAttempts       = 5    # failed attempts before the flag is renamed .failed (each failure is written into the flag; next run retries)
 $SelfUpdateRemoteBase        = "\\ms.ds.uhc.com\netlogon\UHG\Scripts\AOVPN\CPR\bin"
 $SelfUpdateZipName           = "cpr_current.zip"
 $SelfUpdateInstallScript     = "install.ps1"

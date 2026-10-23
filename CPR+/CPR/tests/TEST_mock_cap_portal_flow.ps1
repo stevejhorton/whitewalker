@@ -40,8 +40,8 @@
     - Synthetic marker field: ssid="CPR-MOCK-FLOW" (default, configurable via -SsidMarker).
     - Splunk exclusion query for production dashboards / SLO calculations:
         NOT ssid="CPR-MOCK-FLOW"
-    - Machine and user reflect the real executing context ($env:COMPUTERNAME, WindowsIdentity)
-      so test results are attributable to whoever ran the mock.
+    - machine= is -MachineName (default CPR_TESTER, applied to this process only so Write-TeeLog stamps it);
+      user reflects the real executing context (WindowsIdentity) so results stay attributable to whoever ran the mock.
 
 .PARAMETER Outcome
     Simulated remediation outcome.
@@ -119,6 +119,8 @@ param(
     [int]$ListenPort = 0,
 
     [string]$SsidMarker = 'CPR-MOCK-FLOW',
+
+    [string]$MachineName = 'CPR_TESTER',
 
     [string]$StateJsonPath = 'C:\Windows\UHGLogs\state.json',
 
@@ -238,6 +240,7 @@ Invoke-Expression $fnTestReachable.Extent.Text
 Invoke-Expression $fnGetNetState.Extent.Text
 
 # Setup Drain environment and logger capture
+if (-not [string]::IsNullOrWhiteSpace($MachineName)) { $env:COMPUTERNAME = $MachineName }   # process-scoped; Write-TeeLog stamps machine= from it
 if ([string]::IsNullOrWhiteSpace($env:COMPUTERNAME)) {
     try {
         $env:COMPUTERNAME = [System.Net.Dns]::GetHostName()

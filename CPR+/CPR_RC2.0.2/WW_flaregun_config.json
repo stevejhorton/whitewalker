@@ -1,0 +1,143 @@
+{
+  "_comment": "WhiteWalker FlareGun Event Configuration",
+  "_version": "1.0.0",
+  "_author": "steve.horton@optum.com",
+  "_description": "Maps flare tags to Event IDs and execution contexts",
+  
+  "flare_events": {
+    "user_tun": {
+      "event_id": 780,
+      "context": "USER",
+      "flare_tag": "user_tun",
+      "description": "User tunnel VPN connection detected",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "mgmt_tun": {
+      "event_id": 781,
+      "context": "USER",
+      "flare_tag": "mgmt_tun",
+      "description": "Management tunnel VPN connection detected",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "off_prem_no_vpn": {
+      "event_id": 782,
+      "context": "USER",
+      "flare_tag": "off_prem_no_vpn",
+      "description": "Off-premises connection without VPN",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "on_prem": {
+      "event_id": 793,
+      "context": "SYSTEM",
+      "flare_tag": "on_prem",
+      "description": "On-premises connection detected",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "ise_employee_captive_portal": {
+      "event_id": 790,
+      "context": "SYSTEM",
+      "flare_tag": "ise_employee_captive_portal",
+      "description": "ISE employee network - posture rescan required",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "ise_posture_compliant": {
+      "event_id": 791,
+      "context": "SYSTEM",
+      "flare_tag": "ise_posture_compliant",
+      "description": "ISE posture compliance verification successful",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "ise_posture_failed": {
+      "event_id": 792,
+      "context": "SYSTEM",
+      "flare_tag": "ise_posture_failed",
+      "description": "ISE posture compliance verification failed",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "ise_guest_captive_portal": {
+      "event_id": 794,
+      "context": "SYSTEM",
+      "flare_tag": "ise_guest_captive_portal",
+      "description": "ISE guest network detected",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "non_ise_captive_portal": {
+      "event_id": 795,
+      "context": "SYSTEM",
+      "flare_tag": "non_ise_captive_portal",
+      "description": "Non-ISE captive portal detected",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "captive_portal_browser": {
+      "event_id": 777,
+      "context": "USER",
+      "flare_tag": "captive_portal_browser",
+      "description": "Launch captive portal browser for user authentication",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "captive_portal_browser_base": {
+      "event_id": 778,
+      "context": "USER",
+      "flare_tag": "captive_portal_browser_base",
+      "description": "Launch base captive portal observer (AlwaysOn-native mode) - watches and logs, only intervenes if user not online within timeout",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "captive_portal_dns_misconfiguration": {
+      "event_id": 796,
+      "context": "SYSTEM",
+      "flare_tag": "captive_portal_dns_misconfiguration",
+      "description": "DNS chicken/egg problem: DNS blocked until portal accepted, but portal URL requires DNS",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "captive_walled_garden": {
+      "event_id": 797,
+      "context": "SYSTEM",
+      "flare_tag": "captive_walled_garden",
+      "description": "Walled-garden captive portal detected: DNS blocked, gateway reachable. Hotel/venue portal requiring direct gateway navigation.",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "no_net_transient": {
+      "event_id": 798,
+      "context": "SYSTEM",
+      "flare_tag": "no_net_transient",
+      "description": "Genuine transient network connectivity problem - not a captive portal",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "deep_diagnostics": {
+      "event_id": 799,
+      "context": "SYSTEM",
+      "flare_tag": "deep_diagnostics",
+      "description": "Trigger deep diagnostics collection",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "notify_user": {
+      "event_id": 800,
+      "context": "USER",
+      "flare_tag": "notify_user",
+      "description": "Display toast notification to logged-on user - payload in event message",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "xml_vault_sync": {
+      "event_id": 801,
+      "context": "USER",
+      "flare_tag": "xml_vault_sync",
+      "description": "XmlVault: sync VPN profile XMLs from NETLOGON share to local vault (24h cooldown gated)",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "xml_vault_restore": {
+      "event_id": 802,
+      "context": "USER",
+      "flare_tag": "xml_vault_restore",
+      "description": "XmlVault: restore VPN profile XML from local vault to client profile dir (island self-heal)",
+      "source": "WhiteWalkerFlareGun"
+    }
+  },
+  
+  "paths": {
+    "config_file": "C:\\ProgramData\\WhiteWalker\\WW_flaregun_config.json",
+    "main_script_dir": "C:\\ProgramData\\WhiteWalker",
+    "cap_portal_script_dir": "C:\\ProgramData\\WhiteWalker",
+    "log_dir": "C:\\ProgramData\\WhiteWalker",
+    "diag_dir": "C:\\ProgramData\\WhiteWalker\\diagnostics"
+  }
+}

@@ -74,7 +74,7 @@
 
         # --- WW_tee.ps1 : Write-TeeLog (ad-hoc tee nuggets) ---
         # Superset of every field currently referenced by the 'fields' lists
-        # in tee_profiles/tee_level_*.psd1. WW_tee.ps1 does not itself
+        # in WW_tee_master.psd1. WW_tee.ps1 does not itself
         # restrict which keys a caller may pass via -Data; this catalog
         # documents what's actually emitted today so Splunk/lint have a
         # single reference instead of re-deriving it from the profiles.

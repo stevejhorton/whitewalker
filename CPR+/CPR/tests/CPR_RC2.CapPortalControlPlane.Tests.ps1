@@ -521,19 +521,20 @@ Describe 'Truthful, fail-soft telemetry' {
         }
     }
 
-    It 'registers the new fields on the intentional tee profile levels' {
-        foreach ($level in 3, 4, 5) {
-            $profile = Import-PowerShellDataFile (Join-Path $script:root "tee_profiles/tee_level_$level.psd1")
+    It 'registers the new fields on every tee level (cap portal detail is core since the single-master change)' {
+        . (Join-Path $script:root 'WW_set_tee_level.ps1')
+        foreach ($level in 1..5) {
+            $profile = Get-CprTeeLevelProfile -Level $level -MasterPath (Join-Path $script:root 'WW_tee_master.psd1')
             $profile.Events['cap_portal_preflight_observation'].fields | Should -Contain 'classification'
             $profile.Events['cap_portal_webhelper_navigation'].fields | Should -Contain 'trace_id'
             $profile.Events['cap_portal_webhelper_navigation'].fields | Should -Contain 'event_record_id'
         }
     }
 
-    It 'documents that the active WW_tee_events.psd1 is sticky and must be copied explicitly' {
+    It 'documents that the active profile is generated from WW_tee_master.psd1' {
         $readme = Get-Content (Join-Path $script:root 'README.txt') -Raw
 
-        $readme | Should -Match 'create-only/sticky'
+        $readme | Should -Match 'WW_tee_master\.psd1'
         $readme | Should -Match 'tag_not_in_profile'
     }
 }

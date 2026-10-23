@@ -658,26 +658,23 @@ Describe 'Required G - USER spool / SYSTEM ingestion' {
 # =============================================================================
 Describe 'Required H - tee profile staleness and level-preserving repair' {
     BeforeAll {
-        $script:profilesDir = Join-Path $script:root 'tee_profiles'
+        $script:masterPath = Join-Path $script:root 'WW_tee_master.psd1'
         $script:adminSource = Get-Content (Join-Path $script:root 'admin/Invoke-WhiteWalkerAction.ps1') -Raw
+        . (Join-Path $script:root 'WW_set_tee_level.ps1')
     }
 
-    It 'every reference profile carries an explicit Level and ProfileVersion marker' {
-        foreach ($file in Get-ChildItem -Path $script:profilesDir -Filter 'tee_level_*.psd1') {
-            $data = Import-PowerShellDataFile -Path $file.FullName
-            $expected = [int]($file.BaseName -replace '^tee_level_', '')
-            $data.Level          | Should -Be $expected
+    It 'every generated level carries an explicit Level and ProfileVersion marker' {
+        foreach ($level in 0..5) {
+            $text = ConvertTo-CprTeeProfileText -LevelProfile (Get-CprTeeLevelProfile -Level $level -MasterPath $script:masterPath)
+            $path = Join-Path $TestDrive "gen_$level.psd1"
+            Set-Content -Path $path -Value $text -Encoding UTF8
+            $data = Import-PowerShellDataFile -Path $path
+            $data.Level          | Should -Be $level
             $data.ProfileVersion | Should -Not -BeNullOrEmpty
         }
     }
 
-    It 'the deployed active profile also carries a marker' {
-        $active = Import-PowerShellDataFile -Path (Join-Path $script:root 'WW_tee_events.psd1')
-        $active.Level          | Should -Not -BeNullOrEmpty
-        $active.ProfileVersion | Should -Not -BeNullOrEmpty
-    }
-
-    It 'identifies the active level from the marker, not only a SHA256 match' {
+    It 'identifies the active level from the marker' {
         $detect = Get-CprFunctionSource -Path (Join-Path $script:root 'admin/Invoke-WhiteWalkerAction.ps1') `
             -Names @('Get-WWActiveTeeProfileName')
         $detect | Should -Match 'Import-PowerShellDataFile'
@@ -691,10 +688,10 @@ Describe 'Required H - tee profile staleness and level-preserving repair' {
         $refresh | Should -Match 'Write-WWAdminLog "Tee profile refresh skipped'
     }
 
-    It 'refreshes from the operator-selected level, preserving the choice' {
+    It 'refreshes at the operator-selected level, preserving the choice' {
         $refresh = Get-CprFunctionSource -Path (Join-Path $script:root 'admin/Invoke-WhiteWalkerAction.ps1') `
             -Names @('Invoke-WWTeeProfileRefresh')
-        $refresh | Should -Match 'Copy-Item -LiteralPath \$status\.ReferencePath'
+        $refresh | Should -Match 'Set-CprTeeLevel -Level \$n'
         $refresh | Should -Match 'selected level preserved'
     }
 
@@ -703,10 +700,10 @@ Describe 'Required H - tee profile staleness and level-preserving repair' {
         $script:adminSource | Should -Match "Invoke-WWAction -Name 'TeeProfileRefresh'"
     }
 
-    It 'the level picker always copies the latest deployed reference file' {
+    It 'the level picker generates the profile from the master through the shared tool' {
         $picker = Get-CprFunctionSource -Path (Join-Path $script:root 'admin/Invoke-WhiteWalkerAction.ps1') `
             -Names @('Invoke-WWTeeLevelPicker')
-        $picker | Should -Match 'Copy-Item -LiteralPath \$chosen\.Path -Destination \$script:ActiveTeeProfile -Force'
+        $picker | Should -Match 'Set-CprTeeLevel -Level \$chosen\.Level'
     }
 
     It 'makes stale-profile status obvious in diagnostics' {
@@ -718,7 +715,7 @@ Describe 'Required H - tee profile staleness and level-preserving repair' {
     It 'level 5 contains every new tag with its exact schema fields' {
         $schema  = Import-PowerShellDataFile (Join-Path $script:root 'support_files/haystack_msg_schema.psd1')
         $known   = @($schema.Mandatory.Keys) + @($schema.Optional.Keys)
-        $level5  = Import-PowerShellDataFile (Join-Path $script:profilesDir 'tee_level_5.psd1')
+        $level5  = Get-CprTeeLevelProfile -Level 5 -MasterPath $script:masterPath
 
         foreach ($tag in @('flare_runner_started', 'flare_runner_completed', 'flare_dispatched',
                            'cap_portal_preflight_observation', 'cap_portal_webhelper_navigation')) {
@@ -731,21 +728,22 @@ Describe 'Required H - tee profile staleness and level-preserving repair' {
         }
     }
 
-    It 'levels 3 and 4 also expose the new captive-portal and flare lifecycle tags' {
-        foreach ($name in @('tee_level_3', 'tee_level_4')) {
-            $data = Import-PowerShellDataFile (Join-Path $script:profilesDir "$name.psd1")
+    It 'levels 3 and 4 also expose the captive-portal and flare lifecycle tags' {
+        foreach ($level in 3, 4) {
+            $data = Get-CprTeeLevelProfile -Level $level -MasterPath $script:masterPath
             foreach ($tag in @('flare_runner_started', 'flare_runner_completed', 'flare_dispatched',
                                'cap_portal_preflight_observation', 'cap_portal_webhelper_navigation')) {
-                $data.Events.ContainsKey($tag) | Should -BeTrue -Because "$name must expose $tag"
+                $data.Events.ContainsKey($tag) | Should -BeTrue -Because "level $level must expose $tag"
             }
         }
     }
 
-    It 'the deployed active profile exposes the same new tags' {
-        $active = Import-PowerShellDataFile -Path (Join-Path $script:root 'WW_tee_events.psd1')
-        foreach ($tag in @('flare_runner_started', 'flare_runner_completed', 'flare_dispatched',
-                           'cap_portal_preflight_observation', 'cap_portal_webhelper_navigation')) {
-            $active.Events.ContainsKey($tag) | Should -BeTrue -Because "$tag must be available on the endpoint"
+    It 'level 1 (the default) already carries all the captive-portal tags' {
+        $l1 = Get-CprTeeLevelProfile -Level 1 -MasterPath $script:masterPath
+        foreach ($tag in @('cap_portal_redirect', 'cap_portal_remediation_passed', 'cap_portal_remediation_failed',
+                           'cap_portal_preflight_observation', 'cap_portal_webhelper_navigation', 'cap_portal_runner_result',
+                           'captive_walled_garden', 'tee_level_set')) {
+            $l1.Events.ContainsKey($tag) | Should -BeTrue -Because "level 1 must carry $tag"
         }
     }
 }

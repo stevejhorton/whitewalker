@@ -245,12 +245,32 @@ function Drain-SyslogQueue {
         $null = Import-SyslogSpool
     }
 
-    if (-not (Test-Path $SyslogQueueFile)) { return }
+    # Claim the queue ATOMICALLY by renaming it, then work on the claimed copy. Writers that append
+    # while we drain create a fresh queue file, so nothing they add can be read-then-deleted (the old
+    # read / send / Remove-Item left a window where an entry appended mid-drain was destroyed unsent).
+    $workFile = "$SyslogQueueFile.draining"
+    try {
+        if (Test-Path -LiteralPath $workFile) {
+            $claimAge = ((Get-Date) - (Get-Item -LiteralPath $workFile -ErrorAction Stop).LastWriteTime).TotalMinutes
+            if ($claimAge -lt 5) {
+                Write-HALog "SyslogQueue: another drain is active (claim $([math]::Round($claimAge,1))m old) - skipping" "DEBUG"
+                return
+            }
+            Write-HALog "SyslogQueue: recovering a stale claimed queue left by an earlier drain" "WARN"
+        } else {
+            if (-not (Test-Path -LiteralPath $SyslogQueueFile)) { return }
+            Move-Item -LiteralPath $SyslogQueueFile -Destination $workFile -ErrorAction Stop
+        }
+        (Get-Item -LiteralPath $workFile -ErrorAction Stop).LastWriteTime = Get-Date   # stamp the claim time
+    } catch {
+        Write-HALog "SyslogQueue: could not claim the queue for draining (a writer has it open?): $_" "DEBUG"
+        return
+    }
 
     try {
-        $lines = Get-Content $SyslogQueueFile -Encoding UTF8 -ErrorAction Stop
+        $lines = Get-Content -LiteralPath $workFile -Encoding UTF8 -ErrorAction Stop
         if (-not $lines -or $lines.Count -eq 0) {
-            Remove-Item $SyslogQueueFile -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $workFile -Force -ErrorAction SilentlyContinue
             return
         }
 
@@ -286,18 +306,24 @@ function Drain-SyslogQueue {
                 }
                 if ($entry.extraInfo) { $splatArgs['ExtraInfo'] = $entry.extraInfo }
                 & $WWSyslogScript @splatArgs
-                if ($LASTEXITCODE -eq 0) { $sent++ } else { $failed++; $keep += $line }
+                if ($LASTEXITCODE -eq 0) {
+                    $sent++
+                    $sentAction = if ([string]$entry.payload -match 'action="([^"]+)"') { $Matches[1] } else { '?' }
+                    Write-HALog "SyslogQueue: sent action=$sentAction queued_at=$($entry.ts)" "DEBUG"
+                } else { $failed++; $keep += $line }
             } catch {
                 $failed++
                 $keep += $line  # re-queue on failure
             }
         }
 
-        # Rewrite queue with only failed entries
-        if ($keep.Count -gt 0) {
-            $keep | Set-Content $SyslogQueueFile -Encoding UTF8 -Force
-        } else {
-            Remove-Item $SyslogQueueFile -Force -ErrorAction SilentlyContinue
+        # Put failed entries back by APPENDING to the live queue (never overwrite what writers added
+        # meanwhile). If cleanup fails the claimed file is kept and a later drain recovers it.
+        try {
+            if ($keep.Count -gt 0) { Add-Content -LiteralPath $SyslogQueueFile -Value $keep -Encoding UTF8 -ErrorAction Stop }
+            Remove-Item -LiteralPath $workFile -Force -ErrorAction Stop
+        } catch {
+            Write-HALog "SyslogQueue: could not finish cleanup (claimed file kept for the next drain): $_" "WARN"
         }
 
         Write-HALog "SyslogQueue: drained - sent=$sent expired=$expired failed=$failed remaining=$($keep.Count)" "INFO"
