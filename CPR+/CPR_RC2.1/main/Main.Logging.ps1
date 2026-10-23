@@ -46,10 +46,18 @@ function Initialize-Logger {
 }
 
 function Add-LogLine([string]$line) {
-  for ($i=1; $i -le 3; $i++) {
-    try   { Add-Content -Path $LogPath -Value $line -Encoding UTF8 -ErrorAction Stop; break }
-    catch { Start-Sleep -Milliseconds (50 * $i); if ($i -eq 3) { Write-Host "LOG WRITE FAILED: $($_.Exception.Message)" } }
+  # Retry through a transient lock (AV scan, a tail or editor holding the file): 6 tries, ~1s of backoff.
+  # If the line still cannot be written, leave a trace in log_write_failures.txt instead of dropping it silently.
+  $lastErr = ''
+  for ($i=1; $i -le 6; $i++) {
+    try   { Add-Content -Path $LogPath -Value $line -Encoding UTF8 -ErrorAction Stop; return }
+    catch { $lastErr = $_.Exception.Message; Start-Sleep -Milliseconds (50 * $i) }
   }
+  Write-Host "LOG WRITE FAILED: $lastErr"
+  try {
+    $failFile = Join-Path (Split-Path -Parent $LogPath) 'log_write_failures.txt'
+    Add-Content -LiteralPath $failFile -Value ("{0} run={1} err={2} line={3}" -f (Get-Date -Format 'o'), $RunId, $lastErr, $line) -ErrorAction Stop
+  } catch { }
 }
 function Write-Log { param([Parameter(Mandatory=$true)][string]$Message, [string]$Level = "INFO")
   $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss.fff zzz")

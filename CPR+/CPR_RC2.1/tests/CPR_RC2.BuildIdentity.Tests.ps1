@@ -544,3 +544,17 @@ Describe 'Syslog queue drain does not lose entries appended mid-drain' {
         $script:drain.IndexOf('Import-SyslogSpool') | Should -BeLessThan $script:drain.IndexOf('$workFile')
     }
 }
+
+Describe 'Main log writer does not drop lines silently' {
+    BeforeAll {
+        $src = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.Logging.ps1') -Raw
+        $script:fn = [regex]::Match($src, 'function Add-LogLine.*?function Write-Log', 'Singleline').Value
+    }
+    It 'retries more than 3 times through a transient lock' {
+        $script:fn | Should -Match '\$i -le 6'
+    }
+    It 'leaves a trace in log_write_failures.txt when every try fails' {
+        $script:fn | Should -Match 'log_write_failures\.txt'
+        $script:fn | Should -Match 'run=\{1\}'
+    }
+}
