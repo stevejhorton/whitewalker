@@ -5,6 +5,14 @@ specification for CPR+ RC2.0.2, a requirement-to-test traceability map, and a re
 list (performance, maintainability, efficiency, security). Written 2026-10-24.
 Owner: Steve Horton (VPN SLO). Work in this repo, folder `CPR+/CPR_RC2.0.2`.
 
+## 0. Read these first (already in docs/)
+
+`CPR_Plus_System_Architecture.drawio`, `CPR_Plus_Decision_Flow.drawio`,
+`CPR_Plus_Scenario_Flows.drawio`, `CPR+_use_cases_cap_report.html`,
+`COMPLETE_TEST_SUMMARY.md`, `cpr_field_catalog.md`, and `README.txt` in the repo root of this
+folder. They may be out of date for RC2.0.2; where they disagree with the code, the code wins and
+the disagreement goes in "Questions for Steve". Do not rebuild what they already cover; link to it.
+
 ## 1. Goal and deliverables
 
 Build the spec in tiers. Stop after each tier and let Steve decide whether to continue.
