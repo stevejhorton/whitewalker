@@ -9,7 +9,7 @@ Owner: Steve Horton (VPN SLO). Work in this repo, folder `CPR+/CPR_RC2.0.2`.
 
 `CPR_Plus_System_Architecture.drawio`, `CPR_Plus_Decision_Flow.drawio`,
 `CPR_Plus_Scenario_Flows.drawio`, `CPR+_use_cases_cap_report.html`,
-`COMPLETE_TEST_SUMMARY.md`, `cpr_field_catalog.md`, and `README.txt` in the repo root of this
+`cpr_field_catalog.md`, and `README.txt` in the repo root of this
 folder. They may be out of date for RC2.0.2; where they disagree with the code, the code wins and
 the disagreement goes in "Questions for Steve". Do not rebuild what they already cover; link to it.
 
@@ -54,8 +54,10 @@ Also produce:
 - Do not change production code in the spec pass. Findings go in REVIEW_FINDINGS.md.
   Tests may be tagged with `REQ:` ids (that is a safe edit); say so in the commit.
 - Be explicit about certainty: confirmed by a test run / read in code / inferred.
-- There may be no PowerShell in the session sandbox. Pester has never been run on this
-  codebase. Do not claim a test passes. Steve runs tests on a Windows box.
+- There may be no PowerShell in the session sandbox. Steve has run Pester v5.3.3 on his
+  Windows box (see `docs/steve_to_review/unit_test_results_10jun26.txt`: three runs, 157/205/35
+  passed with 1/7/4 failed, June 2026), but the tests added since RC2.0 have not been run
+  there yet. Do not claim a test passes. Steve runs tests on a Windows box.
 - Token economy: read function signatures and call graphs first (`Get-Content` with AST or
   grep on `function `), read bodies only for the area being specced, write each area to
   disk as soon as it is done so a new session does not have to re-derive it.

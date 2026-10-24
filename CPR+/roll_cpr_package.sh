@@ -133,6 +133,26 @@ rsync -a --exclude='.git' "$VERSION_DIR"/ "$STAGE_DIR"/ 2>/dev/null || {
     find "$VERSION_DIR" -mindepth 1 -maxdepth 1 ! -name '.git' -exec cp -r {} "$STAGE_DIR"/ \;
 }
 
+# --- 3b. Prune repo-only material from the staged package ---------------------
+# install.ps1 mirrors docs\ to EVERY endpoint (C:\ProgramData\WhiteWalker\docs) and the zip is
+# pulled from the share, so ship only the docs that runtime code reads: the toast logo,
+# the user guide (+ its logo) and the VPN blackhole page. Everything else in docs\
+# (reports, diagrams, test plans, steve_to_review) stays in the repo only.
+# archive\ is a dev artifact the installer never deploys; logs\ is created by the installer.
+# To ship another doc, add its file name to DOCS_SHIP.
+DOCS_SHIP="CPR_Logo.jpeg CPR_Logo.png cpr_user_guide.html vpn_blackhole_info.html"
+if [ -d "$STAGE_DIR/docs" ]; then
+    for f in "$STAGE_DIR"/docs/* "$STAGE_DIR"/docs/.[!.]*; do
+        [ -e "$f" ] || continue
+        keep=0
+        for k in $DOCS_SHIP; do
+            [ "$(basename "$f")" = "$k" ] && keep=1
+        done
+        [ "$keep" -eq 1 ] || rm -rf "$f"
+    done
+fi
+rm -rf "$STAGE_DIR/archive" "$STAGE_DIR/logs"
+
 # --- 4 & 5. Zip staging contents as cpr_current.zip and CPR_<version>.zip ----
 CURRENT_ZIP="$SCRIPT_ROOT/cpr_current.zip"
 VERSION_ZIP="$SCRIPT_ROOT/${VERSION}.zip"
