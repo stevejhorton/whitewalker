@@ -760,3 +760,56 @@ Describe 'Posture marker distinguishes a HostScan scan from client connect activ
         ($script:logged -join ' ') | Should -Not -Match 'vpn_hostscan_posture_active'
     }
 }
+
+Describe 'HostScan hold: never disconnect during a live scan, with a ceiling' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in 'Test-VpnHostscanHold','Invoke-VpnCliBounded' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        function Write-Log { param($m, $l) }
+        $script:VpnPostureDetection = $true; $script:VpnHostscanHold = $true
+        $script:VpnHostscanSilentSec = 30; $script:VpnHostscanMaxWaitSec = 300
+        $script:VpnPostureLogName = 'x'; $script:VpnPostureScanProvider = 'csc_cscan'
+        $script:VpnHostscanEpisodeFile = Join-Path $TestDrive 'hold.txt'
+        $script:VpnCliTimeoutSec = 8; $script:VpnCliDisconnectTimeoutSec = 20
+        $script:VpnDisconnectsThisRun = 0
+        $script:vpn_cmd = Join-Path $env:SystemRoot 'System32\cmd.exe'
+    }
+    BeforeEach { $script:VpnHostscanHoldActive = $false; Remove-Item $script:VpnHostscanEpisodeFile -ErrorAction SilentlyContinue; $script:VpnDisconnectsThisRun = 0 }
+    It 'holds while scanner events are fresh and starts an episode' {
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Test-VpnHostscanHold | Should -BeTrue
+        $script:VpnHostscanHoldActive | Should -BeTrue
+        Test-Path $script:VpnHostscanEpisodeFile | Should -BeTrue
+    }
+    It 'does not hold when the scanner is silent and clears the episode' {
+        Set-Content $script:VpnHostscanEpisodeFile (Get-Date).ToString('o')
+        Mock Get-WinEvent { $null }
+        Test-VpnHostscanHold | Should -BeFalse
+        Test-Path $script:VpnHostscanEpisodeFile | Should -BeFalse
+    }
+    It 'gives up after the ceiling even if the scanner is still writing' {
+        Set-Content $script:VpnHostscanEpisodeFile (Get-Date).AddSeconds(-400).ToString('o')
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Test-VpnHostscanHold | Should -BeFalse
+    }
+    It 'honors the off switch and is fail-soft' {
+        $script:VpnHostscanHold = $false
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Test-VpnHostscanHold | Should -BeFalse
+        $script:VpnHostscanHold = $true
+        Mock Get-WinEvent { throw 'boom' }
+        Test-VpnHostscanHold | Should -BeFalse
+    }
+    It 'Invoke-VpnCliBounded skips disconnect during a hold and does not count it' {
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Invoke-VpnCliBounded -Arguments 'disconnect' | Should -Be ''
+        $script:VpnDisconnectsThisRun | Should -Be 0
+    }
+    It 'static: stabilize returns early on a hold and the main flow exits cleanly' {
+        $vs = Get-Content (Join-Path $root 'main\Main.VpnState.ps1') -Raw
+        $en = Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw
+        $vs | Should -Match "Test-VpnHostscanHold -Where 'stabilize'"
+        $en | Should -Match 'vpn_hostscan_posturing'
+    }
+}
