@@ -224,9 +224,18 @@ function Test-VpnPostureActive {
   if ($WindowSec -le 0) { $WindowSec = [int]$VpnPostureActiveWindowSec }
   if ($WindowSec -le 0) { $WindowSec = 15 }
   try {
-    $ev = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; StartTime = (Get-Date).AddSeconds(-$WindowSec) } -MaxEvents 1 -ErrorAction SilentlyContinue
-    if ($ev) {
+    $since = (Get-Date).AddSeconds(-$WindowSec)
+    # Scanner process (csc_cscan) = a real HostScan/OPSWAT scan. Any other provider in this log
+    # (csc_ciscod connection callbacks) is just the client working on a connect attempt.
+    $scan = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; ProviderName = $VpnPostureScanProvider; StartTime = $since } -MaxEvents 1 -ErrorAction SilentlyContinue
+    if ($scan) {
       Write-Log ("vpn_hostscan_posture_active log='{0}' last_event='{1}' provider='{2}' window_sec={3} - reporting Connecting instead of Disconnected" -f `
+        $VpnPostureLogName, $scan.TimeCreated.ToString('HH:mm:ss'), $scan.ProviderName, $WindowSec) "WARN"
+      return $true
+    }
+    $ev = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; StartTime = $since } -MaxEvents 1 -ErrorAction SilentlyContinue
+    if ($ev) {
+      Write-Log ("vpn_client_connect_activity log='{0}' last_event='{1}' provider='{2}' window_sec={3} - no HostScan scan seen, client is working on a connect attempt; reporting Connecting instead of Disconnected" -f `
         $VpnPostureLogName, $ev.TimeCreated.ToString('HH:mm:ss'), $ev.ProviderName, $WindowSec) "WARN"
       return $true
     }

@@ -711,6 +711,7 @@ Describe 'Posture activity makes a Disconnected vpncli read count as Connecting'
         $script:VpnPostureDetection = $true
         $script:VpnPostureLogName = 'Cisco Secure Client - Secure Firewall Posture'
         $script:VpnPostureActiveWindowSec = 15
+        $script:VpnPostureScanProvider = 'csc_cscan'
         function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { '' } else { "  >> state: Disconnected`n" } }
     }
     It 'returns Connecting when state reads Disconnected and posture events are recent' {
@@ -733,5 +734,29 @@ Describe 'Posture activity makes a Disconnected vpncli read count as Connecting'
         function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Connected`n" } else { "  >> state: Connected`n" } }
         Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
         Get-VpnState | Should -Be 'Connected'
+    }
+}
+
+Describe 'Posture marker distinguishes a HostScan scan from client connect activity' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Test-VpnPostureActive' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        $script:VpnPostureDetection = $true; $script:VpnPostureActiveWindowSec = 15
+        $script:VpnPostureLogName = 'x'; $script:VpnPostureScanProvider = 'csc_cscan'
+        $script:logged = @()
+        function Write-Log { param($m, $l) $script:logged += $m }
+    }
+    BeforeEach { $script:logged = @() }
+    It 'logs vpn_hostscan_posture_active only for the scanner provider' {
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Test-VpnPostureActive | Should -BeTrue
+        ($script:logged -join ' ') | Should -Match 'vpn_hostscan_posture_active'
+    }
+    It 'logs vpn_client_connect_activity when only other providers wrote' {
+        Mock Get-WinEvent { if ($FilterHashtable.ProviderName) { $null } else { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_ciscod' } } }
+        Test-VpnPostureActive | Should -BeTrue
+        ($script:logged -join ' ') | Should -Match 'vpn_client_connect_activity'
+        ($script:logged -join ' ') | Should -Not -Match 'vpn_hostscan_posture_active'
     }
 }
