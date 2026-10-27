@@ -212,6 +212,28 @@ function Invoke-VpnCliBounded {
   }
 }
 
+function Test-VpnPostureActive {
+  <#
+  Secure Firewall Posture (HostScan/OPSWAT) is invisible to vpncli: the client can sit in a posture
+  scan for minutes while 'vpncli state' still reads Disconnected. That Windows event log is silent when
+  the client is idle (observed), so any event inside a short window means posture is in progress.
+  One bounded Get-WinEvent (MaxEvents 1). Fail-soft: any error or missing log returns $false.
+  #>
+  param([int]$WindowSec = 0)
+  if (-not $VpnPostureDetection) { return $false }
+  if ($WindowSec -le 0) { $WindowSec = [int]$VpnPostureActiveWindowSec }
+  if ($WindowSec -le 0) { $WindowSec = 45 }
+  try {
+    $ev = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; StartTime = (Get-Date).AddSeconds(-$WindowSec) } -MaxEvents 1 -ErrorAction SilentlyContinue
+    if ($ev) {
+      Write-Log ("vpn_posture_active log='{0}' last_event='{1}' provider='{2}' window_sec={3} - reporting Connecting instead of Disconnected" -f `
+        $VpnPostureLogName, $ev.TimeCreated.ToString('HH:mm:ss'), $ev.ProviderName, $WindowSec) "WARN"
+      return $true
+    }
+  } catch { Write-Log "Test-VpnPostureActive error: $_" "DEBUG" }
+  return $false
+}
+
 function Get-VpnState {
   try {
     $statsText = ""
@@ -253,6 +275,7 @@ function Get-VpnState {
         }
       }
       
+      if ($lastState -eq 'Disconnected' -and (Test-VpnPostureActive)) { return 'Connecting' }
       return $lastState
     }
     
@@ -276,6 +299,7 @@ function Get-VpnState {
         return "Unknown"
       }
       Write-Log "Management shows Disconnected, no user tunnel" "DEBUG"
+      if (Test-VpnPostureActive) { return "Connecting" }
       return "Disconnected"
     }
     

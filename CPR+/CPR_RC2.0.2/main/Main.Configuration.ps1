@@ -52,6 +52,9 @@ $VpnWakeDetection = $true        # detect wake from sleep and disconnect blockin
 $VpnCliTimeoutSec = 8            # max wait for one vpncli stats/state/status call; a busy Secure Client agent can block it for minutes. On timeout the child is killed and the output treated as empty
 $VpnCliDisconnectTimeoutSec = 20 # max wait for a vpncli disconnect call (it legitimately takes ~10s+ on a busy agent)
 $VpnPostDisconnectRetryMax = 2   # after WW cut the VPN this run, extra disconnects allowed if Secure Client re-enters Connecting/Reconnecting while we stabilize
+$VpnPostureDetection = $true     # treat recent Secure Firewall Posture (HostScan/OPSWAT) event-log activity as Connecting; vpncli cannot see posture scans
+$VpnPostureLogName = 'Cisco Secure Client - Secure Firewall Posture'   # silent when the client is idle
+$VpnPostureActiveWindowSec = 45  # an event newer than this many seconds means posture is in progress
 $VpnWakeTimeWindow = 120         # seconds - if wake event within this window, consider it a wake scenario
 
 # RC2.1 early VPN gate - runs at the TOP of every run, before any wait/sleep/preflight

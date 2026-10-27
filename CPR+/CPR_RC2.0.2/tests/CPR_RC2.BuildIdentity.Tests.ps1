@@ -699,3 +699,39 @@ Describe 'Get-VpnState does not trust the management line when vpncli state is e
         Get-VpnState | Should -Be 'Connecting'
     }
 }
+
+Describe 'Posture activity makes a Disconnected vpncli read count as Connecting' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in 'Get-VpnState','Test-VpnPostureActive' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        function Write-Log { param($m, $l) }
+        function Write-DebugBlock { param($Label, $Text) }
+        $script:WWDebug = $false
+        $script:VpnPostureDetection = $true
+        $script:VpnPostureLogName = 'Cisco Secure Client - Secure Firewall Posture'
+        $script:VpnPostureActiveWindowSec = 45
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { '' } else { "  >> state: Disconnected`n" } }
+    }
+    It 'returns Connecting when state reads Disconnected and posture events are recent' {
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Get-VpnState | Should -Be 'Connecting'
+    }
+    It 'returns Disconnected when the posture log is quiet' {
+        Mock Get-WinEvent { $null }
+        Get-VpnState | Should -Be 'Disconnected'
+    }
+    It 'is fail-soft when the log query throws, and honors the off switch' {
+        Mock Get-WinEvent { throw 'no such log' }
+        Test-VpnPostureActive | Should -BeFalse
+        $script:VpnPostureDetection = $false
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'x' } }
+        Test-VpnPostureActive | Should -BeFalse
+        $script:VpnPostureDetection = $true
+    }
+    It 'never changes a Connected read' {
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Connected`n" } else { "  >> state: Connected`n" } }
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Get-VpnState | Should -Be 'Connected'
+    }
+}
