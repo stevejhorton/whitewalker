@@ -710,7 +710,7 @@ Describe 'Posture activity makes a Disconnected vpncli read count as Connecting'
         $script:WWDebug = $false
         $script:VpnPostureDetection = $true
         $script:VpnPostureLogName = 'Cisco Secure Client - Secure Firewall Posture'
-        $script:VpnPostureActiveWindowSec = 45
+        $script:VpnPostureActiveWindowSec = 15
         function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { '' } else { "  >> state: Disconnected`n" } }
     }
     It 'returns Connecting when state reads Disconnected and posture events are recent' {

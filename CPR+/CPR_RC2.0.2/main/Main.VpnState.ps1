@@ -222,7 +222,7 @@ function Test-VpnPostureActive {
   param([int]$WindowSec = 0)
   if (-not $VpnPostureDetection) { return $false }
   if ($WindowSec -le 0) { $WindowSec = [int]$VpnPostureActiveWindowSec }
-  if ($WindowSec -le 0) { $WindowSec = 45 }
+  if ($WindowSec -le 0) { $WindowSec = 15 }
   try {
     $ev = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; StartTime = (Get-Date).AddSeconds(-$WindowSec) } -MaxEvents 1 -ErrorAction SilentlyContinue
     if ($ev) {
