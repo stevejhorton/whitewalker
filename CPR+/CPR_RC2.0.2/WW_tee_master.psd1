@@ -14,7 +14,7 @@
     #
     # L0 holds the always-on tee level reporting events (every level includes it, so even level 0
     # reports which level a box runs at). Plain data file: no code runs here.
-    MasterVersion = 'RC2.1-m4'
+    MasterVersion = 'RC2.1-m5'
 
     LevelDescriptions = @{
         L0 = 'MINIMAL - only tee level reporting (tee_level_info / tee_level_set); nothing else leaves the box'
@@ -52,7 +52,8 @@
 
                 cap_portal_redirect = @{
                     action = 'cap_portal_redirect'
-                    fields = @('ssid','url','port','ip','gw','dns','vpn_state','portal_type','status','reason')
+                    fields = @('ssid','url','port','ip','gw','dns','vpn_state','portal_type','status','reason','detection_source','protocol','fqdn','ap_name','ap_tags','ap_mac','sip','org','ui','psid','login_url','ma','os','api_domain','os_name','os_version','browser_name','browser_version','device_type','trace_id')
+                    # Portal-descriptor fields are parsed from the redirect URL (same as 301 rows); empty when the URL lacks them.
                     # Fires when: WW_main detects a captive portal / non-ISE redirect
                     # and is about to hand off to a cap portal runner.
                 }

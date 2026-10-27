@@ -638,3 +638,41 @@ Describe 'vpncli calls are time-bounded' {
         foreach ($n in 'VpnCliTimeoutSec', 'VpnCliDisconnectTimeoutSec', 'VpnPostDisconnectRetryMax') { $cfg | Should -Match "\`$$n\s*=" }
     }
 }
+
+Describe 'Native redirect carries the same portal fields as the 301 row' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $src = Join-Path $root 'main\Main.CaptivePortal.ps1'
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($src, [ref]$null, [ref]$null)
+        $want = 'Get-CprCiscoWebHelperQueryParameter', 'Get-CprCiscoWebHelperQueryParameterAny', 'Get-CprPortalUrlFields'
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in $want }, $true)) {
+            . ([scriptblock]::Create($d.Extent.Text))
+        }
+        $script:srcText = Get-Content $src -Raw
+    }
+    It 'extracts portal descriptors from a redirect URL' {
+        $f = Get-CprPortalUrlFields -Url 'https://portal.example/login?ap_name=AP1&ap_mac=aa-bb&SIP=10.0.0.1&PSID=xyz&login_url=http%3A%2F%2Fa%2Fb&ORG=acme'
+        $f.ap_name | Should -Be 'AP1'
+        $f.ap_mac  | Should -Be 'aa-bb'
+        $f.sip     | Should -Be '10.0.0.1'
+        $f.psid    | Should -Be 'xyz'
+        $f.login_url | Should -Be 'http://a/b'
+        $f.org     | Should -Be 'acme'
+    }
+    It 'uses the cm alias for ap_mac, like the 301 parser' {
+        (Get-CprPortalUrlFields -Url 'http://p/x?cm=11-22').ap_mac | Should -Be '11-22'
+    }
+    It 'leaves absent parameters empty and tolerates empty or junk input' {
+        (Get-CprPortalUrlFields -Url 'http://p/x?a=b').ap_name | Should -Be ''
+        (Get-CprPortalUrlFields -Url '').trace_id | Should -Be ''
+        { Get-CprPortalUrlFields -Url 'not a url' } | Should -Not -Throw
+    }
+    It 'cap_portal_redirect tee in remediation merges the portal fields' {
+        $srcText | Should -Match 'Get-CprPortalUrlFields -Url \(\[string\]\$RedirectUrl\)'
+        $srcText | Should -Match "detection_source = \$\(if \(\$accepted301Carried\)"
+    }
+    It 'tee master lists the new fields for cap_portal_redirect' {
+        $m = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'WW_tee_master.psd1') -Raw
+        $m | Should -Match "'reason','detection_source','protocol','fqdn','ap_name'"
+    }
+}

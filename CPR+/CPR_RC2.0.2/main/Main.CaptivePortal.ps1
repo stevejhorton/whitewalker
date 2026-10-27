@@ -61,6 +61,39 @@ function Get-CprCiscoWebHelperUrlDetails {
     return $details
 }
 
+function Get-CprPortalUrlFields {
+    <#
+    .SYNOPSIS
+    Portal-descriptor fields (ap_name, ap_mac, sip, psid, login_url, ...) read
+    from the query string of a captive portal URL. Same parameter names and
+    aliases as the Cisco WebHelper EventID 301 parser, so a redirect seen
+    natively (preflight / enroll.cisco.com) is described in Splunk with the
+    same fields as one seen via 301. Fail-soft: a parameter the URL does not
+    carry stays '' (never fabricated). The cp_da_* client fields are added by
+    Secure Client itself, so they are normally empty on a native redirect.
+    #>
+    param([string]$Url = '')
+    $f = @{
+        ap_name=''; ap_tags=''; ap_mac=''; sip=''; org=''; ui=''; psid=''
+        login_url=''; ma=''; os=''; api_domain=''; os_name=''; os_version=''
+        browser_name=''; browser_version=''; device_type=''; trace_id=''
+    }
+    if ([string]::IsNullOrWhiteSpace($Url)) { return $f }
+    try {
+        $map = @{ ap_name='ap_name'; ap_tags='ap_tags'; sip='SIP'; org='ORG'; ui='UI'
+                  psid='PSID'; login_url='login_url'; ma='MA'; os='OS'; api_domain='api_domain' }
+        foreach ($k in @($map.Keys)) { $f[$k] = Get-CprCiscoWebHelperQueryParameter -Url $Url -ParameterName $map[$k] }
+        $f.ap_mac          = Get-CprCiscoWebHelperQueryParameterAny $Url @('ap_mac','cm')
+        $f.os_name         = Get-CprCiscoWebHelperQueryParameterAny $Url @('cp_da_osname')
+        $f.os_version      = Get-CprCiscoWebHelperQueryParameterAny $Url @('cp_da_osversion')
+        $f.browser_name    = Get-CprCiscoWebHelperQueryParameterAny $Url @('cp_da_browsername')
+        $f.browser_version = Get-CprCiscoWebHelperQueryParameterAny $Url @('cp_da_browserversion')
+        $f.device_type     = Get-CprCiscoWebHelperQueryParameterAny $Url @('cp_da_type')
+        $f.trace_id        = Get-CprCiscoWebHelperQueryParameterAny $Url @('traceId','trace_id','traceid')
+    } catch { }
+    return $f
+}
+
 function ConvertFrom-CprCiscoWebHelperNavigationBody {
     <#
     Main-side copy of Base's EventID 301 parser. Base is a standalone process,
@@ -1564,7 +1597,7 @@ function Invoke-CaptivePortalRemediation {
     $redirectNetCtx = Get-CaptivePortalNetworkContext
     $redirectSsid = ConvertTo-TelemetryValue $currentSsid
     if ([string]::IsNullOrEmpty($redirectSsid)) { $redirectSsid = $redirectNetCtx.ssid }
-    Write-TeeLog 'cap_portal_redirect' @{
+    $redirectTee = @{
         EvtTime     = (Get-Date -Format 'o')
         url         = ConvertTo-TelemetryValue $redirectTelemetry.url
         port        = ConvertTo-TelemetryValue $redirectTelemetry.port
@@ -1576,7 +1609,16 @@ function Invoke-CaptivePortalRemediation {
         portal_type = ConvertTo-TelemetryValue $PortalType
         status      = 'detected'
         reason      = 'redirect_detected'
+        detection_source = $(if ($accepted301Carried) { 'cisco_webhelper_301' } else { 'native_redirect' })
+        protocol    = ConvertTo-TelemetryValue $redirectTelemetry.protocol
+        fqdn        = ConvertTo-TelemetryValue $redirectTelemetry.fqdn
     }
+    # Same portal-descriptor fields the 301 row carries, read from the redirect URL.
+    try {
+        $portalFields = Get-CprPortalUrlFields -Url ([string]$RedirectUrl)
+        foreach ($k in $portalFields.Keys) { $redirectTee[$k] = [string]$portalFields[$k] }
+    } catch { Write-Log "cap_portal_redirect: portal field extraction failed: $_" "DEBUG" }
+    Write-TeeLog 'cap_portal_redirect' $redirectTee
     
     $eventCount = Get-CaptiveEventCount
     Write-Log "Recent captive portal events in last $CaptiveEventCooldown minutes: $eventCount" "DEBUG"
