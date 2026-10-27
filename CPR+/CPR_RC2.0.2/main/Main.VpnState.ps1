@@ -226,7 +226,7 @@ function Test-VpnPostureActive {
   try {
     $ev = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; StartTime = (Get-Date).AddSeconds(-$WindowSec) } -MaxEvents 1 -ErrorAction SilentlyContinue
     if ($ev) {
-      Write-Log ("vpn_posture_active log='{0}' last_event='{1}' provider='{2}' window_sec={3} - reporting Connecting instead of Disconnected" -f `
+      Write-Log ("vpn_hostscan_posture_active log='{0}' last_event='{1}' provider='{2}' window_sec={3} - reporting Connecting instead of Disconnected" -f `
         $VpnPostureLogName, $ev.TimeCreated.ToString('HH:mm:ss'), $ev.ProviderName, $WindowSec) "WARN"
       return $true
     }
