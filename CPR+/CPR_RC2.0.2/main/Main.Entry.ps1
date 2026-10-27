@@ -368,6 +368,14 @@ function Invoke-WhiteWalkerMain {
                     if ($PreflightRequiresSettledVpn) {
                         $preSettleVpnState = Get-VpnStateStable -TimeoutSec $VpnStateMaxWaitSeconds
                     }
+                    # HostScan posture in progress: the client already reached the headend and is not blocked behind a
+                    # portal. Do not probe, classify or cut - end the run; the next trigger re-checks.
+                    if ($script:VpnHostscanHoldActive -and $preSettleVpnState -in @('Connecting', 'Reconnecting')) {
+                        Write-Log "vpn_hostscan_posturing_hold exit - HostScan scan in progress, ending run without probing or disconnecting" "WARN"
+                        $script:exitReason = "vpn_hostscan_posturing"
+                        Write-RunEnd $script:exitReason
+                        return
+                    }
                     $vpnSettledForProbe = ($preSettleVpnState -in @('Connected', 'Disconnected'))
                     $readiness = Wait-CprNetworkReady -GatewayAddress $networkInfo.DefaultGateway `
                         -ProbeHost $NewPreflightURL -Disabled:((-not $NetworkReadyEnabled) -or (-not $vpnSettledForProbe))

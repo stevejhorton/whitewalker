@@ -181,7 +181,11 @@ function Invoke-VpnCliBounded {
     [Parameter(Mandatory = $true)][string]$Arguments,
     [int]$TimeoutSec = 0
   )
-  if ($Arguments -match '^\s*disconnect\b') { $script:VpnDisconnectsThisRun = [int]$script:VpnDisconnectsThisRun + 1 }
+  if ($Arguments -match '^\s*disconnect\b') {
+    # Safety net for every disconnect path: never cut a client that is mid HostScan scan.
+    if ((Get-Command Test-VpnHostscanHold -ErrorAction SilentlyContinue) -and (Test-VpnHostscanHold -Where 'disconnect')) { return '' }
+    $script:VpnDisconnectsThisRun = [int]$script:VpnDisconnectsThisRun + 1
+  }
   if ($TimeoutSec -le 0) {
     $TimeoutSec = if ($Arguments -match '^\s*disconnect\b') { [int]$VpnCliDisconnectTimeoutSec } else { [int]$VpnCliTimeoutSec }
     if ($TimeoutSec -le 0) { $TimeoutSec = 8 }
@@ -210,6 +214,42 @@ function Invoke-VpnCliBounded {
   } finally {
     if ($proc) { try { $proc.Dispose() } catch { } }
   }
+}
+
+function Test-VpnHostscanHold {
+  <#
+  True while a real HostScan scan (scanner provider csc_cscan) is running and the episode is under the
+  ceiling. HostScan runs only after the client has reached the headend, so the network works and the
+  client is NOT blocked behind a captive portal: cutting it would kill a legitimate connect. The episode
+  start is persisted so the ceiling holds across runs; the episode ends (file removed) once the scanner
+  has been silent for $VpnHostscanSilentSec. Fail-soft: any error returns $false (normal behavior).
+  #>
+  param([string]$Where = '')
+  if (-not $VpnPostureDetection -or -not $VpnHostscanHold) { return $false }
+  try {
+    $silent = [int]$VpnHostscanSilentSec; if ($silent -le 0) { $silent = 30 }
+    $ceil = [int]$VpnHostscanMaxWaitSec;  if ($ceil -le 0) { $ceil = 300 }
+    $scan = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; ProviderName = $VpnPostureScanProvider; StartTime = (Get-Date).AddSeconds(-$silent) } -MaxEvents 1 -ErrorAction SilentlyContinue
+    if (-not $scan) {
+      if ($VpnHostscanEpisodeFile -and (Test-Path -LiteralPath $VpnHostscanEpisodeFile)) { Remove-Item -LiteralPath $VpnHostscanEpisodeFile -Force -ErrorAction SilentlyContinue }
+      return $false
+    }
+    $start = Get-Date
+    if ($VpnHostscanEpisodeFile) {
+      $parsed = [datetime]::MinValue
+      if ((Test-Path -LiteralPath $VpnHostscanEpisodeFile) -and [datetime]::TryParse((Get-Content -LiteralPath $VpnHostscanEpisodeFile -Raw -ErrorAction SilentlyContinue), [ref]$parsed)) { $start = $parsed }
+      else { Set-Content -LiteralPath $VpnHostscanEpisodeFile -Value (Get-Date).ToString('o') -Force -ErrorAction SilentlyContinue }
+    }
+    $age = [int]((Get-Date) - $start).TotalSeconds
+    if ($age -gt $ceil) {
+      Write-Log ("vpn_hostscan_posture_ceiling episode_age_sec={0} max_wait_sec={1} where='{2}' - scan has run too long, normal VPN handling resumes" -f $age, $ceil, $Where) "WARN"
+      return $false
+    }
+    $script:VpnHostscanHoldActive = $true
+    Write-Log ("vpn_hostscan_posturing_hold episode_age_sec={0} max_wait_sec={1} last_event='{2}' where='{3}' - HostScan scan in progress, not disconnecting" -f $age, $ceil, $scan.TimeCreated.ToString('HH:mm:ss'), $Where) "WARN"
+    return $true
+  } catch { Write-Log "Test-VpnHostscanHold error: $_" "DEBUG" }
+  return $false
 }
 
 function Test-VpnPostureActive {
@@ -339,6 +379,10 @@ function Get-VpnStateStable {
       # Secure Client re-fires a connect attempt right after our disconnect (it retries a cached headend, and on a
       # guest network that fails with DNS errors). If WW already cut the VPN this run and it re-entered
       # Connecting/Reconnecting, cut it again - capped, so a client that never stops retrying cannot trap the run.
+      if (@('Connecting', 'Reconnecting') -contains $state -and (Test-VpnHostscanHold -Where 'stabilize')) {
+        Write-Log "vpncli state (stable): $state - HostScan scan in progress; not waiting or cutting this run" "INFO"
+        return $state
+      }
       if (@('Connecting', 'Reconnecting') -contains $state -and [int]$script:VpnDisconnectsThisRun -gt 0 -and
           [int]$script:VpnPostDisconnectRetries -lt [int]$VpnPostDisconnectRetryMax) {
         $script:VpnPostDisconnectRetries = [int]$script:VpnPostDisconnectRetries + 1

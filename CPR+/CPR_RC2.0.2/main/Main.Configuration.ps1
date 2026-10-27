@@ -55,6 +55,10 @@ $VpnPostDisconnectRetryMax = 2   # after WW cut the VPN this run, extra disconne
 $VpnPostureDetection = $true     # treat recent Secure Firewall Posture (HostScan/OPSWAT) event-log activity as Connecting; vpncli cannot see posture scans
 $VpnPostureLogName = 'Cisco Secure Client - Secure Firewall Posture'   # silent when the client is idle
 $VpnPostureScanProvider = 'csc_cscan'   # provider of the HostScan scanner process; only it earns the vpn_hostscan_posture_active marker
+$VpnHostscanHold = $true          # never disconnect while a real HostScan scan (csc_cscan) is running, up to the ceiling below
+$VpnHostscanSilentSec = 30       # scanner silent this long = scan over or hung; normal VPN handling resumes
+$VpnHostscanMaxWaitSec = 300     # hard ceiling per posture episode (persisted across runs)
+$VpnHostscanEpisodeFile = "C:\ProgramData\WhiteWalker\hostscan_hold_started.txt"
 $VpnPostureActiveWindowSec = 15  # an event newer than this many seconds means posture is in progress
 $VpnWakeTimeWindow = 120         # seconds - if wake event within this window, consider it a wake scenario
 
