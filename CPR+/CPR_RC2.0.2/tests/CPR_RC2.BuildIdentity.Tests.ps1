@@ -676,3 +676,26 @@ Describe 'Native redirect carries the same portal fields as the 301 row' {
         $m | Should -Match "'reason','detection_source','protocol','fqdn','ap_name'"
     }
 }
+
+Describe 'Get-VpnState does not trust the management line when vpncli state is empty' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-VpnState' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        function Write-Log { param($m, $l) }
+        function Write-DebugBlock { param($Label, $Text) }
+        $script:WWDebug = $false
+    }
+    It 'returns Unknown when state is empty and stats only shows a Disconnected management line' {
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Disconnected`n" } else { '' } }
+        Get-VpnState | Should -Be 'Unknown'
+    }
+    It 'still returns Disconnected when state answers Disconnected' {
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Disconnected`n" } else { "  >> state: Disconnected`n" } }
+        Get-VpnState | Should -Be 'Disconnected'
+    }
+    It 'returns Connecting when state says so' {
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { '' } else { "  >> state: Connecting`n" } }
+        Get-VpnState | Should -Be 'Connecting'
+    }
+}

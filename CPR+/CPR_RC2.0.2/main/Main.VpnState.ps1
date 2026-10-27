@@ -267,6 +267,14 @@ function Get-VpnState {
     }
     
     if ($combined -match '(?im)^\s*Management\s+Connection\s+State\s*:\s*Disconnected\s*') {
+      # 'vpncli state' returned nothing (timed out or blank) while 'stats' answered. The management
+      # line says nothing about the user tunnel (non-Always-On profiles have no management tunnel), so
+      # it cannot prove Disconnected - the client may be mid-connect. Report Unknown (an intermediate
+      # state) instead of a false Disconnected.
+      if ([string]::IsNullOrWhiteSpace($stateText)) {
+        Write-Log "vpn_state_untrusted: 'vpncli state' returned no output; management line alone cannot prove Disconnected - returning Unknown" "WARN"
+        return "Unknown"
+      }
       Write-Log "Management shows Disconnected, no user tunnel" "DEBUG"
       return "Disconnected"
     }
