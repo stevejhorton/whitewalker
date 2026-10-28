@@ -1,17 +1,14 @@
 Describe "HayStack standalone wiring" {
     BeforeAll {
-        # Targets the CURRENT release, not an old CPR_3.14_RC1.x copy.
-        # Works from the release root (shipped copy) and from tests\.
-        $repoRoot = if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'haystack.ps1')) { $PSScriptRoot } else { Split-Path $PSScriptRoot -Parent }
-        $script:haystackPath = Join-Path $repoRoot "haystack.ps1"
+        $repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+        $script:haystackPath = Join-Path $repoRoot "CPR_3.14_RC1.14/haystack.ps1"
+        $script:wwMainPath   = Join-Path $repoRoot "CPR_3.14_RC1.13/WW_main.ps1"
         $script:haystackText = Get-Content -LiteralPath $haystackPath -Raw
-        # RC2 split WW_main: HayStack config lives in Main.Configuration.ps1, the reroll launch in Main.Entry.ps1.
-        $script:wwMainText   = (Get-Content -LiteralPath (Join-Path $repoRoot "main\Main.Configuration.ps1") -Raw) + "`n" +
-                               (Get-Content -LiteralPath (Join-Path $repoRoot "main\Main.Entry.ps1") -Raw)
+        $script:wwMainText   = Get-Content -LiteralPath $wwMainPath -Raw
     }
 
     It "makes haystack.ps1 standalone with the expected flags" {
-        $haystackText | Should -Match '\[CmdletBinding\(\)\]\s*param\(\s*\[switch\]\$reroll,\s*\[switch\]\$remove,\s*\[switch\]\$Force,[^\r\n]*\r?\n\s*\[int\]\$RerollCooldownMinutes = 0\s*\)'
+        $haystackText | Should -Match '\[CmdletBinding\(\)\]\s*param\(\s*\[switch\]\$reroll,\s*\[switch\]\$remove,\s*\[int\]\$RerollCooldownMinutes = 0\s*\)'
     }
 
     It "uses the new internal cooldown default and removes the old dot-source guard" {
@@ -28,12 +25,12 @@ Describe "HayStack standalone wiring" {
     }
 
     It "keeps WW_main haystack integration limited to config and Start-Process orchestration" {
-        $wwMainText | Should -Match '\$HaystackEnabled\s*=\s*\$(true|false)'
+        $wwMainText | Should -Match '\$HaystackEnabled\s*=\s*\$false'
         $wwMainText | Should -Match '\$HaystackScriptPath\s*=\s*"C:\\ProgramData\\WhiteWalker\\haystack\.ps1"'
         $wwMainText | Should -Match '\$HaystackRerollCooldownMinutes\s*=\s*60'
         $wwMainText | Should -Match 'Start-Process "powershell\.exe"'
-        $wwMainText | Should -Match '-File `"\$HaystackScriptPath`" -reroll"'
-        $wwMainText | Should -Match 'Would invoke haystack\.ps1 -reroll'
+        $wwMainText | Should -Match '-reroll -RerollCooldownMinutes \$HaystackRerollCooldownMinutes'
+        $wwMainText | Should -Match 'Would invoke haystack\.ps1 -reroll -RerollCooldownMinutes \$HaystackRerollCooldownMinutes'
         $wwMainText | Should -Not -Match 'Invoke-HaystackReroll'
         $wwMainText | Should -Not -Match '\.\s+\$HaystackScriptPath'
     }

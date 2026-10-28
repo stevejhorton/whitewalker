@@ -151,7 +151,7 @@ if [ -d "$STAGE_DIR/docs" ]; then
         [ "$keep" -eq 1 ] || rm -rf "$f"
     done
 fi
-rm -rf "$STAGE_DIR/archive" "$STAGE_DIR/logs"
+rm -rf "$STAGE_DIR/archive" "$STAGE_DIR/logs" "$STAGE_DIR/support_files/dev_linux_test"   # dev-only Linux test kit: never shipped
 
 # --- 4 & 5. Zip staging contents as cpr_current.zip and CPR_<version>.zip ----
 CURRENT_ZIP="$SCRIPT_ROOT/cpr_current.zip"

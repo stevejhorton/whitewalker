@@ -54,4 +54,5 @@ The six decisions (old tests vs current code in `WW_cap_portal_runner_base.ps1`)
 * Hardening idea: HayStack's own wakes also trust `state.json`; a stale `user_tun` plus a UDP "success" on a dead path can drop rows. Fix = TCP syslog or a real reachability probe before draining.
 * Docs: placeholder contacts remain in `cpr_user_guide.html` and `vpn_blackhole_info.html`; town-hall slide metrics unverified. The Nov 1 corporate spec-build session uses `docs/SPEC_BUILD_BRIEF.md` (in the repo, not shipped).
 * Older backlog: installer downgrade-merge guard, retire `WW_migrate_legacy_tasks.ps1`, the duplicate `RUN END` line, the 13 s XmlVault observation, self-update `Copy-Item`/installer have no timeout.
-* Repo layout: after the reorg the live tree is `CPR+/CPR/`. `CPR+/CPR_RC2.0.2/` is the previous copy (same source, same test fixes); keep them in step or retire one.
+* Repo layout: `CPR+/CPR_RC2.0.2/` is the source of truth. `CPR+/CPR/` is the staging folder `BUILD.ps1` / `roll_cpr_package.sh` regenerate (`rm -rf CPR/` first), so never edit it; it is tracked in git only by accident of `git add -A` and could go in `.gitignore`.
+* `roll_cpr_package.sh` prunes `support_files/dev_linux_test` from the staged package, so this kit never reaches the NETLOGON zip.

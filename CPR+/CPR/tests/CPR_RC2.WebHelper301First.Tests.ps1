@@ -303,7 +303,7 @@ Describe '301-first control-plane ordering and configuration' {
     It 'checks direct 301 only in a credible active WebView2 branch before gateway preflight' {
         $active = $script:entrySource.IndexOf('Test-CprCiscoWebHelperActive')
         $lookup = $script:entrySource.IndexOf('Wait-CprCiscoWebHelper301Evidence')
-        $preflight = $script:entrySource.IndexOf('$nwCheck = Invoke-GatedNwCheck')
+        $preflight = $script:entrySource.IndexOf('$nwCheck = Get-NwCheckResult')
         $active | Should -BeGreaterThan 0
         $lookup | Should -BeGreaterThan $active
         $preflight | Should -BeGreaterThan $lookup
@@ -312,7 +312,7 @@ Describe '301-first control-plane ordering and configuration' {
     It 'uses usable 301 as redirect evidence and otherwise falls back to gateway preflight' {
         $script:entrySource | Should -Match "detection_source=cisco_webhelper_301"
         $script:entrySource | Should -Match "detection_source=gateway_preflight"
-        $script:entrySource | Should -Match '\$nwCheck = Invoke-GatedNwCheck'
+        $script:entrySource | Should -Match '\$nwCheck = Get-NwCheckResult'
         $script:entrySource | Should -Match 'UsableNavigation'
     }
 

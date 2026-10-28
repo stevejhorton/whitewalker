@@ -302,8 +302,6 @@ Describe 'Invoke-WhiteWalkerAction - flag-touch logic (VPN restore / self-update
     }
 
     It 'rejects a bad tee level and creates nothing' {
-        # TestDrive is shared by the Its in this block: clear flags the earlier Its created.
-        Get-ChildItem -LiteralPath $TestDrive -Filter 'cpr_update_*.flag' | Remove-Item -Force
         $answers = [System.Collections.Generic.Queue[string]]::new([string[]]@('1','9'))
         Mock Read-Host { $answers.Dequeue() }
 

@@ -281,21 +281,6 @@ if (-not (Test-Path -LiteralPath $resolvedTeeProfile)) {
         $resolvedTeeProfile = $fallbackProfile
     }
 }
-# A clean checkout has no installed or repo profile (the active profile is generated at install time),
-# and Write-TeeLog drops every tag that is not in the active profile. Generate a max-level one from the
-# master next to the queue file so the mock exercises the real queue path anywhere.
-if (-not (Test-Path -LiteralPath $resolvedTeeProfile)) {
-    $teeSetTool = Join-Path $cprRoot 'WW_set_tee_level.ps1'
-    $teeMaster  = Join-Path $cprRoot 'WW_tee_master.psd1'
-    if ((Test-Path -LiteralPath $teeSetTool) -and (Test-Path -LiteralPath $teeMaster)) {
-        try {
-            $genProfile = Join-Path (Split-Path -Parent $QueueFilePath) 'mock_tee_events.psd1'
-            . $teeSetTool
-            $null = Set-CprTeeLevel -Level 5 -MasterPath $teeMaster -ActivePath $genProfile -GeneratedBy 'TEST_mock_cap_portal_flow' -Reason 'no installed profile'
-            if (Test-Path -LiteralPath $genProfile) { $resolvedTeeProfile = $genProfile }
-        } catch { Write-Host "[WARN] Could not generate a mock tee profile: $($_.Exception.Message)" -ForegroundColor Yellow }
-    }
-}
 
 . $teeFile
 
