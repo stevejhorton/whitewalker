@@ -34,10 +34,15 @@ function Invoke-WhiteWalkerStartupSubsystems {
 }
 
 function Invoke-HaystackDrainKick {
+    param([bool]$CorpReachable = $false)
     # End-of-run: if telemetry is queued and the state can ship, start the
     # HayStack_Monitor task now instead of waiting for its next wake, so an
     # install/update result reaches Splunk right away. The task drains the
     # queue itself (claim-by-rename, IgnoreNew), so this never double-sends.
+    # Gated on THIS run's verdict ($CorpReachable = on-prem or VPN really Connected),
+    # never on state.json, which can be stale (e.g. user_tun left over while the
+    # client is still posturing). WW_syslog.ps1 is UDP and exits 0 once the packet
+    # leaves the box, so a drain on a dead path would DELETE rows as "sent".
     # Fail-soft: never throws, never delays the run.
     if (-not $HaystackEnabled -or -not $HaystackDrainKick) { return }
     try {
@@ -48,12 +53,12 @@ function Invoke-HaystackDrainKick {
         }
         if (-not $queued) { Write-Log "haystack_drain_kick skipped reason='queue_empty'" "DEBUG"; return }
 
-        $cur = ''
-        try { $cur = [string](Get-Content $StateFile -Raw -ErrorAction Stop | ConvertFrom-Json).currentState } catch { }
-        if (@('on_prem', 'user_tun', 'mgmt_tun') -notcontains $cur) {
-            Write-Log "haystack_drain_kick skipped reason='state_cannot_ship' state='$cur'" "INFO"
+        if (-not $CorpReachable) {
+            Write-Log "haystack_drain_kick skipped reason='corp_not_reachable_this_run'" "INFO"
             return
         }
+        $cur = ''
+        try { $cur = [string](Get-Content $StateFile -Raw -ErrorAction Stop | ConvertFrom-Json).currentState } catch { }
         if ($WhatIf) { Write-Log "WHATIF: Would start task $HaystackDrainTaskName (drain kick)" "INFO"; return }
         # Find the task by name wherever it is registered (the reroll may be
         # re-registering it, or an older install left it in another folder).
@@ -157,7 +162,7 @@ function Invoke-MaintenanceStage {
         Write-MaintStep 'xmlvault'
     }
     # After self-update so its result rows are already queued.
-    Invoke-HaystackDrainKick
+    Invoke-HaystackDrainKick -CorpReachable ([bool]$shareOk)
     Write-MaintStep 'haystack_drain_kick'
     Write-Log ("phase_timing phase='maintenance_stage' elapsed_ms={0}" -f `
         [math]::Round(((Get-Date) - $maintStartedAt).TotalMilliseconds)) "INFO"
