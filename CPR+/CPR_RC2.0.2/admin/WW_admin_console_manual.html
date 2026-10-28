@@ -114,16 +114,17 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
   <div>
     <h1>Tech Action Console Manual</h1>
     <p>How to use <code>Invoke-WhiteWalkerAction.ps1</code> to restore, refresh, update, and debug WhiteWalker (CPR+) on an endpoint without editing files by hand.</p>
-    <div class="chips"><span class="chip">CPR 3.14.0_RC2.0.2</span><span class="chip">Console 1.0.0</span><span class="chip">Windows PowerShell 5.1</span><span class="chip">Needs an elevated prompt</span></div>
+    <div class="chips"><span class="chip">CPR 3.14.0_RC2.0.2</span><span class="chip">Console 1.0.0</span><span class="chip">Windows PowerShell 5.1</span><span class="chip">Needs an elevated or ASAM Powershell prompt</span></div>
   </div>
 </section>
 
 <section id="start">
 <h2>Start here</h2>
 <p>The console is a numbered menu. Pick an action, answer the prompts, and confirm with <kbd>y</kbd>. Pressing <kbd>Enter</kbd> on any prompt that offers it cancels with nothing changed. A failure inside an action is logged and drops you back at the menu, so the console itself does not crash.</p>
+<div class="warn"><p>For issues or questions please reach out to: <b>steve.horton@optum.com</b></p></div>
 <h3>Launch it</h3>
 <ol class="steps">
-  <li>Open <b>Windows PowerShell</b> (not PowerShell 7) with <b>Run as administrator</b>. The script refuses to start without elevation.</li>
+  <li>Open <b>Windows PowerShell</b> (not PowerShell 7) with <b>Run as administrator or ASAM_Developer</b>. The script refuses to start without elevation.</li>
   <li>Run:
 <div class="cmd"><button type="button" data-copy>Copy</button>& "C:\ProgramData\WhiteWalker\admin\Invoke-WhiteWalkerAction.ps1"</div></li>
   <li>The menu header shows the installed CPR version. Pick a key and follow the prompts.</li>
