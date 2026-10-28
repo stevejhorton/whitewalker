@@ -103,7 +103,8 @@ function Invoke-MaintenanceStage {
         Write-Log "maintenance_stage skipped reason='online_fast_path_policy'" "INFO"
         return
     }
-    $offline = @('no_network_connection', 'no_net_transient', 'network_changed_no_ip', 'unknown', 'error_exception') -contains $ExitReason
+    # exit_reason is <reason>:<state>; offline = no usable network state, or a run that never settled (error/unknown).
+    $offline = ((Get-CprExitState $ExitReason) -eq 'no_net_transient') -or (@('error_exception', 'state_unknown') -contains (Get-CprExitReasonPart $ExitReason))
     $maintStartedAt = Get-Date
     $script:maintStepAt = $maintStartedAt
     Write-Log "maintenance_stage begin exit_reason='$ExitReason' offline=$offline" "DEBUG"
@@ -181,7 +182,8 @@ function Invoke-WhiteWalkerMain {
 
     if (-not $ciscoPath) { 
         Write-Log "Error: Cisco Secure Client install path not found."
-        $script:exitReason = "error_no_cisco"
+        Set-CprRunExit -Reason 'error_no_cisco' -State 'cpr_error'
+        Send-CprExitFlare $script:exitReason
     } else {
         $ise_cmd = Join-Path $ciscoPath "posturecli.exe"
         $vpn_cmd = Join-Path $ciscoPath "vpncli.exe"
@@ -192,12 +194,14 @@ function Invoke-WhiteWalkerMain {
 
         if (-not (Test-Path $vpn_cmd)) { 
             Write-Log "Error: vpncli.exe not found."
-            $script:exitReason = "error_no_vpncli"
+            Set-CprRunExit -Reason 'error_no_vpncli' -State 'cpr_error'
+            Send-CprExitFlare $script:exitReason
         } elseif (-not (Test-Path $ise_cmd)) { 
             Write-Log "Error: posturecli.exe not found."
-            $script:exitReason = "error_no_posturecli"
+            Set-CprRunExit -Reason 'error_no_posturecli' -State 'cpr_error'
+            Send-CprExitFlare $script:exitReason
         } else {
-            $script:exitReason = "unknown"
+            Set-CprRunExit -Reason 'state_unknown' -State 'cpr_error'
             $script:currentSsid = $null
             try {
                 Write-Log "CPR+ v$ver starting..."
@@ -245,7 +249,7 @@ function Invoke-WhiteWalkerMain {
                     if ($networkInfo.IPAddress -eq "N/A" -or $networkInfo.ConnectionType -eq "Unknown") {
                         Write-Log "No network connection after $NetworkConnectionRetries retries (total wait: $($NetworkConnectionRetries * $NetworkConnectionWait)s)" "WARN"
                         Write-Log "User needs to manually connect to network (check 'Connect Automatically' setting)" "WARN"
-                        $script:exitReason = "no_network_connection"
+                        Set-CprRunExit -Reason 'no_network_connection' -State 'no_net_transient'
                         Write-NetworkInfoToLog -NetworkInfo $networkInfo
                         Invoke-WhiteWalkerStartupSubsystems
                         Invoke-BlackholeAction -Tag 'no_network_connection'
@@ -282,7 +286,7 @@ function Invoke-WhiteWalkerMain {
                 
                 # Check for user prompt flag
                 if (Test-UserPromptedFlag) {
-                    $script:exitReason = "waiting_user_response"
+                    Set-CprRunExit -Reason 'waiting_user_response' -State 'captive_portal'
                     Invoke-WhiteWalkerStartupSubsystems
                     Invoke-BlackholeAction -Tag 'waiting_user_response'
                     return
@@ -322,7 +326,7 @@ function Invoke-WhiteWalkerMain {
                             }
                             Send-FlareEvent $scFlavor
                             Clear-CaptiveEventHistory "VPN connected"
-                            $script:exitReason = "vpn_connected:$scFlavor"
+                            Set-CprRunExit -Reason 'vpn_connected' -State $scFlavor
                             return
                         }
                         Write-Log "VPN reported Connected but tunnel flavor is '$scFlavor' - continuing with normal preflight" "WARN"
@@ -342,7 +346,7 @@ function Invoke-WhiteWalkerMain {
                 if ($networkInfo.IPAddress -match '^169\.254\.' -and 
                     ($networkInfo.DefaultGateway -eq 'N/A' -or [string]::IsNullOrEmpty($networkInfo.DefaultGateway))) {
                     Write-Log "APIPA address ($($networkInfo.IPAddress)) with no gateway - not connected to network yet" "WARN"
-                    $script:exitReason = "no_net_transient"
+                    Set-CprRunExit -Reason 'apipa_no_gateway' -State 'no_net_transient'
                     Invoke-WhiteWalkerStartupSubsystems
                     Invoke-BlackholeAction -Tag 'no_net_transient'
                     return
@@ -431,7 +435,7 @@ function Invoke-WhiteWalkerMain {
                     # portal. Do not probe, classify or cut - end the run; the next trigger re-checks.
                     if ($script:VpnHostscanHoldActive -and $preSettleVpnState -in @('Connecting', 'Reconnecting')) {
                         Write-Log "vpn_hostscan_posturing_hold exit - HostScan scan in progress, ending run without probing or disconnecting" "WARN"
-                        $script:exitReason = "vpn_hostscan_posturing"
+                        Set-CprRunExit -Reason 'hostscan_in_progress' -State 'vpn_connecting'
                         Write-RunEnd $script:exitReason
                         return
                     }
@@ -515,7 +519,7 @@ function Invoke-WhiteWalkerMain {
                     $script:LastWebHelper301Evidence = $null
                     if (-not (Test-AnyUsableIp -NetworkInfo $networkInfo)) {
                         Write-Log "New network has no usable IP yet - ending run; its DHCP event starts a fresh run" "WARN"
-                        $script:exitReason = "network_changed_no_ip"
+                        Set-CprRunExit -Reason 'network_changed_no_ip' -State 'no_net_transient'
                         return
                     }
                     $nwCheck = Invoke-GatedNwCheck
@@ -555,7 +559,7 @@ function Invoke-WhiteWalkerMain {
                             Send-FlareEvent $flavor
                             
                             Clear-CaptiveEventHistory "VPN connected"
-                            $script:exitReason = "vpn_connected:$flavor"
+                            Set-CprRunExit -Reason 'vpn_connected' -State $flavor
                             return
                         }
                         
@@ -575,14 +579,14 @@ function Invoke-WhiteWalkerMain {
                                 # Ivanti Use: Telemetry for on-prem presence / campus automations
                                 Send-FlareEvent 'on_prem'
                                 Clear-CaptiveEventHistory "on-premises connection"
-                                $script:exitReason = "on_prem"
+                                Set-CprRunExit -Reason 'no_action_dc_reachable' -State 'on_prem'
                             } else {
                                 # DC reachable but SSID not trusted - off-prem on VPN with no ISP suffix.
                                 # Do NOT disconnect VPN. Let normal VPN flare fire on next run.
                                 Write-Log "DC reachable but SSID '$($networkInfo.SSID)' not trusted - treating as off-prem, leaving VPN alone" "WARN"
                                 Send-FlareEvent 'off_prem_no_vpn'
                                 Clear-CaptiveEventHistory "off-premises - untrusted SSID"
-                                $script:exitReason = "off_prem_untrusted_ssid"
+                                Set-CprRunExit -Reason 'untrusted' -State 'off_prem_no_vpn'
                             }
                         } else {
                             # FLARE EVENT: off_prem_no_vpn
@@ -590,7 +594,7 @@ function Invoke-WhiteWalkerMain {
                             # Ivanti Use: Prompt user to connect VPN
                             Send-FlareEvent 'off_prem_no_vpn'
                             Clear-CaptiveEventHistory "off-premises connection"
-                            $script:exitReason = "off_prem_no_vpn"
+                            Set-CprRunExit -Reason 'untrusted' -State 'off_prem_no_vpn'
                         }
                         return
                     }
@@ -636,7 +640,7 @@ function Invoke-WhiteWalkerMain {
                                     # Ivanti Use: Alert for broken Cisco Secure Client installations
                                     Send-FlareEvent 'ise_posture_service_unavailable'
                                     
-                                    $script:exitReason = "ise_redirect_no_posture_service"
+                                    Set-CprRunExit -Reason 'ise_redirect_no_posture_service' -NetworkInfo $networkInfo
                                     return
                                 }
                                 
@@ -667,7 +671,7 @@ function Invoke-WhiteWalkerMain {
                                     Write-TeeLog 'ise_posture_compliant' @{ duration_sec = $postureCheckDurationSec }
                                     
                                     Clear-CaptiveEventHistory "ISE posture compliant"
-                                    $script:exitReason = "ise_employee_compliant"
+                                    Set-CprRunExit -Reason 'ise_employee_compliant' -NetworkInfo $networkInfo
                                 } else {
                                     Write-Log "ISE posture check FAILED - result: $complianceResult" "ERROR"
                                     
@@ -677,7 +681,7 @@ function Invoke-WhiteWalkerMain {
                                     Send-FlareEvent 'ise_posture_failed'
                                     Write-TeeLog 'ise_posture_failed' @{ reason = $complianceResult }
                                     
-                                    $script:exitReason = "ise_employee_failed_$complianceResult"
+                                    Set-CprRunExit -Reason "ise_employee_failed_$complianceResult" -NetworkInfo $networkInfo
                                 }
                                 return
                             }
@@ -685,7 +689,7 @@ function Invoke-WhiteWalkerMain {
                                 # ISE guest portal -> browser. cap_portal_runner polls nwcheck until clear.
                                 Write-Log "ISE Guest portal redirect -> browser remediation" "INFO"
                                 Invoke-CaptivePortalRemediation -PortalType "ISE_GUEST" -RedirectUrl $redirectUrl
-                                $script:exitReason = "ise_guest_browser_remediated"
+                                Set-CprRunExit -Reason 'ise_guest_browser_remediated' -NetworkInfo $networkInfo
                                 return
                             }
                             default {
@@ -701,7 +705,7 @@ function Invoke-WhiteWalkerMain {
                                 }
                                 
                                 Invoke-CaptivePortalRemediation -PortalType "NON_ISE" -RedirectUrl $redirectUrl
-                                $script:exitReason = "non_ise_browser_remediated"
+                                Set-CprRunExit -Reason 'non_ise_browser_remediated' -NetworkInfo $networkInfo
                                 return
                             }
                         }
@@ -736,7 +740,7 @@ function Invoke-WhiteWalkerMain {
                             } else {
                                 $flavor = Get-VpnTunnelFlavor
                                 Send-FlareEvent $flavor
-                                $script:exitReason = if ($triage.Preflight -eq 'online') { "vpn_connected:$flavor" } else { "vpn_connected_nwcheck_unreachable:$flavor" }
+                                Set-CprRunExit -Reason $(if ($triage.Preflight -eq 'online') { 'vpn_connected' } else { 'vpn_connected_nwcheck_unreachable' }) -State $flavor
                                 Invoke-BlackholeAction -Tag $flavor
                                 return
                             }
@@ -760,7 +764,7 @@ function Invoke-WhiteWalkerMain {
                                 if (-not $svc) {
                                     Write-Log "ISE redirect confirmed but posture service unavailable - cannot rescan" "ERROR"
                                     Send-FlareEvent 'ise_posture_service_unavailable'
-                                    $script:exitReason = "ise_redirect_no_posture_service"
+                                    Set-CprRunExit -Reason 'ise_redirect_no_posture_service' -NetworkInfo $networkInfo
                                     return
                                 }
                                 
@@ -787,12 +791,12 @@ function Invoke-WhiteWalkerMain {
                                     Send-FlareEvent 'ise_posture_compliant'
                                     Write-TeeLog 'ise_posture_compliant' @{ duration_sec = $postureCheckDurationSec }
                                     Clear-CaptiveEventHistory "ISE posture compliant"
-                                    $script:exitReason = "ise_employee_compliant"
+                                    Set-CprRunExit -Reason 'ise_employee_compliant' -NetworkInfo $networkInfo
                                 } else {
                                     Write-Log "ISE posture check FAILED - result: $complianceResult" "ERROR"
                                     Send-FlareEvent 'ise_posture_failed'
                                     Write-TeeLog 'ise_posture_failed' @{ reason = $complianceResult }
-                                    $script:exitReason = "ise_employee_failed_$complianceResult"
+                                    Set-CprRunExit -Reason "ise_employee_failed_$complianceResult" -NetworkInfo $networkInfo
                                 }
                                 return
                             } else {
@@ -829,7 +833,7 @@ function Invoke-WhiteWalkerMain {
                                     }
                                 }
                                 Invoke-CaptivePortalRemediation -PortalType "NON_ISE" -RedirectUrl $portalRedirectUrl
-                                $script:exitReason = "non_ise_browser_remediated_via_enroll"
+                                Set-CprRunExit -Reason 'non_ise_browser_remediated_via_enroll' -NetworkInfo $networkInfo
                                 return
                             }
                         }
@@ -843,7 +847,7 @@ function Invoke-WhiteWalkerMain {
                             Write-Log "nwcheck unreachable with VPN connected - unexpected state, exiting" "WARN"
                             $flavor = Get-VpnTunnelFlavor
                             Send-FlareEvent $flavor
-                            $script:exitReason = "vpn_connected_nwcheck_unreachable:$flavor"
+                            Set-CprRunExit -Reason 'vpn_connected_nwcheck_unreachable' -State $flavor
                             Invoke-BlackholeAction -Tag $flavor
                             return
                         }
@@ -875,17 +879,17 @@ function Invoke-WhiteWalkerMain {
                                     $flavor = Get-VpnTunnelFlavor
                                     Send-FlareEvent $flavor
                                     Clear-CaptiveEventHistory "VPN connected post-disconnect"
-                                    $script:exitReason = "vpn_connected:$flavor"
+                                    Set-CprRunExit -Reason 'vpn_connected' -State $flavor
                                 } else {
                                     $dcOK = Test-DC -hostname $DC_FQDN
                                     if ($dcOK) {
                                         Send-FlareEvent 'on_prem'
                                         Clear-CaptiveEventHistory "on-premises connection"
-                                        $script:exitReason = "on_prem"
+                                        Set-CprRunExit -Reason 'no_action_dc_reachable' -State 'on_prem'
                                     } else {
                                         Send-FlareEvent 'off_prem_no_vpn'
                                         Clear-CaptiveEventHistory "off-premises connection"
-                                        $script:exitReason = "off_prem_no_vpn"
+                                        Set-CprRunExit -Reason 'untrusted' -State 'off_prem_no_vpn'
                                     }
                                 }
                                 return
@@ -900,7 +904,7 @@ function Invoke-WhiteWalkerMain {
                                         $svc = Wait-ForPostureService -TimeoutSec $PostureWaitSeconds
                                         if (-not $svc) {
                                             Send-FlareEvent 'ise_posture_service_unavailable'
-                                            $script:exitReason = "ise_redirect_no_posture_service"
+                                            Set-CprRunExit -Reason 'ise_redirect_no_posture_service' -NetworkInfo $networkInfo
                                             return
                                         }
                                         Invoke-PostureRescan
@@ -911,23 +915,23 @@ function Invoke-WhiteWalkerMain {
                                             Send-FlareEvent 'ise_posture_compliant'
                                             Write-TeeLog 'ise_posture_compliant' @{ duration_sec = $postureCheckDurationSec }
                                             Clear-CaptiveEventHistory "ISE posture compliant"
-                                            $script:exitReason = "ise_employee_compliant"
+                                            Set-CprRunExit -Reason 'ise_employee_compliant' -NetworkInfo $networkInfo
                                         } else {
                                             Send-FlareEvent 'ise_posture_failed'
                                             Write-TeeLog 'ise_posture_failed' @{ reason = $complianceResult }
-                                            $script:exitReason = "ise_employee_failed_$complianceResult"
+                                            Set-CprRunExit -Reason "ise_employee_failed_$complianceResult" -NetworkInfo $networkInfo
                                         }
                                         return
                                     }
                                     "ISE_GUEST" {
                                         Invoke-CaptivePortalRemediation -PortalType "ISE_GUEST" -RedirectUrl $nwCheck2.RedirectUrl
-                                        $script:exitReason = "ise_guest_browser_remediated"
+                                        Set-CprRunExit -Reason 'ise_guest_browser_remediated' -NetworkInfo $networkInfo
                                         return
                                     }
                                     default {
                                         if ($redirectType2 -eq "UNKNOWN") { Send-FlareEvent 'unknown_captive_portal' }
                                         Invoke-CaptivePortalRemediation -PortalType "NON_ISE" -RedirectUrl $nwCheck2.RedirectUrl
-                                        $script:exitReason = "non_ise_browser_remediated"
+                                        Set-CprRunExit -Reason 'non_ise_browser_remediated' -NetworkInfo $networkInfo
                                         return
                                     }
                                 }
@@ -935,7 +939,7 @@ function Invoke-WhiteWalkerMain {
                             # nwcheck still unreachable after VPN disconnect and enroll didn't redirect
                             # (we tested enroll immediately at top of unreachable block)
                             Write-Log "nwcheck still unreachable after VPN disconnect - genuine network problem" "WARN"
-                            $script:exitReason = "no_net_transient"
+                            Set-CprRunExit -Reason 'nwcheck_unreachable_after_vpn_disconnect' -State 'no_net_transient'
                             Invoke-BlackholeAction -Tag 'no_net_transient'
                             return
                         }
@@ -973,7 +977,7 @@ function Invoke-WhiteWalkerMain {
 
                         if (-not $localNet.IsPlausible) {
                             Write-Log "No usable local network (reason=$($localNet.Reason)) - captive-portal handoff suppressed: no Event 778, no Event 777, no runner launch" "WARN"
-                            $script:exitReason = "no_net_transient"
+                            Set-CprRunExit -Reason 'no_plausible_local_network' -State 'no_net_transient'
                             Send-FlareEvent "no_net_transient"
                             Invoke-BlackholeAction -Tag 'no_net_transient'
                             Clear-CapPortalRemediationState -Reason 'no_usable_local_network' | Out-Null
@@ -1033,7 +1037,7 @@ function Invoke-WhiteWalkerMain {
                             }
 
                             # Telemetry flare - SYSTEM context, fires immediately
-                            $script:exitReason = "captive_walled_garden"
+                            Set-CprRunExit -Reason 'captive_walled_garden' -State 'captive_portal'
                             Send-FlareEvent -Tag "captive_walled_garden"
                             Write-TeeLog 'captive_walled_garden' @{ gateway_ip = $walledGarden.GatewayIP; ssid = $networkInfo.SSID }
 
@@ -1164,7 +1168,7 @@ function Invoke-WhiteWalkerMain {
                                     reason      = "preflight_inconclusive_walled_garden_$($walledGarden.Reason)"
                                 }
 
-                                $script:exitReason = "captive_portal_suspected"
+                                Set-CprRunExit -Reason 'portal_suspected' -State 'captive_portal'
                                 Write-Log "CapPortalRunner: mode=base - firing captive_portal_browser_base (Event 778) for suspected captive portal" "INFO"
                                 Send-FlareEvent 'captive_portal_browser_base'
                                 Write-RunEnd $script:exitReason
@@ -1174,7 +1178,7 @@ function Invoke-WhiteWalkerMain {
                             # Genuinely no plausible local network, or not base mode - preserve
                             # the existing full-mode behavior exactly.
                             Write-Log "enroll.cisco.com no redirect, VPN state OK - genuine network connectivity problem" "WARN"
-                            $script:exitReason = "no_net_transient"
+                            Set-CprRunExit -Reason 'nwcheck_unreachable_enroll_no_redirect' -State 'no_net_transient'
                             Send-FlareEvent "no_net_transient"
                             Invoke-BlackholeAction -Tag 'no_net_transient'
                             if ($CapPortalRunnerMode -ne 'base' -and $ciscoBrowserKillerJob) {
@@ -1188,8 +1192,10 @@ function Invoke-WhiteWalkerMain {
                 
             } catch {
                 Write-Log "Error in main execution: $_" "ERROR"
-                $script:exitReason = "error_exception"
+                Set-CprRunExit -Reason 'error_exception' -State 'cpr_error'
             } finally {
+                # Exit state flare: exactly one per run, the <state> half of exit_reason (Ivanti reads this).
+                Send-CprExitFlare $script:exitReason
                 if ((Test-Path variable:onlineFastPathSelected) -and $onlineFastPathSelected) {
                     Write-Log ("phase_timing phase='online_fast_path' elapsed_ms={0} exit_reason='{1}'" -f `
                         [math]::Round(((Get-Date) - $onlineFastPathStartedAt).TotalMilliseconds), $script:exitReason) "INFO"

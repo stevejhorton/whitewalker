@@ -82,7 +82,7 @@
         port                  = "Network port relevant to the event (captive portal, etc.)."
         ssid                  = "Wireless SSID at event time, or N/A when unavailable/not applicable (including wired connections)."
         connection_type       = "Physical connection classification derived from adapter identity: WiFi, Wired, Unknown, or NoNetwork."
-        vpn_state             = "CPR network state at event time (on_prem, user_tun, mgmt_tun, off_prem_no_vpn, captive_portal, off_prem_untrusted_ssid)."
+        vpn_state             = "CPR network state at event time (on_prem, user_tun, mgmt_tun, off_prem_no_vpn, captive_portal, vpn_connecting, no_net_transient, cpr_error). Exit reasons are <reason>:<state> with the same state words.."
         portal_type           = "Captive portal type/classification (e.g. walled_garden, standard_redirect)."
         status                = "Generic pass/fail/skip style status string for the tee'd sub-event."
         status_code           = "HTTP or protocol status code associated with a probe/check."

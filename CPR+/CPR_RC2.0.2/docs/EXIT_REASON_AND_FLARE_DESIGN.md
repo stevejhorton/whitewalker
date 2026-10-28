@@ -1,4 +1,4 @@
-# Exit reasons and exit flares - design (DRAFT, nothing built; Steve approved the uniform convention 2026-10-28)
+# Exit reasons and exit flares - design (BUILT 2026-10-28; Steve approved the convention)
 
 Goal: fix the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE the Splunk boards exist, and keep it portable so the macOS port inherits it unchanged.
 
@@ -11,7 +11,7 @@ Goal: fix the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE th
 4. **Outcomes are platform-neutral** (no Windows-only words), so the Mac port reuses the same strings. `<type>` describes the path, not the OS.
 5. **`<type>` is derived, never read from `state.json`**: tunnel flavor if a tunnel is up; else DC reachable AND (wired or trusted SSID) -> `on_prem`; else `off_prem_no_vpn`. `off_prem_no_vpn` means no tunnel and not on a trusted path, whatever the reason; the outcome carries the reason. Trusted = the 3 corp suffixes (code var, reroll to change) plus the trusted-SSID list (share file + code; currently one entry). Anything else is untrusted, in line with Cisco TND.
 6. **Outcomes never reuse a type word** (Pester-enforced), so the two halves never say the same thing twice. Non-connectivity exits use `no_net_transient` / `cpr_error` / `vpn_connecting` as listed.
-7. **One choke point:** `Set-CprRunExit -Outcome <o> -Type <t>` sets the reason AND sends the state flare. A Pester test fails if any `$script:exitReason =` appears outside it.
+7. **One choke point:** `Set-CprRunExit -Reason <r> [-State <s>]` is the only place `$script:exitReason` is assigned (state derived via `Get-CprExitType` when omitted, e.g. ISE exits). The state flare is sent once from the run's `finally` block by `Send-CprExitFlare`, so every exit gets exactly one. A Pester test fails if any `$script:exitReason =` appears outside it.
 
 ## Mechanics read from the code (affect the build)
 * `Send-FlareEvent`: one send per tag per run, 1-minute per-tag cooldown (`$FlareCooldownMinutes`); `Set-FlareStamp` updates `currentState` only for tags in `$script:StateFlares`.
@@ -38,15 +38,15 @@ Reason = what CPR concluded or did. State = where the machine sits (same word as
 | `off_prem_no_vpn`, `off_prem_untrusted_ssid` | `untrusted:off_prem_no_vpn` (both; the odd untrusted-SSID-with-reachable-DC case stays visible in the WARN log) |
 | `ise_employee_compliant`, `ise_employee_failed_<result>`, `ise_redirect_no_posture_service`, `ise_guest_browser_remediated` | same reason + `:<state>` |
 | `non_ise_browser_remediated`, `non_ise_browser_remediated_via_enroll` | same reason + `:<state>` |
-| `captive_portal_suspected`, `captive_walled_garden` | same reason + `:captive_portal` |
+| `captive_portal_suspected` -> `portal_suspected`, `captive_walled_garden` | reason + `:captive_portal` (renamed so the reason never repeats the state word) |
 | `waiting_user_response` | `waiting_user_response:captive_portal` |
 | `no_network_connection`, `network_changed_no_ip` | same reason + `:no_net_transient` |
-| `no_net_transient` (3 sites) | three reasons named per site when read, each `:no_net_transient` |
+| `no_net_transient` (4 sites) | `apipa_no_gateway`, `nwcheck_unreachable_after_vpn_disconnect`, `no_plausible_local_network`, `nwcheck_unreachable_enroll_no_redirect`, each `:no_net_transient` |
 | `error_no_cisco`, `error_no_vpncli`, `error_no_posturecli`, `error_exception` | same reason + `:cpr_error` |
 | `unknown` | `state_unknown:cpr_error` |
 
 ## Decisions
-IDs 803/804/805 and the captive state flare are set as above; Ivanti side defines triggers. Only open item: names of the three `no_net_transient` reasons (read each site first).
+IDs 803/804/805 and the captive state flare are set as above; Ivanti side defines triggers. None open.
 
 ## Build plan once approved (small, test-first)
 1. `Set-CprRunExit`, `Get-CprExitType`, `$StateFlares` additions, `WW_flaregun_config.json` entries (+ tee master / schema if a tag needs it).
