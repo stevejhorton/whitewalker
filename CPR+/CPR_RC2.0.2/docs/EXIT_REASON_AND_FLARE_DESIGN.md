@@ -5,12 +5,13 @@ Goal: fix the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE th
 ## Rules
 1. **Every exit is `<outcome>:<type>`. No exceptions.** Parse by splitting on the LAST colon; outcomes never contain a colon.
 2. **`<type>` is the connection path the machine is on at exit, and it is the same word as the exit state flare.** One vocabulary:
-   `on_prem` | `user_tun` | `mgmt_tun` | `off_prem_no_vpn` | `off_prem_untrusted_ssid` | `vpn_connecting` | `captive_portal` | `no_net_transient` | `cpr_error`
+   `on_prem` | `user_tun` | `mgmt_tun` | `off_prem_no_vpn` | `vpn_connecting` | `captive_portal` | `no_net_transient` | `cpr_error`
    So `ise_employee_compliant:on_prem` and `ise_employee_compliant:user_tun` (ISE over VPN, e.g. overseas Macs) are different, distinguishable facts.
 3. **Every run ends with exactly one state flare for `<type>`** (Ivanti reads it; `currentState` is updated by it). Action flares (`captive_portal_browser` 777, `captive_portal_browser_base` 778, `ise_posture_*` 791/792, ...) are unchanged and still fire; the exit state flare is in addition.
 4. **Outcomes are platform-neutral** (no Windows-only words), so the Mac port reuses the same strings. `<type>` describes the path, not the OS.
-5. **`<type>` is derived, never read from `state.json`**: VPN Connected -> tunnel flavor; else corp-only DNS suffix (`Test-OnPremBySuffix`) -> `on_prem`; else untrusted SSID -> `off_prem_untrusted_ssid`; else `off_prem_no_vpn`. Non-connectivity exits use `no_net_transient` / `cpr_error` / `vpn_connecting` as listed.
-6. **One choke point:** `Set-CprRunExit -Outcome <o> -Type <t>` sets the reason AND sends the state flare. A Pester test fails if any `$script:exitReason =` appears outside it.
+5. **`<type>` is derived, never read from `state.json`**: tunnel flavor if a tunnel is up; else DC reachable AND (wired or trusted SSID) -> `on_prem`; else `off_prem_no_vpn`. `off_prem_no_vpn` means no tunnel and not on a trusted path, whatever the reason; the outcome carries the reason. Trusted = the 3 corp suffixes (code var, reroll to change) plus the trusted-SSID list (share file + code; currently one entry). Anything else is untrusted, in line with Cisco TND.
+6. **Outcomes never reuse a type word** (Pester-enforced), so the two halves never say the same thing twice. Non-connectivity exits use `no_net_transient` / `cpr_error` / `vpn_connecting` as listed.
+7. **One choke point:** `Set-CprRunExit -Outcome <o> -Type <t>` sets the reason AND sends the state flare. A Pester test fails if any `$script:exitReason =` appears outside it.
 
 ## Mechanics read from the code (affect the build)
 * `Send-FlareEvent`: one send per tag per run, 1-minute per-tag cooldown (`$FlareCooldownMinutes`); `Set-FlareStamp` updates `currentState` only for tags in `$script:StateFlares`.
@@ -24,9 +25,8 @@ Goal: fix the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE th
 |---|---|---|
 | user_tun / mgmt_tun / off_prem_no_vpn / on_prem | 780 / 781 / 782 / 793 | exist |
 | no_net_transient | 798 | exists; add to `$StateFlares` |
-| off_prem_untrusted_ssid | 803 | NEW |
-| vpn_connecting | 804 | NEW (HostScan scan in progress) |
-| cpr_error | 805 | NEW |
+| vpn_connecting | 803 (proposed) | NEW (HostScan scan in progress) |
+| cpr_error | 804 (proposed) | NEW |
 | captive_portal | ? | **decision**: reuse 794/795/797 as the state, or one new ID |
 
 ## Mapping: current -> proposed `exit_reason` (state flare = the `<type>`)
@@ -35,9 +35,9 @@ Goal: fix the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE th
 | `vpn_connected:<flavor>` (4 sites) | unchanged |
 | `vpn_connected_nwcheck_unreachable:<flavor>` | unchanged |
 | `vpn_hostscan_posturing` | `hostscan_in_progress:vpn_connecting` |
-| `on_prem` (2 sites) | `no_vpn_dc_reachable:on_prem` |
-| `off_prem_no_vpn` (2 sites) | `no_vpn_dc_unreachable:off_prem_no_vpn` |
-| `off_prem_untrusted_ssid` | `dc_reachable_untrusted_ssid:off_prem_untrusted_ssid` |
+| `on_prem` (2 sites) | `no_action_dc_reachable:on_prem` |
+| `off_prem_no_vpn` (2 sites) | `dc_unreachable:off_prem_no_vpn` |
+| `off_prem_untrusted_ssid` | `ssid_untrusted:off_prem_no_vpn` (anomaly exit: DC reachable but no tunnel on an untrusted SSID; should be rare; sends 782, which is now correct) |
 | `ise_employee_compliant` | `ise_employee_compliant:<type>` |
 | `ise_employee_failed_<result>` | `ise_employee_failed_<result>:<type>` |
 | `ise_redirect_no_posture_service` | `ise_redirect_no_posture_service:<type>` |
@@ -51,7 +51,7 @@ Goal: fix the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE th
 | `unknown` | `state_unknown:cpr_error` |
 
 ## Decisions still open
-1. OK to allocate 803/804/805 (Ivanti side to define triggers)? Note `off_prem_untrusted_ssid` will stop sending 782 and send 803, a behavior change Ivanti will see.
+1. OK to allocate 803 (vpn_connecting) and 804 (cpr_error)? Ivanti side defines triggers.
 2. Captive state: reuse 794/795/797 as the state flare, or one new `captive_portal` ID?
 
 ## Build plan once approved (small, test-first)
