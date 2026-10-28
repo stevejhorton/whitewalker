@@ -15,8 +15,7 @@ Goal: fix the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE th
 
 ## Mechanics read from the code (affect the build)
 * `Send-FlareEvent`: one send per tag per run, 1-minute per-tag cooldown (`$FlareCooldownMinutes`); `Set-FlareStamp` updates `currentState` only for tags in `$script:StateFlares`.
-* A tag not in `WW_flaregun_config.json` falls back to a legacy direct send with no event ID. `captive_portal` and `off_prem_untrusted_ssid` are in `$StateFlares` but have no config entry.
-* Today the `off_prem_untrusted_ssid` exit sends the `off_prem_no_vpn` flare (782): reason and flare already disagree.
+* A tag not in `WW_flaregun_config.json` falls back to a legacy direct send with no event ID. `captive_portal` and `off_prem_untrusted_ssid` (to be removed from `$StateFlares`) are in `$StateFlares` but have no config entry.
 * **Consumer that must change:** `Invoke-MaintenanceStage` decides "offline" by exact exit-reason strings (`unknown`, `no_net_transient`, ...). It must compare the outcome part (before the last colon). `maintSkip` uses `-like 'vpn_connected:*'` and keeps working.
 * Event IDs 777-802 are taken; new ones start at 803.
 
@@ -25,34 +24,29 @@ Goal: fix the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE th
 |---|---|---|
 | user_tun / mgmt_tun / off_prem_no_vpn / on_prem | 780 / 781 / 782 / 793 | exist |
 | no_net_transient | 798 | exists; add to `$StateFlares` |
-| vpn_connecting | 803 (proposed) | NEW (HostScan scan in progress) |
-| cpr_error | 804 (proposed) | NEW |
-| captive_portal | ? | **decision**: reuse 794/795/797 as the state, or one new ID |
+| vpn_connecting | 803 | NEW (HostScan scan in progress) |
+| cpr_error | 804 | NEW |
+| captive_portal | 805 | NEW state flare; action flares 777/778/794/795/797 unchanged |
 
-## Mapping: current -> proposed `exit_reason` (state flare = the `<type>`)
-| Current | Proposed |
+## Mapping: current -> new `reason:connection_state`
+Reason = what CPR concluded or did. State = where the machine sits (same word as the state flare). A reason never contains a state word (Pester-enforced). `<state>` = derived from the live path at exit.
+| Current | New |
 |---|---|
-| `vpn_connected:<flavor>` (4 sites) | unchanged |
-| `vpn_connected_nwcheck_unreachable:<flavor>` | unchanged |
+| `vpn_connected:<flavor>`, `vpn_connected_nwcheck_unreachable:<flavor>` | unchanged |
 | `vpn_hostscan_posturing` | `hostscan_in_progress:vpn_connecting` |
-| `on_prem` (2 sites) | `no_action_dc_reachable:on_prem` |
-| `off_prem_no_vpn` (2 sites) | `dc_unreachable:off_prem_no_vpn` |
-| `off_prem_untrusted_ssid` | `ssid_untrusted:off_prem_no_vpn` (anomaly exit: DC reachable but no tunnel on an untrusted SSID; should be rare; sends 782, which is now correct) |
-| `ise_employee_compliant` | `ise_employee_compliant:<type>` |
-| `ise_employee_failed_<result>` | `ise_employee_failed_<result>:<type>` |
-| `ise_redirect_no_posture_service` | `ise_redirect_no_posture_service:<type>` |
-| `ise_guest_browser_remediated` | `ise_guest_browser_remediated:<type>` |
-| `non_ise_browser_remediated`, `non_ise_browser_remediated_via_enroll` | same outcome + `:<type>` |
-| `captive_portal_suspected`, `captive_walled_garden` | same outcome + `:<type>` (`captive_portal` if the decision below says so) |
-| `waiting_user_response` | `waiting_user_response:<type>` (type of the current connection; no new flare needed) |
-| `no_network_connection`, `network_changed_no_ip` | same outcome + `:no_net_transient` |
-| `no_net_transient` (3 sites, 3 meanings) | `network_dropped:no_net_transient`, `no_network_after_portal_check:no_net_transient`, `no_network_after_base_handoff:no_net_transient` (names confirmed when each site is read) |
-| `error_no_cisco`, `error_no_vpncli`, `error_no_posturecli`, `error_exception` | same outcome + `:cpr_error` |
+| `on_prem` | `no_action_dc_reachable:on_prem` |
+| `off_prem_no_vpn`, `off_prem_untrusted_ssid` | `no_trusted_path:off_prem_no_vpn` (both; the odd untrusted-SSID-with-reachable-DC case stays visible in the WARN log) |
+| `ise_employee_compliant`, `ise_employee_failed_<result>`, `ise_redirect_no_posture_service`, `ise_guest_browser_remediated` | same reason + `:<state>` |
+| `non_ise_browser_remediated`, `non_ise_browser_remediated_via_enroll` | same reason + `:<state>` |
+| `captive_portal_suspected`, `captive_walled_garden` | same reason + `:captive_portal` |
+| `waiting_user_response` | `waiting_user_response:captive_portal` |
+| `no_network_connection`, `network_changed_no_ip` | same reason + `:no_net_transient` |
+| `no_net_transient` (3 sites) | three reasons named per site when read, each `:no_net_transient` |
+| `error_no_cisco`, `error_no_vpncli`, `error_no_posturecli`, `error_exception` | same reason + `:cpr_error` |
 | `unknown` | `state_unknown:cpr_error` |
 
-## Decisions still open
-1. OK to allocate 803 (vpn_connecting) and 804 (cpr_error)? Ivanti side defines triggers.
-2. Captive state: reuse 794/795/797 as the state flare, or one new `captive_portal` ID?
+## Decisions
+IDs 803/804/805 and the captive state flare are set as above; Ivanti side defines triggers. Only open item: names of the three `no_net_transient` reasons (read each site first).
 
 ## Build plan once approved (small, test-first)
 1. `Set-CprRunExit`, `Get-CprExitType`, `$StateFlares` additions, `WW_flaregun_config.json` entries (+ tee master / schema if a tag needs it).
