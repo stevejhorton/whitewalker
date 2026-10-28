@@ -821,6 +821,9 @@ Describe 'HayStack drain kick: end-of-run ship of queued install/update results'
         foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-HaystackDrainKick' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
         function Write-Log { param($m, $l) }
         function Start-ScheduledTask { param($TaskPath, $TaskName, $ErrorAction) }
+        function Get-ScheduledTask { param($TaskName, $ErrorAction) }
+        function Start-Process { param($FilePath, $ArgumentList, $WindowStyle) }
+        $script:HaystackActionScriptPath = Join-Path $TestDrive 'ha.ps1'
         $script:HaystackEnabled = $true; $script:HaystackDrainKick = $true; $script:WhatIf = $false
         $script:HaystackDrainQueueFile = Join-Path $TestDrive 'q.jsonl'
         $script:HaystackDrainPendingDir = Join-Path $TestDrive 'pending'
@@ -834,9 +837,21 @@ Describe 'HayStack drain kick: end-of-run ship of queued install/update results'
     It 'starts the task when the queue has content and the state can ship' {
         Set-Content $script:HaystackDrainQueueFile '{"x":1}'
         '{"currentState":"user_tun"}' | Set-Content $script:StateFile
+        Mock Get-ScheduledTask { [pscustomobject]@{ TaskName = 'HayStack_Monitor'; TaskPath = '\CPR\' } }
         Mock Start-ScheduledTask {}
         Invoke-HaystackDrainKick
         Should -Invoke Start-ScheduledTask -Times 1
+    }
+    It 'falls back to running the action script when the task is not found'{
+        Set-Content $script:HaystackDrainQueueFile '{"x":1}'
+        Set-Content $script:HaystackActionScriptPath '#'
+        '{"currentState":"user_tun"}' | Set-Content $script:StateFile
+        Mock Get-ScheduledTask { $null }
+        Mock Start-ScheduledTask {}
+        Mock Start-Process {}
+        Invoke-HaystackDrainKick
+        Should -Invoke Start-ScheduledTask -Times 0
+        Should -Invoke Start-Process -Times 1
     }
     It 'does nothing when the queue is empty' {
         '{"currentState":"on_prem"}' | Set-Content $script:StateFile
@@ -855,6 +870,7 @@ Describe 'HayStack drain kick: end-of-run ship of queued install/update results'
         New-Item -ItemType Directory $script:HaystackDrainPendingDir | Out-Null
         Set-Content (Join-Path $script:HaystackDrainPendingDir 'e.json') '{}'
         '{"currentState":"mgmt_tun"}' | Set-Content $script:StateFile
+        Mock Get-ScheduledTask { [pscustomobject]@{ TaskName = 'HayStack_Monitor'; TaskPath = '\CPR\' } }
         Mock Start-ScheduledTask {}
         Invoke-HaystackDrainKick
         Should -Invoke Start-ScheduledTask -Times 1
@@ -862,7 +878,9 @@ Describe 'HayStack drain kick: end-of-run ship of queued install/update results'
     It 'is fail-soft when the task start throws' {
         Set-Content $script:HaystackDrainQueueFile '{"x":1}'
         '{"currentState":"on_prem"}' | Set-Content $script:StateFile
+        Mock Get-ScheduledTask { [pscustomobject]@{ TaskName = 'HayStack_Monitor'; TaskPath = '\CPR\' } }
         Mock Start-ScheduledTask { throw 'nope' }
+        Mock Start-Process {}
         { Invoke-HaystackDrainKick } | Should -Not -Throw
     }
     It 'static: maintenance stage calls the kick after self-update' {

@@ -55,8 +55,30 @@ function Invoke-HaystackDrainKick {
             return
         }
         if ($WhatIf) { Write-Log "WHATIF: Would start task $HaystackDrainTaskName (drain kick)" "INFO"; return }
-        Start-ScheduledTask -TaskPath $CprTaskFolder -TaskName $HaystackDrainTaskName -ErrorAction Stop
-        Write-Log "haystack_drain_kick started task='$HaystackDrainTaskName' state='$cur'" "INFO"
+        # Find the task by name wherever it is registered (the reroll may be
+        # re-registering it, or an older install left it in another folder).
+        $t = @(Get-ScheduledTask -TaskName $HaystackDrainTaskName -ErrorAction SilentlyContinue) | Select-Object -First 1
+        $started = $false
+        if ($t) {
+            try {
+                Start-ScheduledTask -TaskPath $t.TaskPath -TaskName $t.TaskName -ErrorAction Stop
+                Write-Log "haystack_drain_kick started task='$($t.TaskPath)$($t.TaskName)' state='$cur'" "INFO"
+                $started = $true
+            } catch {
+                Write-Log "haystack_drain_kick task start failed ($($_.Exception.Message)) - trying direct" "WARN"
+            }
+        } else {
+            Write-Log "haystack_drain_kick task '$HaystackDrainTaskName' not found in any folder - trying direct" "WARN"
+        }
+        if (-not $started) {
+            if (Test-Path $HaystackActionScriptPath) {
+                Start-Process "powershell.exe" -WindowStyle Hidden `
+                    -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$HaystackActionScriptPath`""
+                Write-Log "haystack_drain_kick started direct script='$HaystackActionScriptPath' state='$cur'" "INFO"
+            } else {
+                Write-Log "haystack_drain_kick failed: no task and script not found: $HaystackActionScriptPath" "WARN"
+            }
+        }
     } catch {
         Write-Log "haystack_drain_kick failed: $($_.Exception.Message)" "WARN"
     }

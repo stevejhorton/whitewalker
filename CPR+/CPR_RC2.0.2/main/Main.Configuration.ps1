@@ -305,6 +305,7 @@ $HaystackDrainKick             = $true  # end of run: start HayStack_Monitor if 
 $HaystackDrainQueueFile        = "C:\ProgramData\WhiteWalker\logs\haystack_syslog_queue.jsonl"
 $HaystackDrainPendingDir       = "C:\ProgramData\WhiteWalkerPending"
 $HaystackDrainTaskName         = "HayStack_Monitor"
+$HaystackActionScriptPath       = "C:\ProgramData\WhiteWalker\haystack_action.ps1"  # fallback when the task cannot be found
 $HaystackRerollCooldownMinutes = 60      # passed to haystack.ps1 -reroll as override if needed
 
 # HayStack HEADER needles (opt-in structured run-header telemetry)
