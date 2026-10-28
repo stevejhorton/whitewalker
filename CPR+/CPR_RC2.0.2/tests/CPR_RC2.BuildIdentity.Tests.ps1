@@ -888,3 +888,14 @@ Describe 'HayStack drain kick: end-of-run ship of queued install/update results'
         $en | Should -Match "(?s)Invoke-SelfUpdate.*Invoke-HaystackDrainKick"
     }
 }
+
+Describe 'HayStack reroll recreates a missing task even when the stamp is current' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $script:hsSrc = Get-Content (Join-Path $root 'haystack.ps1') -Raw
+    }
+    It 'Test-RerollNeeded checks task existence before trusting the stamp' {
+        $script:hsSrc | Should -Match '(?s)function Test-RerollNeeded.*?Get-ScheduledTask -TaskName \$TsTaskName -TaskPath \$TsTaskPath.*?Get-RerollStampData'
+        $script:hsSrc | Should -Match 'task not registered at'
+    }
+}
