@@ -33,6 +33,62 @@ function Invoke-WhiteWalkerStartupSubsystems {
     Write-MaintStep 'blackhole_startup'
 }
 
+function Invoke-HaystackDrainKick {
+    param([bool]$CorpReachable = $false)
+    # End-of-run: if telemetry is queued and the state can ship, start the
+    # HayStack_Monitor task now instead of waiting for its next wake, so an
+    # install/update result reaches Splunk right away. The task drains the
+    # queue itself (claim-by-rename, IgnoreNew), so this never double-sends.
+    # Gated on THIS run's verdict ($CorpReachable = on-prem or VPN really Connected),
+    # never on state.json, which can be stale (e.g. user_tun left over while the
+    # client is still posturing). WW_syslog.ps1 is UDP and exits 0 once the packet
+    # leaves the box, so a drain on a dead path would DELETE rows as "sent".
+    # Fail-soft: never throws, never delays the run.
+    if (-not $HaystackEnabled -or -not $HaystackDrainKick) { return }
+    try {
+        $queued = $false
+        if ((Test-Path $HaystackDrainQueueFile) -and ((Get-Item $HaystackDrainQueueFile -ErrorAction SilentlyContinue).Length -gt 0)) { $queued = $true }
+        if (-not $queued -and (Test-Path $HaystackDrainPendingDir)) {
+            if (@(Get-ChildItem $HaystackDrainPendingDir -File -ErrorAction SilentlyContinue).Count -gt 0) { $queued = $true }
+        }
+        if (-not $queued) { Write-Log "haystack_drain_kick skipped reason='queue_empty'" "DEBUG"; return }
+
+        if (-not $CorpReachable) {
+            Write-Log "haystack_drain_kick skipped reason='corp_not_reachable_this_run'" "INFO"
+            return
+        }
+        $cur = ''
+        try { $cur = [string](Get-Content $StateFile -Raw -ErrorAction Stop | ConvertFrom-Json).currentState } catch { }
+        if ($WhatIf) { Write-Log "WHATIF: Would start task $HaystackDrainTaskName (drain kick)" "INFO"; return }
+        # Find the task by name wherever it is registered (the reroll may be
+        # re-registering it, or an older install left it in another folder).
+        $t = @(Get-ScheduledTask -TaskName $HaystackDrainTaskName -ErrorAction SilentlyContinue) | Select-Object -First 1
+        $started = $false
+        if ($t) {
+            try {
+                Start-ScheduledTask -TaskPath $t.TaskPath -TaskName $t.TaskName -ErrorAction Stop
+                Write-Log "haystack_drain_kick started task='$($t.TaskPath)$($t.TaskName)' state='$cur'" "INFO"
+                $started = $true
+            } catch {
+                Write-Log "haystack_drain_kick task start failed ($($_.Exception.Message)) - trying direct" "WARN"
+            }
+        } else {
+            Write-Log "haystack_drain_kick task '$HaystackDrainTaskName' not found in any folder - trying direct" "WARN"
+        }
+        if (-not $started) {
+            if (Test-Path $HaystackActionScriptPath) {
+                Start-Process "powershell.exe" -WindowStyle Hidden `
+                    -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$HaystackActionScriptPath`""
+                Write-Log "haystack_drain_kick started direct script='$HaystackActionScriptPath' state='$cur'" "INFO"
+            } else {
+                Write-Log "haystack_drain_kick failed: no task and script not found: $HaystackActionScriptPath" "WARN"
+            }
+        }
+    } catch {
+        Write-Log "haystack_drain_kick failed: $($_.Exception.Message)" "WARN"
+    }
+}
+
 function Invoke-MaintenanceStage {
     # RC2.1 Maintenance stage: everything that is not on the critical path
     # (classify network -> flare -> remediate). Runs ONCE at the very end of the
@@ -105,6 +161,9 @@ function Invoke-MaintenanceStage {
         }
         Write-MaintStep 'xmlvault'
     }
+    # After self-update so its result rows are already queued.
+    Invoke-HaystackDrainKick -CorpReachable ([bool]$shareOk)
+    Write-MaintStep 'haystack_drain_kick'
     Write-Log ("phase_timing phase='maintenance_stage' elapsed_ms={0}" -f `
         [math]::Round(((Get-Date) - $maintStartedAt).TotalMilliseconds)) "INFO"
 }
@@ -368,6 +427,14 @@ function Invoke-WhiteWalkerMain {
                     if ($PreflightRequiresSettledVpn) {
                         $preSettleVpnState = Get-VpnStateStable -TimeoutSec $VpnStateMaxWaitSeconds
                     }
+                    # HostScan posture in progress: the client already reached the headend and is not blocked behind a
+                    # portal. Do not probe, classify or cut - end the run; the next trigger re-checks.
+                    if ($script:VpnHostscanHoldActive -and $preSettleVpnState -in @('Connecting', 'Reconnecting')) {
+                        Write-Log "vpn_hostscan_posturing_hold exit - HostScan scan in progress, ending run without probing or disconnecting" "WARN"
+                        $script:exitReason = "vpn_hostscan_posturing"
+                        Write-RunEnd $script:exitReason
+                        return
+                    }
                     $vpnSettledForProbe = ($preSettleVpnState -in @('Connected', 'Disconnected'))
                     $readiness = Wait-CprNetworkReady -GatewayAddress $networkInfo.DefaultGateway `
                         -ProbeHost $NewPreflightURL -Disabled:((-not $NetworkReadyEnabled) -or (-not $vpnSettledForProbe))
@@ -541,7 +608,7 @@ function Invoke-WhiteWalkerMain {
                         if (Test-VPNBlockingNetwork -VPNState $currentVPNState -RedirectDetected $true) {
                             Write-Log "VPN blocking network auth - forcing disconnect" "WARN"
                             try {
-                                & $vpn_cmd disconnect | Out-Null
+                                Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
                                 Start-Sleep -Seconds 2
                                 Write-Log "VPN disconnected to allow network authentication" "INFO"
                             } catch {
@@ -786,7 +853,7 @@ function Invoke-WhiteWalkerMain {
                         if ($currentVPNState -notin @("Disconnected", "Connected")) {
                             Write-Log "VPN in intermediate state: $currentVPNState (blocks all traffic) - forcing disconnect" "WARN"
                             try {
-                                & $vpn_cmd disconnect | Out-Null
+                                Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
                                 Start-Sleep -Seconds 3
                                 Write-Log "VPN disconnect issued - waiting for state to settle" "INFO"
                                 $currentVPNState = Get-VpnState
@@ -889,7 +956,7 @@ function Invoke-WhiteWalkerMain {
                         if (Test-VPNBlockingNetwork -VPNState $vpnStateForBlockCheck -RedirectDetected $false) {
                             Write-Log "VPN client is blocking network access (state: $vpnStateForBlockCheck) - force-disconnecting before walled-garden test" "WARN"
                             try {
-                                & $vpn_cmd disconnect | Out-Null
+                                Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
                                 Start-Sleep -Seconds 2
                                 $vpnStateForBlockCheck = Get-VpnState
                                 Write-Log "VPN state after forced disconnect: $vpnStateForBlockCheck" "INFO"

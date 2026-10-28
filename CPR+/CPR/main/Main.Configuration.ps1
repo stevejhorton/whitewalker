@@ -49,6 +49,17 @@ $PostureComplianceTimeout = 20   # seconds to wait for posture compliance after 
 $VpnStateMaxWaitSeconds = 12     # how long to wait for vpncli to settle to Connected/Disconnected
 $VpnIntermediateMaxWait = 30     # force disconnect if stuck in Reconnecting/Connecting/Unknown >30s
 $VpnWakeDetection = $true        # detect wake from sleep and disconnect blocking VPN (smart disconnect)
+$VpnCliTimeoutSec = 8            # max wait for one vpncli stats/state/status call; a busy Secure Client agent can block it for minutes. On timeout the child is killed and the output treated as empty
+$VpnCliDisconnectTimeoutSec = 20 # max wait for a vpncli disconnect call (it legitimately takes ~10s+ on a busy agent)
+$VpnPostDisconnectRetryMax = 2   # after WW cut the VPN this run, extra disconnects allowed if Secure Client re-enters Connecting/Reconnecting while we stabilize
+$VpnPostureDetection = $true     # treat recent Secure Firewall Posture (HostScan/OPSWAT) event-log activity as Connecting; vpncli cannot see posture scans
+$VpnPostureLogName = 'Cisco Secure Client - Secure Firewall Posture'   # silent when the client is idle
+$VpnPostureScanProvider = 'csc_cscan'   # provider of the HostScan scanner process; only it earns the vpn_hostscan_posture_active marker
+$VpnHostscanHold = $true          # never disconnect while a real HostScan scan (csc_cscan) is running, up to the ceiling below
+$VpnHostscanSilentSec = 30       # scanner silent this long = scan over or hung; normal VPN handling resumes
+$VpnHostscanMaxWaitSec = 300     # hard ceiling per posture episode (persisted across runs)
+$VpnHostscanEpisodeFile = "C:\ProgramData\WhiteWalker\hostscan_hold_started.txt"
+$VpnPostureActiveWindowSec = 15  # an event newer than this many seconds means posture is in progress
 $VpnWakeTimeWindow = 120         # seconds - if wake event within this window, consider it a wake scenario
 
 # RC2.1 early VPN gate - runs at the TOP of every run, before any wait/sleep/preflight
@@ -290,6 +301,11 @@ $BlackholeClearedFlagFile = "C:\ProgramData\WhiteWalker\vpn_blackhole_cleared.fl
 # HayStack Event Monitor (event log needle watcher)
 $HaystackEnabled               = $true  # set to $true to enable HayStack event monitoring
 $HaystackScriptPath            = "C:\ProgramData\WhiteWalker\haystack.ps1"
+$HaystackDrainKick             = $true  # end of run: start HayStack_Monitor if telemetry is queued and the state can ship (install/update results reach Splunk now)
+$HaystackDrainQueueFile        = "C:\ProgramData\WhiteWalker\logs\haystack_syslog_queue.jsonl"
+$HaystackDrainPendingDir       = "C:\ProgramData\WhiteWalkerPending"
+$HaystackDrainTaskName         = "HayStack_Monitor"
+$HaystackActionScriptPath       = "C:\ProgramData\WhiteWalker\haystack_action.ps1"  # fallback when the task cannot be found
 $HaystackRerollCooldownMinutes = 60      # passed to haystack.ps1 -reroll as override if needed
 
 # HayStack HEADER needles (opt-in structured run-header telemetry)

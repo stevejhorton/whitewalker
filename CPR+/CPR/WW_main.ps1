@@ -1,4 +1,4 @@
-# CPR+ v3.14.0_RC2.1.0 - WW_main.ps1 (keep in sync with $ver in main\Main.Configuration.ps1; a test enforces it)
+# CPR+ v3.14.0_RC2.0.2 - WW_main.ps1 (keep in sync with $ver in main\Main.Configuration.ps1; a test enforces it)
 #Requires -RunAsAdministrator
 param(
   [switch]$WWDebug,
@@ -8,7 +8,7 @@ param(
 
 <#
   White Walker CPR RC2 experimental decomposition line.
-  Version: 3.14.0_RC2.1.0 (see line 1; the log prints the same version and a build= fingerprint)
+  Version: 3.14.0_RC2.0.2 (see line 1; the log prints the same version and a build= fingerprint)
   Seeded from CPR_3.14_RC1.25; behavior is intended to remain unchanged.
 
   Dot-source order is significant: configuration and shared utilities load first,

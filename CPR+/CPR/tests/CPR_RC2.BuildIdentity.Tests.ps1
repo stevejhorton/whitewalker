@@ -595,3 +595,329 @@ Describe 'Combined update + tee flag' {
         (Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'install.ps1') -Raw) | Should -Match "-Filter 'cpr_update_\*\.flag'"
     }
 }
+
+Describe 'vpncli calls are time-bounded' {
+    BeforeAll {
+        $script:root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $script:root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        $def = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-VpnCliBounded' }, $true)[0]
+        . ([scriptblock]::Create($def.Extent.Text))
+        function Write-Log { param($m, $l) $script:logged += "$m" }
+        $script:vpn_cmd = Join-Path $env:SystemRoot 'System32\cmd.exe'
+        $script:VpnCliTimeoutSec = 8
+        $script:VpnCliDisconnectTimeoutSec = 20
+    }
+    BeforeEach { $script:logged = @(); $script:VpnDisconnectsThisRun = 0 }
+
+    It 'returns the stdout of a call that finishes in time' {
+        $out = Invoke-VpnCliBounded -Arguments '/c echo state: Disconnected' -TimeoutSec 5
+        $out | Should -Match 'state: Disconnected'
+    }
+    It 'kills a hung call, returns empty and logs vpncli_timeout' {
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $out = Invoke-VpnCliBounded -Arguments '/c ping -n 30 127.0.0.1 >nul' -TimeoutSec 1
+        $sw.Elapsed.TotalSeconds | Should -BeLessThan 6
+        $out | Should -Be ''
+        ($script:logged -join "`n") | Should -Match 'vpncli_timeout'
+    }
+    It 'counts disconnect calls for the run' {
+        $null = Invoke-VpnCliBounded -Arguments 'disconnect' -TimeoutSec 5
+        $script:VpnDisconnectsThisRun | Should -Be 1
+    }
+    It 'no main script calls vpncli directly any more' {
+        $direct = Get-ChildItem (Join-Path $script:root 'main') -Filter *.ps1 | Select-String -Pattern '& \$vpn_cmd'
+        @($direct).Count | Should -Be 0
+    }
+    It 'retry-disconnect only fires after WW itself cut the VPN, and is capped' {
+        $src = Get-Content (Join-Path $script:root 'main\Main.VpnState.ps1') -Raw
+        $src | Should -Match '\$script:VpnDisconnectsThisRun -gt 0'
+        $src | Should -Match '\$script:VpnPostDisconnectRetries -lt \[int\]\$VpnPostDisconnectRetryMax'
+    }
+    It 'has config knobs for the timeouts and the retry cap' {
+        $cfg = Get-Content (Join-Path $script:root 'main\Main.Configuration.ps1') -Raw
+        foreach ($n in 'VpnCliTimeoutSec', 'VpnCliDisconnectTimeoutSec', 'VpnPostDisconnectRetryMax') { $cfg | Should -Match "\`$$n\s*=" }
+    }
+}
+
+Describe 'Native redirect carries the same portal fields as the 301 row' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $src = Join-Path $root 'main\Main.CaptivePortal.ps1'
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile($src, [ref]$null, [ref]$null)
+        $want = 'Get-CprCiscoWebHelperQueryParameter', 'Get-CprCiscoWebHelperQueryParameterAny', 'Get-CprPortalUrlFields'
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in $want }, $true)) {
+            . ([scriptblock]::Create($d.Extent.Text))
+        }
+        $script:srcText = Get-Content $src -Raw
+    }
+    It 'extracts portal descriptors from a redirect URL' {
+        $f = Get-CprPortalUrlFields -Url 'https://portal.example/login?ap_name=AP1&ap_mac=aa-bb&SIP=10.0.0.1&PSID=xyz&login_url=http%3A%2F%2Fa%2Fb&ORG=acme'
+        $f.ap_name | Should -Be 'AP1'
+        $f.ap_mac  | Should -Be 'aa-bb'
+        $f.sip     | Should -Be '10.0.0.1'
+        $f.psid    | Should -Be 'xyz'
+        $f.login_url | Should -Be 'http://a/b'
+        $f.org     | Should -Be 'acme'
+    }
+    It 'uses the cm alias for ap_mac, like the 301 parser' {
+        (Get-CprPortalUrlFields -Url 'http://p/x?cm=11-22').ap_mac | Should -Be '11-22'
+    }
+    It 'leaves absent parameters empty and tolerates empty or junk input' {
+        (Get-CprPortalUrlFields -Url 'http://p/x?a=b').ap_name | Should -Be ''
+        (Get-CprPortalUrlFields -Url '').trace_id | Should -Be ''
+        { Get-CprPortalUrlFields -Url 'not a url' } | Should -Not -Throw
+    }
+    It 'cap_portal_redirect tee in remediation merges the portal fields' {
+        $srcText | Should -Match 'Get-CprPortalUrlFields -Url \(\[string\]\$RedirectUrl\)'
+        $srcText | Should -Match "detection_source = \$\(if \(\$accepted301Carried\)"
+    }
+    It 'tee master lists the new fields for cap_portal_redirect' {
+        $m = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'WW_tee_master.psd1') -Raw
+        $m | Should -Match "'reason','detection_source','protocol','fqdn','ap_name'"
+    }
+}
+
+Describe 'Get-VpnState does not trust the management line when vpncli state is empty' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-VpnState' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        function Write-Log { param($m, $l) }
+        function Write-DebugBlock { param($Label, $Text) }
+        $script:WWDebug = $false
+    }
+    It 'returns Unknown when state is empty and stats only shows a Disconnected management line' {
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Disconnected`n" } else { '' } }
+        Get-VpnState | Should -Be 'Unknown'
+    }
+    It 'still returns Disconnected when state answers Disconnected' {
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Disconnected`n" } else { "  >> state: Disconnected`n" } }
+        Get-VpnState | Should -Be 'Disconnected'
+    }
+    It 'returns Connecting when state says so' {
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { '' } else { "  >> state: Connecting`n" } }
+        Get-VpnState | Should -Be 'Connecting'
+    }
+}
+
+Describe 'Posture activity makes a Disconnected vpncli read count as Connecting' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in 'Get-VpnState','Test-VpnPostureActive' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        function Write-Log { param($m, $l) }
+        function Write-DebugBlock { param($Label, $Text) }
+        $script:WWDebug = $false
+        $script:VpnPostureDetection = $true
+        $script:VpnPostureLogName = 'Cisco Secure Client - Secure Firewall Posture'
+        $script:VpnPostureActiveWindowSec = 15
+        $script:VpnPostureScanProvider = 'csc_cscan'
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { '' } else { "  >> state: Disconnected`n" } }
+    }
+    It 'returns Connecting when state reads Disconnected and posture events are recent' {
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Get-VpnState | Should -Be 'Connecting'
+    }
+    It 'returns Disconnected when the posture log is quiet' {
+        Mock Get-WinEvent { $null }
+        Get-VpnState | Should -Be 'Disconnected'
+    }
+    It 'is fail-soft when the log query throws, and honors the off switch' {
+        Mock Get-WinEvent { throw 'no such log' }
+        Test-VpnPostureActive | Should -BeFalse
+        $script:VpnPostureDetection = $false
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'x' } }
+        Test-VpnPostureActive | Should -BeFalse
+        $script:VpnPostureDetection = $true
+    }
+    It 'never changes a Connected read' {
+        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Connected`n" } else { "  >> state: Connected`n" } }
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Get-VpnState | Should -Be 'Connected'
+    }
+}
+
+Describe 'Posture marker distinguishes a HostScan scan from client connect activity' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Test-VpnPostureActive' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        $script:VpnPostureDetection = $true; $script:VpnPostureActiveWindowSec = 15
+        $script:VpnPostureLogName = 'x'; $script:VpnPostureScanProvider = 'csc_cscan'
+        $script:logged = @()
+        function Write-Log { param($m, $l) $script:logged += $m }
+    }
+    BeforeEach { $script:logged = @() }
+    It 'logs vpn_hostscan_posture_active only for the scanner provider' {
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Test-VpnPostureActive | Should -BeTrue
+        ($script:logged -join ' ') | Should -Match 'vpn_hostscan_posture_active'
+    }
+    It 'logs vpn_client_connect_activity when only other providers wrote' {
+        Mock Get-WinEvent { if ($FilterHashtable.ProviderName) { $null } else { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_ciscod' } } }
+        Test-VpnPostureActive | Should -BeTrue
+        ($script:logged -join ' ') | Should -Match 'vpn_client_connect_activity'
+        ($script:logged -join ' ') | Should -Not -Match 'vpn_hostscan_posture_active'
+    }
+}
+
+Describe 'HostScan hold: never disconnect during a live scan, with a ceiling' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.VpnState.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in 'Test-VpnHostscanHold','Invoke-VpnCliBounded' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        function Write-Log { param($m, $l) }
+        $script:VpnPostureDetection = $true; $script:VpnHostscanHold = $true
+        $script:VpnHostscanSilentSec = 30; $script:VpnHostscanMaxWaitSec = 300
+        $script:VpnPostureLogName = 'x'; $script:VpnPostureScanProvider = 'csc_cscan'
+        $script:VpnHostscanEpisodeFile = Join-Path $TestDrive 'hold.txt'
+        $script:VpnCliTimeoutSec = 8; $script:VpnCliDisconnectTimeoutSec = 20
+        $script:VpnDisconnectsThisRun = 0
+        $script:vpn_cmd = Join-Path $env:SystemRoot 'System32\cmd.exe'
+    }
+    BeforeEach { $script:VpnHostscanHoldActive = $false; Remove-Item $script:VpnHostscanEpisodeFile -ErrorAction SilentlyContinue; $script:VpnDisconnectsThisRun = 0 }
+    It 'holds while scanner events are fresh and starts an episode' {
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Test-VpnHostscanHold | Should -BeTrue
+        $script:VpnHostscanHoldActive | Should -BeTrue
+        Test-Path $script:VpnHostscanEpisodeFile | Should -BeTrue
+    }
+    It 'does not hold when the scanner is silent and clears the episode' {
+        Set-Content $script:VpnHostscanEpisodeFile (Get-Date).ToString('o')
+        Mock Get-WinEvent { $null }
+        Test-VpnHostscanHold | Should -BeFalse
+        Test-Path $script:VpnHostscanEpisodeFile | Should -BeFalse
+    }
+    It 'gives up after the ceiling even if the scanner is still writing' {
+        Set-Content $script:VpnHostscanEpisodeFile (Get-Date).AddSeconds(-400).ToString('o')
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Test-VpnHostscanHold | Should -BeFalse
+    }
+    It 'honors the off switch and is fail-soft' {
+        $script:VpnHostscanHold = $false
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Test-VpnHostscanHold | Should -BeFalse
+        $script:VpnHostscanHold = $true
+        Mock Get-WinEvent { throw 'boom' }
+        Test-VpnHostscanHold | Should -BeFalse
+    }
+    It 'Invoke-VpnCliBounded skips disconnect during a hold and does not count it' {
+        Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
+        Invoke-VpnCliBounded -Arguments 'disconnect' | Should -Be ''
+        $script:VpnDisconnectsThisRun | Should -Be 0
+    }
+    It 'static: stabilize returns early on a hold and the main flow exits cleanly' {
+        $vs = Get-Content (Join-Path $root 'main\Main.VpnState.ps1') -Raw
+        $en = Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw
+        $vs | Should -Match "Test-VpnHostscanHold -Where 'stabilize'"
+        $en | Should -Match 'vpn_hostscan_posturing'
+    }
+}
+
+Describe 'HayStack drain kick: end-of-run ship of queued install/update results' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.Entry.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-HaystackDrainKick' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        function Write-Log { param($m, $l) }
+        function Start-ScheduledTask { param($TaskPath, $TaskName, $ErrorAction) }
+        function Get-ScheduledTask { param($TaskName, $ErrorAction) }
+        function Start-Process { param($FilePath, $ArgumentList, $WindowStyle) }
+        $script:HaystackActionScriptPath = Join-Path $TestDrive 'ha.ps1'
+        $script:HaystackEnabled = $true; $script:HaystackDrainKick = $true; $script:WhatIf = $false
+        $script:HaystackDrainQueueFile = Join-Path $TestDrive 'q.jsonl'
+        $script:HaystackDrainPendingDir = Join-Path $TestDrive 'pending'
+        $script:HaystackDrainTaskName = 'HayStack_Monitor'; $script:CprTaskFolder = '\CPR\'
+        $script:StateFile = Join-Path $TestDrive 'state.json'
+    }
+    BeforeEach {
+        Remove-Item $script:HaystackDrainQueueFile, $script:StateFile -ErrorAction SilentlyContinue
+        Remove-Item $script:HaystackDrainPendingDir -Recurse -ErrorAction SilentlyContinue
+    }
+    It 'starts the task when the queue has content and the state can ship' {
+        Set-Content $script:HaystackDrainQueueFile '{"x":1}'
+        '{"currentState":"user_tun"}' | Set-Content $script:StateFile
+        Mock Get-ScheduledTask { [pscustomobject]@{ TaskName = 'HayStack_Monitor'; TaskPath = '\CPR\' } }
+        Mock Start-ScheduledTask {}
+        Invoke-HaystackDrainKick -CorpReachable $true
+        Should -Invoke Start-ScheduledTask -Times 1
+    }
+    It 'falls back to running the action script when the task is not found'{
+        Set-Content $script:HaystackDrainQueueFile '{"x":1}'
+        Set-Content $script:HaystackActionScriptPath '#'
+        '{"currentState":"user_tun"}' | Set-Content $script:StateFile
+        Mock Get-ScheduledTask { $null }
+        Mock Start-ScheduledTask {}
+        Mock Start-Process {}
+        Invoke-HaystackDrainKick -CorpReachable $true
+        Should -Invoke Start-ScheduledTask -Times 0
+        Should -Invoke Start-Process -Times 1
+    }
+    It 'does nothing when the queue is empty' {
+        '{"currentState":"on_prem"}' | Set-Content $script:StateFile
+        Mock Start-ScheduledTask {}
+        Invoke-HaystackDrainKick -CorpReachable $true
+        Should -Invoke Start-ScheduledTask -Times 0
+    }
+    It 'does nothing when this run could not reach corp, even if state.json is stale user_tun' {
+        Set-Content $script:HaystackDrainQueueFile '{"x":1}'
+        '{"currentState":"user_tun"}' | Set-Content $script:StateFile
+        Mock Start-ScheduledTask {}
+        Mock Start-Process {}
+        Invoke-HaystackDrainKick -CorpReachable $false
+        Should -Invoke Start-Process -Times 0
+        Should -Invoke Start-ScheduledTask -Times 0
+    }
+    It 'kicks for a pending-dir file when the queue file is absent' {
+        New-Item -ItemType Directory $script:HaystackDrainPendingDir | Out-Null
+        Set-Content (Join-Path $script:HaystackDrainPendingDir 'e.json') '{}'
+        '{"currentState":"mgmt_tun"}' | Set-Content $script:StateFile
+        Mock Get-ScheduledTask { [pscustomobject]@{ TaskName = 'HayStack_Monitor'; TaskPath = '\CPR\' } }
+        Mock Start-ScheduledTask {}
+        Invoke-HaystackDrainKick -CorpReachable $true
+        Should -Invoke Start-ScheduledTask -Times 1
+    }
+    It 'is fail-soft when the task start throws' {
+        Set-Content $script:HaystackDrainQueueFile '{"x":1}'
+        '{"currentState":"on_prem"}' | Set-Content $script:StateFile
+        Mock Get-ScheduledTask { [pscustomobject]@{ TaskName = 'HayStack_Monitor'; TaskPath = '\CPR\' } }
+        Mock Start-ScheduledTask { throw 'nope' }
+        Mock Start-Process {}
+        { Invoke-HaystackDrainKick } | Should -Not -Throw
+    }
+    It 'static: maintenance stage calls the kick after self-update' {
+        $en = Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw
+        $en | Should -Match "(?s)Invoke-SelfUpdate.*Invoke-HaystackDrainKick -CorpReachable \(\[bool\]\$shareOk\)"
+    }
+}
+
+Describe 'HayStack reroll recreates a missing task even when the stamp is current' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $script:hsSrc = Get-Content (Join-Path $root 'haystack.ps1') -Raw
+    }
+    It 'Test-RerollNeeded checks task existence before trusting the stamp' {
+        $script:hsSrc | Should -Match '(?s)function Test-RerollNeeded.*?Get-ScheduledTask -TaskName \$TsTaskName -TaskPath \$TsTaskPath.*?Get-RerollStampData'
+        $script:hsSrc | Should -Match 'task not registered at'
+    }
+}
+
+Describe 'Installer registers and validates HayStack_Monitor like every other task' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $script:inst = Get-Content (Join-Path $root 'install.ps1') -Raw
+    }
+    It 'defines Register-HaystackMonitorTask running haystack.ps1 -reroll -Force with a bounded wait and one retry' {
+        $script:inst | Should -Match 'function Register-HaystackMonitorTask'
+        $script:inst | Should -Match '-reroll -Force'
+        $script:inst | Should -Match 'WaitForExit\(120000\)'
+        $script:inst | Should -Match '\$attempt -le 2'
+    }
+    It 'calls it after Register-Tasks and before Test-Installation' {
+        $script:inst | Should -Match '(?s)\$tasksOK = Register-Tasks.*\$null = Register-HaystackMonitorTask.*\$validated = Test-Installation'
+    }
+    It 'Test-Installation expects HayStack_Monitor in the CPR folder in addition to the XML tasks' {
+        $script:inst | Should -Match '(?s)\$expectedTasks = @\(\$TaskXMLs\) \+ @\(@\{ Name = "HayStack_Monitor"; TaskPath = \$CprTaskFolder \}\)'
+        $script:inst | Should -Match 'foreach \(\$task in \$expectedTasks\)'
+    }
+}

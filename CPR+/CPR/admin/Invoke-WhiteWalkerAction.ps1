@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Menu-driven tech action console for CPR RC2 (WhiteWalker).
-    CPR version: 3.14.0_RC2.1.0 (keep in sync with $ver in main\Main.Configuration.ps1; a test enforces it)
+    CPR version: 3.14.0_RC2.0.2 (keep in sync with $ver in main\Main.Configuration.ps1; a test enforces it)
     Console version: 1.0.0
     Author: steve.horton@optum.com (with AI assist)
 

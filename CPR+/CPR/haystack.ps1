@@ -909,6 +909,15 @@ function Test-RerollNeeded {
       - Both current needles versions match stamp versions
     #>
 
+    # The task must actually exist. A current stamp says nothing about whether
+    # the task is still registered (an install/cleanup can delete it).
+    $taskPresent = $true
+    try { $taskPresent = [bool](Get-ScheduledTask -TaskName $TsTaskName -TaskPath $TsTaskPath -ErrorAction SilentlyContinue) } catch { }
+    if (-not $taskPresent) {
+        Write-HSLog "HayStack_Monitor task not registered at $TsTaskPath - reroll required (stamp ignored)" "WARN"
+        return $true
+    }
+
     $stamp = Get-RerollStampData
     if (-not $stamp.LastReroll) {
         Write-HSLog "No valid reroll stamp found - reroll required" "INFO"

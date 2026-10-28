@@ -366,7 +366,7 @@ function Invoke-SsidChangeCheck {
     if ($vpnState -in @('Reconnecting', 'Connecting')) {
         Write-Log "VPN in blocking state '$vpnState' on SSID change - disconnecting immediately" "WARN"
         try {
-            & $vpn_cmd disconnect | Out-Null
+            Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
             Start-Sleep -Seconds 2
             Write-Log "VPN cleared from blocking state" "INFO"
         } catch { Write-Log "Error disconnecting VPN in blocking state: $_" "WARN" }
@@ -399,7 +399,7 @@ function Invoke-SsidChangeCheck {
     if (-not $resolved) {
         Write-Log "VPN stuck in '$vpnState' after ${VpnSsidChangeGraceSec}s - forcing disconnect" "WARN"
         try {
-            & $vpn_cmd disconnect | Out-Null
+            Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
             Start-Sleep -Seconds 2
             Write-Log "VPN force disconnected due to SSID change" "INFO"
             Write-TeeLog 'vpn_disconnect_forced' @{ reason = "ssid_change_stuck"; vpn_state_was = $vpnState }

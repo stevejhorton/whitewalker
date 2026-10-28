@@ -172,13 +172,124 @@ function Test-RecentWakeFromSleep {
   }
 }
 
+# Every vpncli call goes through here so a busy Secure Client agent (it blocks vpncli for minutes while it
+# retries a failed connect, e.g. DNS failure on a guest network) can never hang the run. Returns the stdout
+# text. On timeout the child process is killed, a WARN is logged and '' is returned, which callers already
+# treat as "state unknown". A launch failure is NOT swallowed, so existing try/catch blocks still see it.
+function Invoke-VpnCliBounded {
+  param(
+    [Parameter(Mandatory = $true)][string]$Arguments,
+    [int]$TimeoutSec = 0
+  )
+  if ($Arguments -match '^\s*disconnect\b') {
+    # Safety net for every disconnect path: never cut a client that is mid HostScan scan.
+    if ((Get-Command Test-VpnHostscanHold -ErrorAction SilentlyContinue) -and (Test-VpnHostscanHold -Where 'disconnect')) { return '' }
+    $script:VpnDisconnectsThisRun = [int]$script:VpnDisconnectsThisRun + 1
+  }
+  if ($TimeoutSec -le 0) {
+    $TimeoutSec = if ($Arguments -match '^\s*disconnect\b') { [int]$VpnCliDisconnectTimeoutSec } else { [int]$VpnCliTimeoutSec }
+    if ($TimeoutSec -le 0) { $TimeoutSec = 8 }
+  }
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName               = $vpn_cmd
+  $psi.Arguments              = $Arguments
+  $psi.UseShellExecute        = $false
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError  = $true
+  $psi.CreateNoWindow         = $true
+  $proc = $null
+  $startedAt = Get-Date
+  try {
+    $proc = [System.Diagnostics.Process]::Start($psi)
+    $outTask = $proc.StandardOutput.ReadToEndAsync()
+    $null    = $proc.StandardError.ReadToEndAsync()
+    if ($proc.WaitForExit($TimeoutSec * 1000)) {
+      $proc.WaitForExit()   # flush the async readers
+      return [string]$outTask.Result
+    }
+    Write-Log ("vpncli_timeout cmd='{0}' waited_ms={1} - child killed, treating output as empty" -f `
+      $Arguments, [math]::Round(((Get-Date) - $startedAt).TotalMilliseconds)) "WARN"
+    try { $proc.Kill() } catch { }
+    return ''
+  } finally {
+    if ($proc) { try { $proc.Dispose() } catch { } }
+  }
+}
+
+function Test-VpnHostscanHold {
+  <#
+  True while a real HostScan scan (scanner provider csc_cscan) is running and the episode is under the
+  ceiling. HostScan runs only after the client has reached the headend, so the network works and the
+  client is NOT blocked behind a captive portal: cutting it would kill a legitimate connect. The episode
+  start is persisted so the ceiling holds across runs; the episode ends (file removed) once the scanner
+  has been silent for $VpnHostscanSilentSec. Fail-soft: any error returns $false (normal behavior).
+  #>
+  param([string]$Where = '')
+  if (-not $VpnPostureDetection -or -not $VpnHostscanHold) { return $false }
+  try {
+    $silent = [int]$VpnHostscanSilentSec; if ($silent -le 0) { $silent = 30 }
+    $ceil = [int]$VpnHostscanMaxWaitSec;  if ($ceil -le 0) { $ceil = 300 }
+    $scan = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; ProviderName = $VpnPostureScanProvider; StartTime = (Get-Date).AddSeconds(-$silent) } -MaxEvents 1 -ErrorAction SilentlyContinue
+    if (-not $scan) {
+      if ($VpnHostscanEpisodeFile -and (Test-Path -LiteralPath $VpnHostscanEpisodeFile)) { Remove-Item -LiteralPath $VpnHostscanEpisodeFile -Force -ErrorAction SilentlyContinue }
+      return $false
+    }
+    $start = Get-Date
+    if ($VpnHostscanEpisodeFile) {
+      $parsed = [datetime]::MinValue
+      if ((Test-Path -LiteralPath $VpnHostscanEpisodeFile) -and [datetime]::TryParse((Get-Content -LiteralPath $VpnHostscanEpisodeFile -Raw -ErrorAction SilentlyContinue), [ref]$parsed)) { $start = $parsed }
+      else { Set-Content -LiteralPath $VpnHostscanEpisodeFile -Value (Get-Date).ToString('o') -Force -ErrorAction SilentlyContinue }
+    }
+    $age = [int]((Get-Date) - $start).TotalSeconds
+    if ($age -gt $ceil) {
+      Write-Log ("vpn_hostscan_posture_ceiling episode_age_sec={0} max_wait_sec={1} where='{2}' - scan has run too long, normal VPN handling resumes" -f $age, $ceil, $Where) "WARN"
+      return $false
+    }
+    $script:VpnHostscanHoldActive = $true
+    Write-Log ("vpn_hostscan_posturing_hold episode_age_sec={0} max_wait_sec={1} last_event='{2}' where='{3}' - HostScan scan in progress, not disconnecting" -f $age, $ceil, $scan.TimeCreated.ToString('HH:mm:ss'), $Where) "WARN"
+    return $true
+  } catch { Write-Log "Test-VpnHostscanHold error: $_" "DEBUG" }
+  return $false
+}
+
+function Test-VpnPostureActive {
+  <#
+  Secure Firewall Posture (HostScan/OPSWAT) is invisible to vpncli: the client can sit in a posture
+  scan for minutes while 'vpncli state' still reads Disconnected. That Windows event log is silent when
+  the client is idle (observed), so any event inside a short window means posture is in progress.
+  One bounded Get-WinEvent (MaxEvents 1). Fail-soft: any error or missing log returns $false.
+  #>
+  param([int]$WindowSec = 0)
+  if (-not $VpnPostureDetection) { return $false }
+  if ($WindowSec -le 0) { $WindowSec = [int]$VpnPostureActiveWindowSec }
+  if ($WindowSec -le 0) { $WindowSec = 15 }
+  try {
+    $since = (Get-Date).AddSeconds(-$WindowSec)
+    # Scanner process (csc_cscan) = a real HostScan/OPSWAT scan. Any other provider in this log
+    # (csc_ciscod connection callbacks) is just the client working on a connect attempt.
+    $scan = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; ProviderName = $VpnPostureScanProvider; StartTime = $since } -MaxEvents 1 -ErrorAction SilentlyContinue
+    if ($scan) {
+      Write-Log ("vpn_hostscan_posture_active log='{0}' last_event='{1}' provider='{2}' window_sec={3} - reporting Connecting instead of Disconnected" -f `
+        $VpnPostureLogName, $scan.TimeCreated.ToString('HH:mm:ss'), $scan.ProviderName, $WindowSec) "WARN"
+      return $true
+    }
+    $ev = Get-WinEvent -FilterHashtable @{ LogName = $VpnPostureLogName; StartTime = $since } -MaxEvents 1 -ErrorAction SilentlyContinue
+    if ($ev) {
+      Write-Log ("vpn_client_connect_activity log='{0}' last_event='{1}' provider='{2}' window_sec={3} - no HostScan scan seen, client is working on a connect attempt; reporting Connecting instead of Disconnected" -f `
+        $VpnPostureLogName, $ev.TimeCreated.ToString('HH:mm:ss'), $ev.ProviderName, $WindowSec) "WARN"
+      return $true
+    }
+  } catch { Write-Log "Test-VpnPostureActive error: $_" "DEBUG" }
+  return $false
+}
+
 function Get-VpnState {
   try {
     $statsText = ""
     $stateText = ""
     
-    try { $statsText = (& $vpn_cmd stats 2>$null | Out-String) } catch { }
-    try { $stateText = (& $vpn_cmd state 2>$null | Out-String) } catch { }
+    try { $statsText = (Invoke-VpnCliBounded -Arguments 'stats') } catch { }
+    try { $stateText = (Invoke-VpnCliBounded -Arguments 'state') } catch { }
     
     $combined = "$statsText`n$stateText"
     
@@ -213,6 +324,7 @@ function Get-VpnState {
         }
       }
       
+      if ($lastState -eq 'Disconnected' -and (Test-VpnPostureActive)) { return 'Connecting' }
       return $lastState
     }
     
@@ -227,7 +339,16 @@ function Get-VpnState {
     }
     
     if ($combined -match '(?im)^\s*Management\s+Connection\s+State\s*:\s*Disconnected\s*') {
+      # 'vpncli state' returned nothing (timed out or blank) while 'stats' answered. The management
+      # line says nothing about the user tunnel (non-Always-On profiles have no management tunnel), so
+      # it cannot prove Disconnected - the client may be mid-connect. Report Unknown (an intermediate
+      # state) instead of a false Disconnected.
+      if ([string]::IsNullOrWhiteSpace($stateText)) {
+        Write-Log "vpn_state_untrusted: 'vpncli state' returned no output; management line alone cannot prove Disconnected - returning Unknown" "WARN"
+        return "Unknown"
+      }
       Write-Log "Management shows Disconnected, no user tunnel" "DEBUG"
+      if (Test-VpnPostureActive) { return "Connecting" }
       return "Disconnected"
     }
     
@@ -255,6 +376,22 @@ function Get-VpnStateStable {
     
     $intermediateStates = @('Reconnecting', 'Connecting', 'Unknown', 'Disconnecting')
     if ($intermediateStates -contains $state) {
+      # Secure Client re-fires a connect attempt right after our disconnect (it retries a cached headend, and on a
+      # guest network that fails with DNS errors). If WW already cut the VPN this run and it re-entered
+      # Connecting/Reconnecting, cut it again - capped, so a client that never stops retrying cannot trap the run.
+      if (@('Connecting', 'Reconnecting') -contains $state -and (Test-VpnHostscanHold -Where 'stabilize')) {
+        Write-Log "vpncli state (stable): $state - HostScan scan in progress; not waiting or cutting this run" "INFO"
+        return $state
+      }
+      if (@('Connecting', 'Reconnecting') -contains $state -and [int]$script:VpnDisconnectsThisRun -gt 0 -and
+          [int]$script:VpnPostDisconnectRetries -lt [int]$VpnPostDisconnectRetryMax) {
+        $script:VpnPostDisconnectRetries = [int]$script:VpnPostDisconnectRetries + 1
+        Write-Log ("VPN re-entered {0} after our disconnect (retry {1} of {2}) - disconnecting again" -f `
+          $state, $script:VpnPostDisconnectRetries, $VpnPostDisconnectRetryMax) "WARN"
+        try { Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null } catch { Write-Log "Retry disconnect error: $_" "WARN" }
+        Start-Sleep -Seconds 2
+        continue
+      }
       if ($null -eq $intermediateStart) {
         $intermediateStart = Get-Date
         
@@ -282,7 +419,7 @@ function Get-VpnStateStable {
             Write-Log "Laptop wake detected - VPN likely trying to reconnect to wrong headend" "WARN"
             Write-Log "This blocks ALL traffic including 802.1x and captive portals - forcing disconnect" "WARN"
             try {
-              & $vpn_cmd disconnect | Out-Null
+              Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
               Write-Log "Wake-based VPN disconnect completed - local network auth can now proceed" "INFO"
               Start-Sleep -Seconds 2
               Write-Log "vpncli state (stable after wake-based disconnect): Disconnected" "INFO"
@@ -304,7 +441,7 @@ function Get-VpnStateStable {
       if ($intermediateElapsed -ge $VpnIntermediateMaxWait) {
         Write-Log "VPN stuck in intermediate state ($state) for ${intermediateElapsed}s - forcing timeout disconnect" "WARN"
         try {
-          & $vpn_cmd disconnect | Out-Null
+          Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
           Write-Log "Timeout-based VPN disconnect completed" "INFO"
           Start-Sleep -Seconds 2
           Write-Log "vpncli state (stable after timeout disconnect): Disconnected" "INFO"
@@ -327,8 +464,8 @@ function Get-VpnStateStable {
 function Get-VpnTunnelFlavor {
   $statsText  = ""
   $statusText = ""
-  try { $statsText  = (& $vpn_cmd stats  2>$null | Out-String) }  catch { Write-Log "Get-VpnTunnelFlavor: stats error: $_" }
-  try { $statusText = (& $vpn_cmd status 2>$null | Out-String) }  catch { Write-Log "Get-VpnTunnelFlavor: status error: $_" }
+  try { $statsText  = (Invoke-VpnCliBounded -Arguments 'stats') }  catch { Write-Log "Get-VpnTunnelFlavor: stats error: $_" }
+  try { $statusText = (Invoke-VpnCliBounded -Arguments 'status') }  catch { Write-Log "Get-VpnTunnelFlavor: status error: $_" }
 
   if ($WWDebug) { Write-Log "DEBUG: classifying tunnel flavor from vpncli stats/status." }
   Write-DebugBlock -Label 'vpncli stats'  -Text $statsText
@@ -468,7 +605,7 @@ function Invoke-EarlyVpnDisconnect {
     Write-Log "Early VPN gate: disconnecting VPN now (reason=$Reason, state=$VpnStateWas)" "WARN"
     if ($WhatIf) { Write-Log "WHATIF: Would run vpncli disconnect" "INFO"; return $false }
     try {
-        & $vpn_cmd disconnect | Out-Null
+        Invoke-VpnCliBounded -Arguments 'disconnect' | Out-Null
         $deadline = (Get-Date).AddSeconds($EarlyGateDisconnectWaitSec)
         do {
             Start-Sleep -Milliseconds 500

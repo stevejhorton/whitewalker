@@ -929,6 +929,45 @@ function Register-Tasks {
     return ($errors -eq 0)
 }
 
+function Register-HaystackMonitorTask {
+    <#
+    .SYNOPSIS
+    HayStack_Monitor has no task XML: haystack.ps1 -reroll builds and registers it
+    from needles. Remove-OldTasks deletes it on every install, so the installer
+    MUST recreate it here, or nothing drains the telemetry queue until some later
+    run rerolls it. One retry; bounded wait. Verified by Test-Installation.
+    #>
+    $hsScript = Join-Path $MainScriptDeployDir "haystack.ps1"
+    $hsName = "HayStack_Monitor"
+    if (-not (Test-Path $hsScript)) {
+        Write-InstallLog "ERROR: haystack.ps1 not deployed - cannot register $hsName ($hsScript)" "ERROR"
+        return $false
+    }
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        $startedAt = Get-Date
+        try {
+            $proc = Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -PassThru `
+                -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$hsScript`" -reroll -Force"
+            if (-not $proc.WaitForExit(120000)) {
+                try { $proc.Kill() } catch { }
+                Write-InstallLog "HayStack reroll attempt $attempt timed out after 120s - killed" "WARN"
+            }
+        } catch {
+            Write-InstallLog "HayStack reroll attempt $attempt failed to start: $_" "WARN"
+        }
+        $found = Get-ScheduledTask -TaskName $hsName -TaskPath $CprTaskFolder -ErrorAction SilentlyContinue
+        if ($found) {
+            Write-InstallLog "Registered task: $CprTaskFolder$hsName (via haystack.ps1 -reroll -Force, attempt $attempt)" "SUCCESS"
+            Write-InstallLog ("installer_phase_timing phase=haystack_register elapsed_ms={0}" -f `
+                [math]::Round(((Get-Date) - $startedAt).TotalMilliseconds)) "INFO"
+            return $true
+        }
+        Write-InstallLog "HayStack task not present after reroll attempt $attempt" "WARN"
+    }
+    Write-InstallLog "ERROR: $CprTaskFolder$hsName could not be registered (see haystack log: needles.cfg unavailable?)" "ERROR"
+    return $false
+}
+
 function Test-RequiredHelperDeployment {
     <#
     .SYNOPSIS
@@ -1027,18 +1066,26 @@ function Test-Installation {
     Write-InstallLog "Checking registered tasks..." "DEBUG"
     $taskValidationStartedAt = Get-Date
     $taskSnapshot = Get-InstallerTaskSnapshot
-    foreach ($task in $TaskXMLs) {
+    # Every task WhiteWalker needs: the XML-registered ones plus HayStack_Monitor
+    # (registered by haystack.ps1 -reroll, so it has no XML of its own).
+    $expectedTasks = @($TaskXMLs) + @(@{ Name = "HayStack_Monitor"; TaskPath = $CprTaskFolder })
+    foreach ($task in $expectedTasks) {
         $scheduledTask = $taskSnapshot | Where-Object {
             $_.TaskName -eq $task.Name -and $_.TaskPath -eq $task.TaskPath
         } | Select-Object -First 1
         if ($scheduledTask) {
             $state = $scheduledTask.State
-            Write-InstallLog "  OK: $($task.Name) (State: $state)" "DEBUG"
+            if ("$state" -eq 'Disabled') {
+                Write-InstallLog "  DISABLED: $($task.Name) is registered but Disabled" "WARN"
+            } else {
+                Write-InstallLog "  OK: $($task.Name) (State: $state)" "DEBUG"
+            }
         } else {
-            Write-InstallLog "  MISSING: $($task.Name)" "ERROR"
+            Write-InstallLog "  MISSING: $($task.TaskPath)$($task.Name)" "ERROR"
             $allGood = $false
         }
     }
+    Write-InstallLog "Task check: $(@($expectedTasks).Count) expected" "DEBUG"
     Write-InstallLog ("installer_phase_timing phase=task_validation elapsed_ms={0} snapshot_count={1}" -f `
         [math]::Round(((Get-Date) - $taskValidationStartedAt).TotalMilliseconds), $taskSnapshot.Count) "INFO"
     Write-InstallLog ("installer_phase_timing phase=validation elapsed_ms={0}" -f `
@@ -1351,6 +1398,10 @@ try {
         Write-InstallLog "FATAL: Failed to register Task Scheduler jobs" "ERROR"
         Exit-Installer -Code $ExitCodeTaskRegisterFail -Reason "task registration failed"
     }
+
+    # Step 4b: HayStack_Monitor (no XML; created by haystack.ps1 -reroll). A failure
+    # here is caught and reported by Test-Installation's task check below.
+    $null = Register-HaystackMonitorTask
 
     # Step 5: Validation
     Write-InstallLog "" "INFO"

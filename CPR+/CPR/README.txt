@@ -1,9 +1,26 @@
-CPR RC2 — experimental decomposition line
+CPR+ / WhiteWalker RC2.0.2
 
-This directory is a new, in-progress CPR release line seeded from
-CPR_3.14_RC1.25. It is not production-ready and is not a drop-in replacement
-for RC1.25. The RC2 markers are `RC2.0` in install.ps1 and `3.14.0_RC2.0`
-in WW_main.ps1.
+Status: release candidate for the first production rollout. Version strings:
+`$WW_Version = "RC2.0.2"` in install.ps1 and `3.14.0_RC2.0.2` in WW_main.ps1
+and Main.Configuration.ps1. Derived from the tested RC2.1 build.
+
+## Quick reference
+
+Install path: `C:\ProgramData\WhiteWalker`. Logs: `...\logs`. Triggers: DHCP
+lease event and workstation unlock (Task Scheduler, run as SYSTEM).
+
+Flag files (create in `C:\Windows\Temp`):
+- `cpr_tee_<1-5>.flag`       debug log level, reverts after 336 h
+- `cpr_tee_<1-5>_keep.flag`  debug log level, does not revert
+- `cpr_update_<dev|prod>.flag`  self-update from the matching channel
+- `cpr_update_<dev|prod>_tee_<1-5>[_keep].flag`  update, then set tee level
+  only if the update succeeded
+Highest tee level wins; a 10-minute cooldown holds flag changes back.
+Invalid flag names are renamed `.failed`.
+
+Docs: see `docs\README.md`. Admin tool: `admin\Invoke-WhiteWalkerAction.ps1`.
+
+Everything below is the RC2 change history, kept for reference.
 
 ## Main decomposition
 
