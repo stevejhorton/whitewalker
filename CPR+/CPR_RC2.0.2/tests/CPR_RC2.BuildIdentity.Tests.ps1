@@ -813,3 +813,60 @@ Describe 'HostScan hold: never disconnect during a live scan, with a ceiling' {
         $en | Should -Match 'vpn_hostscan_posturing'
     }
 }
+
+Describe 'HayStack drain kick: end-of-run ship of queued install/update results' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.Entry.ps1'), [ref]$null, [ref]$null)
+        foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-HaystackDrainKick' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
+        function Write-Log { param($m, $l) }
+        function Start-ScheduledTask { param($TaskPath, $TaskName, $ErrorAction) }
+        $script:HaystackEnabled = $true; $script:HaystackDrainKick = $true; $script:WhatIf = $false
+        $script:HaystackDrainQueueFile = Join-Path $TestDrive 'q.jsonl'
+        $script:HaystackDrainPendingDir = Join-Path $TestDrive 'pending'
+        $script:HaystackDrainTaskName = 'HayStack_Monitor'; $script:CprTaskFolder = '\CPR\'
+        $script:StateFile = Join-Path $TestDrive 'state.json'
+    }
+    BeforeEach {
+        Remove-Item $script:HaystackDrainQueueFile, $script:StateFile -ErrorAction SilentlyContinue
+        Remove-Item $script:HaystackDrainPendingDir -Recurse -ErrorAction SilentlyContinue
+    }
+    It 'starts the task when the queue has content and the state can ship' {
+        Set-Content $script:HaystackDrainQueueFile '{"x":1}'
+        '{"currentState":"user_tun"}' | Set-Content $script:StateFile
+        Mock Start-ScheduledTask {}
+        Invoke-HaystackDrainKick
+        Should -Invoke Start-ScheduledTask -Times 1
+    }
+    It 'does nothing when the queue is empty' {
+        '{"currentState":"on_prem"}' | Set-Content $script:StateFile
+        Mock Start-ScheduledTask {}
+        Invoke-HaystackDrainKick
+        Should -Invoke Start-ScheduledTask -Times 0
+    }
+    It 'does nothing when the state cannot ship' {
+        Set-Content $script:HaystackDrainQueueFile '{"x":1}'
+        '{"currentState":"no_network"}' | Set-Content $script:StateFile
+        Mock Start-ScheduledTask {}
+        Invoke-HaystackDrainKick
+        Should -Invoke Start-ScheduledTask -Times 0
+    }
+    It 'kicks for a pending-dir file when the queue file is absent' {
+        New-Item -ItemType Directory $script:HaystackDrainPendingDir | Out-Null
+        Set-Content (Join-Path $script:HaystackDrainPendingDir 'e.json') '{}'
+        '{"currentState":"mgmt_tun"}' | Set-Content $script:StateFile
+        Mock Start-ScheduledTask {}
+        Invoke-HaystackDrainKick
+        Should -Invoke Start-ScheduledTask -Times 1
+    }
+    It 'is fail-soft when the task start throws' {
+        Set-Content $script:HaystackDrainQueueFile '{"x":1}'
+        '{"currentState":"on_prem"}' | Set-Content $script:StateFile
+        Mock Start-ScheduledTask { throw 'nope' }
+        { Invoke-HaystackDrainKick } | Should -Not -Throw
+    }
+    It 'static: maintenance stage calls the kick after self-update' {
+        $en = Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw
+        $en | Should -Match "(?s)Invoke-SelfUpdate.*Invoke-HaystackDrainKick"
+    }
+}

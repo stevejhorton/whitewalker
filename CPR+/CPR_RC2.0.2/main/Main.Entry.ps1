@@ -33,6 +33,35 @@ function Invoke-WhiteWalkerStartupSubsystems {
     Write-MaintStep 'blackhole_startup'
 }
 
+function Invoke-HaystackDrainKick {
+    # End-of-run: if telemetry is queued and the state can ship, start the
+    # HayStack_Monitor task now instead of waiting for its next wake, so an
+    # install/update result reaches Splunk right away. The task drains the
+    # queue itself (claim-by-rename, IgnoreNew), so this never double-sends.
+    # Fail-soft: never throws, never delays the run.
+    if (-not $HaystackEnabled -or -not $HaystackDrainKick) { return }
+    try {
+        $queued = $false
+        if ((Test-Path $HaystackDrainQueueFile) -and ((Get-Item $HaystackDrainQueueFile -ErrorAction SilentlyContinue).Length -gt 0)) { $queued = $true }
+        if (-not $queued -and (Test-Path $HaystackDrainPendingDir)) {
+            if (@(Get-ChildItem $HaystackDrainPendingDir -File -ErrorAction SilentlyContinue).Count -gt 0) { $queued = $true }
+        }
+        if (-not $queued) { Write-Log "haystack_drain_kick skipped reason='queue_empty'" "DEBUG"; return }
+
+        $cur = ''
+        try { $cur = [string](Get-Content $StateFile -Raw -ErrorAction Stop | ConvertFrom-Json).currentState } catch { }
+        if (@('on_prem', 'user_tun', 'mgmt_tun') -notcontains $cur) {
+            Write-Log "haystack_drain_kick skipped reason='state_cannot_ship' state='$cur'" "INFO"
+            return
+        }
+        if ($WhatIf) { Write-Log "WHATIF: Would start task $HaystackDrainTaskName (drain kick)" "INFO"; return }
+        Start-ScheduledTask -TaskPath $CprTaskFolder -TaskName $HaystackDrainTaskName -ErrorAction Stop
+        Write-Log "haystack_drain_kick started task='$HaystackDrainTaskName' state='$cur'" "INFO"
+    } catch {
+        Write-Log "haystack_drain_kick failed: $($_.Exception.Message)" "WARN"
+    }
+}
+
 function Invoke-MaintenanceStage {
     # RC2.1 Maintenance stage: everything that is not on the critical path
     # (classify network -> flare -> remediate). Runs ONCE at the very end of the
@@ -105,6 +134,9 @@ function Invoke-MaintenanceStage {
         }
         Write-MaintStep 'xmlvault'
     }
+    # After self-update so its result rows are already queued.
+    Invoke-HaystackDrainKick
+    Write-MaintStep 'haystack_drain_kick'
     Write-Log ("phase_timing phase='maintenance_stage' elapsed_ms={0}" -f `
         [math]::Round(((Get-Date) - $maintStartedAt).TotalMilliseconds)) "INFO"
 }

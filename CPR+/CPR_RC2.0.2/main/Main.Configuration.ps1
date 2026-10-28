@@ -301,6 +301,10 @@ $BlackholeClearedFlagFile = "C:\ProgramData\WhiteWalker\vpn_blackhole_cleared.fl
 # HayStack Event Monitor (event log needle watcher)
 $HaystackEnabled               = $true  # set to $true to enable HayStack event monitoring
 $HaystackScriptPath            = "C:\ProgramData\WhiteWalker\haystack.ps1"
+$HaystackDrainKick             = $true  # end of run: start HayStack_Monitor if telemetry is queued and the state can ship (install/update results reach Splunk now)
+$HaystackDrainQueueFile        = "C:\ProgramData\WhiteWalker\logs\haystack_syslog_queue.jsonl"
+$HaystackDrainPendingDir       = "C:\ProgramData\WhiteWalkerPending"
+$HaystackDrainTaskName         = "HayStack_Monitor"
 $HaystackRerollCooldownMinutes = 60      # passed to haystack.ps1 -reroll as override if needed
 
 # HayStack HEADER needles (opt-in structured run-header telemetry)
