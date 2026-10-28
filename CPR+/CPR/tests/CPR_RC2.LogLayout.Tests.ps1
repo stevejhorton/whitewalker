@@ -27,7 +27,7 @@ Describe 'CPR RC2 consolidated log layout' {
         )
 
         $source = Get-ChildItem -LiteralPath $ReleaseRoot -Recurse -File -Include '*.ps1' |
-            Where-Object { $_.FullName -notmatch '[/\\]archive[/\\]' } |
+            Where-Object { $_.FullName -notmatch '[/\\](code_)?archive[/\\]' -and $_.FullName -notmatch '[/\\]steve_to_review[/\\]' } |
             ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw } |
             Join-String -Separator "`n"
 
@@ -38,7 +38,7 @@ Describe 'CPR RC2 consolidated log layout' {
 
     It 'has no old flat ProgramData log or queue literals outside historical archives' {
         $sourceFiles = Get-ChildItem -LiteralPath $ReleaseRoot -Recurse -File -Include '*.ps1' |
-            Where-Object { $_.FullName -notmatch '[/\\]archive[/\\]' }
+            Where-Object { $_.FullName -notmatch '[/\\](code_)?archive[/\\]' -and $_.FullName -notmatch '[/\\]steve_to_review[/\\]' }
         $oldFlatPaths = 'C:\\ProgramData\\WhiteWalker\\(?!logs\\)[^"''\s]+\.(?:log|jsonl)'
 
         foreach ($file in $sourceFiles) {

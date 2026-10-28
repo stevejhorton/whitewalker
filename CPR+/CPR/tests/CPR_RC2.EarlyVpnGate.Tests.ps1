@@ -125,6 +125,7 @@ Describe 'CPR RC2.1 early VPN gate' {
             function Sync-BlackholeShutdownTask { }
             function Sync-XmlVaultTask { }
             function Invoke-SelfUpdate { }
+            function Invoke-HaystackDrainKick { param($CorpReachable) }
             $script:HaystackEnabled = $false
             $script:XmlVaultEnabled = $false
             $script:WhatIf = $false

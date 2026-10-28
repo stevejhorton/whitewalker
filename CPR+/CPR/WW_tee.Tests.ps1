@@ -53,7 +53,12 @@ Describe 'Write-TeeLog payload' {
     BeforeEach {
         $script:HaystackEnabled = $true
         $script:TeeEnabled      = $true
-        $script:TeeEventsFile   = Join-Path $PSScriptRoot 'WW_tee_events.psd1'
+        # The active profile is generated at install time and is not in the repo: build a max-level one from the master.
+        $script:TeeEventsFile   = Join-Path $TestDrive 'WW_tee_events.psd1'
+        if (-not (Test-Path -LiteralPath $script:TeeEventsFile)) {
+            . (Join-Path $PSScriptRoot 'WW_set_tee_level.ps1')
+            $null = Set-CprTeeLevel -Level 5 -MasterPath (Join-Path $PSScriptRoot 'WW_tee_master.psd1') -ActivePath $script:TeeEventsFile
+        }
         $script:TeeQueueFile    = Join-Path $TestDrive 'haystack_syslog_queue.jsonl'
         $script:TeeProfileCache = $null
         Remove-Item -LiteralPath $script:TeeQueueFile -Force -ErrorAction SilentlyContinue
@@ -126,7 +131,12 @@ Describe 'Write-TeeLog -PassThru result contract (opt-in failure surfacing)' {
     BeforeEach {
         $script:HaystackEnabled = $true
         $script:TeeEnabled      = $true
-        $script:TeeEventsFile   = Join-Path $PSScriptRoot 'WW_tee_events.psd1'
+        # The active profile is generated at install time and is not in the repo: build a max-level one from the master.
+        $script:TeeEventsFile   = Join-Path $TestDrive 'WW_tee_events.psd1'
+        if (-not (Test-Path -LiteralPath $script:TeeEventsFile)) {
+            . (Join-Path $PSScriptRoot 'WW_set_tee_level.ps1')
+            $null = Set-CprTeeLevel -Level 5 -MasterPath (Join-Path $PSScriptRoot 'WW_tee_master.psd1') -ActivePath $script:TeeEventsFile
+        }
         $script:TeeQueueFile    = Join-Path $TestDrive 'passthru_queue.jsonl'
         $script:TeeProfileCache = $null
         Remove-Item -LiteralPath $script:TeeQueueFile -Force -ErrorAction SilentlyContinue
