@@ -21,3 +21,6 @@ Nothing here was deleted. Review by hand, then delete what you do not want. None
 - `townhall_slide.html` claims (97.4% test pass, 99%+ remediation, 2-3M executions/day, 90% reduction) are unverified. Confirm or remove.
 - `CPR_Test_Plan.md` and the three `.drawio` files predate RC2; they have not been re-verified.
 - `support_files/More-Sense_testing.ps1` was left in place because WW_xml_vault.ps1 refers to it.
+
+## Retired tests
+- `RC1.25.Package.Tests.ps1.obsolete` - guarded the RC1.25 package directory name and version markers. This release is RC2.0.2, so it could never pass; version consistency is enforced by `CPR_RC2.Main.Tests.ps1` and `CPR_RC2.BuildIdentity.Tests.ps1`. Moved here (not deleted) on 2026-10-28.
