@@ -3,7 +3,7 @@
 Goal: settle the exit-reason vocabulary and the Ivanti-facing exit flares BEFORE the Splunk boards are built, so neither changes later.
 
 ## Principles
-1. **Every run ends with exactly one *state* flare** that says what the machine's connectivity state is. Ivanti reads that. Action flares (771-ish `captive_portal_browser`, `ise_posture_*`, `notify_user`, ...) are unchanged and still fire as today; the exit state flare is in addition.
+1. **Every run ends with exactly one *state* flare** that says what the machine's connectivity state is. Ivanti reads that. Action flares (`captive_portal_browser` 777, `captive_portal_browser_base` 778, `ise_posture_*`, `notify_user`, ...) are unchanged and still fire as today; the exit state flare is in addition.
 2. **`exit_reason` = `<outcome>:<type>`**, where `<type>` is the same word as the state flare, so there is ONE vocabulary:
    `on_prem` | `user_tun` | `mgmt_tun` | `off_prem_no_vpn` | `off_prem_untrusted_ssid` | `vpn_connecting` | `no_net_transient` | `captive_portal` | `cpr_error`
 3. **No suffix when the outcome already names the state** (`on_prem`, `off_prem_no_vpn`, `vpn_hostscan_posturing`, `no_net_transient`, `error_*`). A suffix is added only when the outcome alone does not say where the machine is (ISE, remediation).
