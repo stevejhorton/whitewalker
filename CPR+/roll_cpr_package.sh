@@ -140,7 +140,7 @@ rsync -a --exclude='.git' "$VERSION_DIR"/ "$STAGE_DIR"/ 2>/dev/null || {
 # (reports, diagrams, test plans, steve_to_review) stays in the repo only.
 # archive\ is a dev artifact the installer never deploys; logs\ is created by the installer.
 # To ship another doc, add its file name to DOCS_SHIP.
-DOCS_SHIP="CPR_Logo.jpeg CPR_Logo.png cpr_user_guide.html vpn_blackhole_info.html WW_admin_console_manual.html"
+DOCS_SHIP="CPR_Logo.jpeg CPR_Logo.png cpr_user_guide.html vpn_blackhole_info.html"
 if [ -d "$STAGE_DIR/docs" ]; then
     for f in "$STAGE_DIR"/docs/* "$STAGE_DIR"/docs/.[!.]*; do
         [ -e "$f" ] || continue
