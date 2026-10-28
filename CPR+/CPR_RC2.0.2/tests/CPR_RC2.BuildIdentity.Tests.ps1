@@ -899,3 +899,23 @@ Describe 'HayStack reroll recreates a missing task even when the stamp is curren
         $script:hsSrc | Should -Match 'task not registered at'
     }
 }
+
+Describe 'Installer registers and validates HayStack_Monitor like every other task' {
+    BeforeAll {
+        $root = Split-Path -Parent $PSScriptRoot
+        $script:inst = Get-Content (Join-Path $root 'install.ps1') -Raw
+    }
+    It 'defines Register-HaystackMonitorTask running haystack.ps1 -reroll -Force with a bounded wait and one retry' {
+        $script:inst | Should -Match 'function Register-HaystackMonitorTask'
+        $script:inst | Should -Match '-reroll -Force'
+        $script:inst | Should -Match 'WaitForExit\(120000\)'
+        $script:inst | Should -Match '\$attempt -le 2'
+    }
+    It 'calls it after Register-Tasks and before Test-Installation' {
+        $script:inst | Should -Match '(?s)\$tasksOK = Register-Tasks.*\$null = Register-HaystackMonitorTask.*\$validated = Test-Installation'
+    }
+    It 'Test-Installation expects HayStack_Monitor in the CPR folder in addition to the XML tasks' {
+        $script:inst | Should -Match '(?s)\$expectedTasks = @\(\$TaskXMLs\) \+ @\(@\{ Name = "HayStack_Monitor"; TaskPath = \$CprTaskFolder \}\)'
+        $script:inst | Should -Match 'foreach \(\$task in \$expectedTasks\)'
+    }
+}
