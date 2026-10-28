@@ -35,7 +35,7 @@ Reason = what CPR concluded or did. State = where the machine sits (same word as
 | `vpn_connected:<flavor>`, `vpn_connected_nwcheck_unreachable:<flavor>` | unchanged |
 | `vpn_hostscan_posturing` | `hostscan_in_progress:vpn_connecting` |
 | `on_prem` | `no_action_dc_reachable:on_prem` |
-| `off_prem_no_vpn`, `off_prem_untrusted_ssid` | `no_trusted_path:off_prem_no_vpn` (both; the odd untrusted-SSID-with-reachable-DC case stays visible in the WARN log) |
+| `off_prem_no_vpn`, `off_prem_untrusted_ssid` | `untrusted:off_prem_no_vpn` (both; the odd untrusted-SSID-with-reachable-DC case stays visible in the WARN log) |
 | `ise_employee_compliant`, `ise_employee_failed_<result>`, `ise_redirect_no_posture_service`, `ise_guest_browser_remediated` | same reason + `:<state>` |
 | `non_ise_browser_remediated`, `non_ise_browser_remediated_via_enroll` | same reason + `:<state>` |
 | `captive_portal_suspected`, `captive_walled_garden` | same reason + `:captive_portal` |
