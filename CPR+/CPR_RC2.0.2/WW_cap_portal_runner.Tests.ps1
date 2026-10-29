@@ -213,84 +213,6 @@ Describe "WW_cap_portal_runner.ps1 - Browser Management" {
     }
 }
 
-Describe "WW_cap_portal_runner.ps1 - Cisco Browser Killer" {
-    
-    Context "Start-CiscoBrowserKiller Background Job" {
-        It "Should target Cisco interference processes" {
-            $ciscoBrowsers = @(
-                "acwebhelper",
-                "CiscoCollabHost",
-                "CiscoAnyConnectWebView"
-            )
-            
-            $ciscoBrowsers.Count | Should -Be 3
-            $ciscoBrowsers | Should -Contain "acwebhelper"
-        }
-        
-        It "Should run as background job" {
-            Mock Start-Job { 
-                [PSCustomObject]@{ Id = 777; State = "Running" }
-            }
-            
-            $job = Start-Job -ScriptBlock { "test" }
-            
-            $job | Should -Not -BeNullOrEmpty
-            $job.State | Should -Be "Running"
-        }
-        
-        It "Should kill processes for 10 seconds" {
-            $killerDuration = 10  # From line 118
-            
-            $killerDuration | Should -Be 10
-        }
-        
-        It "Should check every 500ms for new processes" {
-            $checkInterval = 500  # milliseconds, line 136
-            
-            $checkInterval | Should -BeLessOrEqual 1000  # Responsive
-        }
-    }
-    
-    Context "Stop-CiscoBrowserKiller Cleanup" {
-        It "Should wait for job with timeout" {
-            Mock Wait-Job { 
-                param($Job, $Timeout)
-                $Timeout | Should -Be 15
-                return $Job
-            }
-            
-            $mockJob = [PSCustomObject]@{ Id = 888 }
-            Wait-Job -Job $mockJob -Timeout 15
-            
-            Assert-MockCalled Wait-Job -Times 1
-        }
-        
-        It "Should receive job results" {
-            Mock Receive-Job { 5 }  # 5 processes killed
-            Mock Wait-Job { 
-                [PSCustomObject]@{ Id = 888 }
-            }
-            
-            $mockJob = [PSCustomObject]@{ Id = 888 }
-            $result = Wait-Job -Job $mockJob -Timeout 15 | Receive-Job
-            
-            $result | Should -Be 5
-        }
-        
-        It "Should clean up job after completion" {
-            Mock Stop-Job { }
-            Mock Remove-Job { }
-            
-            $mockJob = [PSCustomObject]@{ Id = 888 }
-            Stop-Job -Job $mockJob -ErrorAction SilentlyContinue | Out-Null
-            Remove-Job -Job $mockJob -ErrorAction SilentlyContinue | Out-Null
-            
-            Assert-MockCalled Stop-Job -Times 1
-            Assert-MockCalled Remove-Job -Times 1
-        }
-    }
-}
-
 Describe "WW_cap_portal_runner.ps1 - Smart Wait & Connectivity" {
     
     Context "Test-SiteReachability Logic" {
@@ -625,31 +547,28 @@ Describe "WW_cap_portal_runner.ps1 v1.7.0_ER3 - Critical Timeout Fix" {
 
 Describe "WW_cap_portal_runner.ps1 v1.7.0_ER3 - Edge ArgumentList Fix" {
     
+    BeforeAll {
+        $script:edgeSrc = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'WW_cap_portal_runner.ps1') -Raw
+    }
+
     Context "Open-ValidationBrowser Argument Syntax" {
         It "Should use array syntax for ArgumentList" {
-            # ER3 Fix: Use @("--start-maximized", $URL) instead of "--start-maximized", "$URL"
-            $correctSyntax = @("--start-maximized", "https://www.optum.com")
-            
-            $correctSyntax | Should -BeOfType [System.Array]
-            $correctSyntax.Count | Should -Be 2
+            # Validation browser: flags and URL are separate array elements.
+            $script:edgeSrc | Should -Match 'Start-Process -FilePath \$edgePath -ArgumentList @\("--start-maximized", \$URL\)'
         }
-        
+
         It "Should pass Edge flags as separate array elements" {
-            $args = @("--start-maximized", "https://test.com")
-            
-            $args[0] | Should -Be "--start-maximized"
-            $args[1] | Should -Be "https://test.com"
+            # Portal browser: --new-window and --start-maximized are their own elements.
+            $script:edgeSrc | Should -Match '-ArgumentList @\("--new-window", "--start-maximized", "\$URL"\)'
         }
-        
-        It "Should handle URL with special characters in array" {
-            $url = "https://portal.company.com/auth?redirect=https://app.com"
-            $args = @("--start-maximized", $url)
-            
-            $args.Count | Should -Be 2
-            $args[1] | Should -Contain "redirect"
+
+        It "Should pass the URL as a single array element (special characters stay intact)" {
+            # A URL with ?, & or = is one element, never joined into a flag string.
+            $script:edgeSrc | Should -Not -Match '-ArgumentList "--start-maximized[^@]'
+            $script:edgeSrc | Should -Match '@\("--start-maximized", \$URL\)'
         }
     }
-    
+
     Context "Browser Launch Compatibility" {
         It "Should try Edge from three possible locations" {
             $edgePaths = @(
@@ -866,31 +785,26 @@ Describe "WW_cap_portal_runner.ps1 v1.7.0_ER3 - Network Reconnect Function" {
         }
         
         It "Should detect current SSID using netsh" {
-            # Simulated netsh output
-            $netshOutput = @"
-    SSID                   : CoffeeShop-Guest
-    BSSID                  : aa:bb:cc:dd:ee:ff
-    Network type           : Infrastructure
-"@
-            $ssidMatch = $netshOutput | Select-String -Pattern '^\s+SSID\s+:\s+(.+)$'
-            
-            $ssidMatch | Should -Not -BeNullOrEmpty
-            $ssidMatch.Matches[0].Groups[1].Value.Trim() | Should -Be "CoffeeShop-Guest"
+            $src = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'WW_cap_portal_runner.ps1') -Raw
+            $m = [regex]::Match($src, '\$ssidLine = \$netshOutput \| Select-String -Pattern ''([^'']+)''')
+            $m.Success | Should -BeTrue -Because 'the runner must still parse the SSID from netsh output'
+            # netsh returns an ARRAY of lines (no CR), which is what Select-String sees in production
+            $netshOutput = @('    SSID                   : CoffeeShop-Guest', '    BSSID                  : aa:bb:cc:dd:ee:ff', '    Network type           : Infrastructure')
+            $ssidLine = $netshOutput | Select-String -Pattern $m.Groups[1].Value
+            $ssidLine | Should -Not -BeNullOrEmpty
+            @($ssidLine)[0].Matches[0].Groups[1].Value.Trim() | Should -Be "CoffeeShop-Guest"
         }
-        
+
         It "Should detect WiFi interface name using netsh" {
-            # Simulated netsh output
-            $netshOutput = @"
-    Name                   : Wi-Fi
-    Description            : Intel(R) Wi-Fi 6 AX200 160MHz
-    GUID                   : {12345678-1234-1234-1234-123456789012}
-"@
-            $interfaceMatch = $netshOutput | Select-String -Pattern '^\s+Name\s+:\s+(.+)$'
-            
-            $interfaceMatch | Should -Not -BeNullOrEmpty
-            $interfaceMatch.Matches[0].Groups[1].Value.Trim() | Should -Be "Wi-Fi"
+            $src = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'WW_cap_portal_runner.ps1') -Raw
+            $m = [regex]::Match($src, '\$interfaceLine = \$netshOutput \| Select-String -Pattern ''([^'']+)''')
+            $m.Success | Should -BeTrue -Because 'the runner must still parse the interface name from netsh output'
+            $netshOutput = @('    Name                   : Wi-Fi', '    Description            : Intel(R) Wi-Fi 6 AX200 160MHz', '    GUID                   : {12345678-1234-1234-1234-123456789012}')
+            $interfaceLine = $netshOutput | Select-String -Pattern $m.Groups[1].Value
+            $interfaceLine | Should -Not -BeNullOrEmpty
+            @($interfaceLine)[0].Matches[0].Groups[1].Value.Trim() | Should -Be "Wi-Fi"
         }
-        
+
         It "Should use netsh to disconnect from WiFi" {
             $disconnectCommand = 'netsh wlan disconnect interface="Wi-Fi"'
             

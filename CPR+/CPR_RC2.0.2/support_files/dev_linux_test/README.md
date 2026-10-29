@@ -16,21 +16,11 @@ Last updated 2026-10-28 (end of the session that built the HayStack drain kick, 
 ### What Linux can and cannot tell you
 Most of the suite is static source checks and AST-loaded functions, which behave the same on Linux. Failures that are **Windows-only** show up as missing cmdlets, `cmd.exe`, `netsh`, Windows principals, jobs. Shims at the top of a few test files define stand-ins for `Get-WinEvent`, `Get-ScheduledTask` and `Unregister-ScheduledTask` so `Mock` works. A green Linux run is **not** a Windows run: run `Invoke-Pester` on a real box before trusting a release.
 
-## State at hand-off (2026-10-28): 789 pass / 18 fail
+## State at hand-off (2026-10-28, updated): 814 pass / 5 fail on Linux; Windows 5.1 run was 811 pass / 14 fail before the fixes below
 
-| Failing | Count | Why | Needs |
-|---|---|---|---|
-| `BuildIdentity` "vpncli calls are time-bounded" (3) | 3 | launch real `cmd.exe` | run on Windows |
-| `WW_cap_portal_runner.Tests` | 9 | Windows principal, jobs, `netsh`, Edge args | run on Windows; some may be stale |
-| `WW_cap_portal_runner_base.Tests` "WebHelper 301" group | 6 | **code and tests disagree** (below) | Steve's decision |
+Remaining Linux-only failures (all pass on Windows): `BuildIdentity` "vpncli calls are time-bounded" (3, need real `cmd.exe`), `WW_cap_portal_runner.Tests` Windows-principal flag test and `Test-SiteReachability` timeout test (2).
 
-The six decisions (old tests vs current code in `WW_cap_portal_runner_base.ps1`):
-1. De-dupe key: code gives `fallback:t:<time>...`, test expects `pid:176`.
-2. Outcome URL order: code = preflight redirect first, WebHelper only as corroboration (documented in `Get-BaseCapTelemetryUrl`); test expects WebHelper first.
-3. Tag/field lists for `cap_portal_preflight_observation` and the WebHelper observation tag have grown past what the test lists.
-4. Two tests assert `Write-TeeLog '<tag>'` literally; the code now goes through `Write-BaseCapTee`.
-5. The wiring regex for `Get-CiscoWebHelperNavigationEvent -Since $webHelperSince -SeenProcessIds` no longer matches.
-6. "Emits one final no-observation outcome outside the polling loop" looks for a string that moved.
+Steve's call (2026-10-28): the Cisco Browser Killer is retired, so its unit tests were removed (the `CapPortalSkipBrowserKill` gating tests still guard the safe default while the code exists). The Edge-args and netsh tests now assert against the runner's own source. The six WebHelper-301 tests were rewritten to match the current code (record-based dedupe, newest record first, preflight-first URL precedence, `Write-BaseCapTee`, `classification` field, `Get-BaseCapMissingNavigationOutcome`). Windows 5.1 pitfalls fixed in tests: `.Count` on single objects needs `@()`, `Join-String` is PS7-only, `Get-WmiObject` must be mocked, non-SYSTEM Windows runs spool instead of writing the queue, leaked `$global:TeeEnabled`/`HaystackEnabled`.
 
 ## Built this session, untested on a real box
 * **End-of-run drain kick** (`Invoke-HaystackDrainKick`, `Main.Entry.ps1`): after self-update, starts the `HayStack_Monitor` task so queued install/update results ship now. Gated on THIS run's corp-reachable verdict (`$shareOk`), not on `state.json` (can be stale; WW_syslog is UDP and reports success once the packet leaves). Falls back to running `haystack_action.ps1`. Toggle: `$HaystackDrainKick`. Log lines: `haystack_drain_kick started|skipped|failed`.
