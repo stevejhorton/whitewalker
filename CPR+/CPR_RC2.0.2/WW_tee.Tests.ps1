@@ -5,6 +5,10 @@ BeforeAll {
     . (Join-Path $PSScriptRoot 'WW_tee.ps1')
     . (Join-Path $PSScriptRoot 'WW_haystack_schema.ps1')
 
+    # Tests below inspect the canonical queue file. On Windows a non-SYSTEM process (you, running
+    # Pester) correctly spools instead, so force the direct path here; spool behavior has its own tests.
+    function Test-TeeSpoolRequired { $false }
+
     function ConvertFrom-TestPayload {
         param([string]$Payload)
         $fields = @{}
