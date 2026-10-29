@@ -5,6 +5,10 @@ BeforeAll {
     . (Join-Path $PSScriptRoot 'WW_tee.ps1')
     . (Join-Path $PSScriptRoot 'WW_haystack_schema.ps1')
 
+    # Tests below inspect the canonical queue file. On Windows a non-SYSTEM process (you, running
+    # Pester) correctly spools instead, so force the direct path here; spool behavior has its own tests.
+    function Test-TeeSpoolRequired { $false }
+
     function ConvertFrom-TestPayload {
         param([string]$Payload)
         $fields = @{}
@@ -51,6 +55,8 @@ Describe 'ConvertTo-NormalizedCapPortalData' {
 
 Describe 'Write-TeeLog payload' {
     BeforeEach {
+        # Write-TeeLog reads the GLOBAL switches first; another test file may have left them set.
+        Remove-Variable -Name TeeEnabled, HaystackEnabled -Scope Global -ErrorAction SilentlyContinue
         $script:HaystackEnabled = $true
         $script:TeeEnabled      = $true
         # The active profile is generated at install time and is not in the repo: build a max-level one from the master.
@@ -129,6 +135,8 @@ Describe 'Get-TeeUserContextFallback' {
 
 Describe 'Write-TeeLog -PassThru result contract (opt-in failure surfacing)' {
     BeforeEach {
+        # Write-TeeLog reads the GLOBAL switches first; another test file may have left them set.
+        Remove-Variable -Name TeeEnabled, HaystackEnabled -Scope Global -ErrorAction SilentlyContinue
         $script:HaystackEnabled = $true
         $script:TeeEnabled      = $true
         # The active profile is generated at install time and is not in the repo: build a max-level one from the master.

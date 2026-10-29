@@ -6,15 +6,35 @@
 #   .\Run-AllTests.ps1 -TestName 'exit'     # only tests whose full name matches (wildcard)
 #   .\Run-AllTests.ps1 -LogFile .\r.log     # also write the output to a file
 #   .\Run-AllTests.ps1 -CI                  # exit code 1 if anything failed
+# Tests run in a child PowerShell, so your session stays clean (safe to install afterwards).
 # Known: a few Windows-only runner tests and the WebHelper-301 group may fail; see support_files\dev_linux_test\README.md.
 param(
     [switch]$Detailed,
     [string]$File = '',
     [string]$TestName = '',
     [string]$LogFile = '',
-    [switch]$CI
+    [switch]$CI,
+    [switch]$InProcess    # debugging only: run in THIS session (leaves test stubs behind - open a new window before installing)
 )
 $ErrorActionPreference = 'Stop'
+
+# Isolation: the tests define global stub functions (Write-TeeLog, Write-Log, ...). Run them in a child
+# PowerShell so none of that survives in the caller's session - installing from a session that ran the
+# tests once failed validation because of those leftovers.
+if (-not $InProcess -and -not $env:CPR_TESTS_CHILD) {
+    $env:CPR_TESTS_CHILD = '1'
+    try {
+        $childArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $PSCommandPath)
+        foreach ($k in $PSBoundParameters.Keys) {
+            $v = $PSBoundParameters[$k]
+            if ($v -is [System.Management.Automation.SwitchParameter]) { if ($v.IsPresent) { $childArgs += "-$k" } }
+            else { $childArgs += "-$k"; $childArgs += [string]$v }
+        }
+        & (Get-Process -Id $PID).Path @childArgs
+        $childExit = $LASTEXITCODE
+    } finally { Remove-Item Env:\CPR_TESTS_CHILD -ErrorAction SilentlyContinue }
+    exit $childExit
+}
 $root = $PSScriptRoot
 $pester = Get-Module -Name Pester -ListAvailable | Where-Object { $_.Version -ge [version]'5.0.0' } | Sort-Object Version -Descending | Select-Object -First 1
 if (-not $pester) { Write-Host 'Pester 5+ not found. Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser -Force -SkipPublisherCheck' -ForegroundColor Red; exit 2 }

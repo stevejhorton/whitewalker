@@ -13,6 +13,11 @@ BeforeAll {
     if (-not (Get-Command Invoke-CimMethod -ErrorAction SilentlyContinue)) {
         function Invoke-CimMethod { param($InputObject, $MethodName) }
     }
+    # Windows PowerShell 5.1 has the real Get-WmiObject: unmocked, probe 3 answers with the
+    # human running the tests. Shim it where absent so every test can mock it.
+    if (-not (Get-Command Get-WmiObject -ErrorAction SilentlyContinue)) {
+        function Get-WmiObject { param($Class) }
+    }
 }
 
 Describe 'Test-HaystackMachineAccount' {
@@ -62,6 +67,7 @@ Describe 'Resolve-HaystackUserContext probe contract' {
             }
         }
         Mock Invoke-CimMethod { $null }
+        Mock Get-WmiObject { [pscustomobject]@{ UserName = 'NT AUTHORITY\SYSTEM' } }
 
         $result = Resolve-HaystackUserContext
 
@@ -73,6 +79,7 @@ Describe 'Resolve-HaystackUserContext probe contract' {
         Mock Get-HaystackCurrentIdentityName { 'NT AUTHORITY\SYSTEM' }
         Mock Get-CimInstance { [pscustomobject]@{ UserName = '' } }
         Mock Invoke-CimMethod { $null }
+        Mock Get-WmiObject { [pscustomobject]@{ UserName = '' } }
 
         $result = Resolve-HaystackUserContext
 
@@ -83,6 +90,7 @@ Describe 'Resolve-HaystackUserContext probe contract' {
     It 'reserves USER_UNKNOWN for a true lookup failure (every probe errors)' {
         Mock Get-HaystackCurrentIdentityName { throw 'identity unavailable' }
         Mock Get-CimInstance { throw 'cim unavailable' }
+        Mock Get-WmiObject { throw 'wmi unavailable' }
 
         $result = Resolve-HaystackUserContext
 

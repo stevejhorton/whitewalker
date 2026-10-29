@@ -26,10 +26,9 @@ Describe 'CPR RC2 consolidated log layout' {
             'logs\haystack_syslog_queue.jsonl'
         )
 
-        $source = Get-ChildItem -LiteralPath $ReleaseRoot -Recurse -File -Include '*.ps1' |
+        $source = @(Get-ChildItem -LiteralPath $ReleaseRoot -Recurse -File -Include '*.ps1' |
             Where-Object { $_.FullName -notmatch '[/\\](code_)?archive[/\\]' -and $_.FullName -notmatch '[/\\]steve_to_review[/\\]' } |
-            ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw } |
-            Join-String -Separator "`n"
+            ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw }) -join "`n"
 
         foreach ($path in $expectedPaths) {
             $source | Should -Match ([regex]::Escape($path))

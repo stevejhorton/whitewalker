@@ -252,7 +252,7 @@ Describe 'Read-NeedleFile - DEFENDER RuleNameMatch validation' {
         $result = @(Read-NeedleFile -Path $script:NeedleFile -SourceTag 'local')
 
         $result.Count | Should -Be 0
-        ($script:LogBuffer | Where-Object { $_.Message -match 'contains no letters or digits' }).Count |
+        @($script:LogBuffer | Where-Object { $_.Message -match 'contains no letters or digits' }).Count |
             Should -BeGreaterThan 0
     }
 
@@ -260,7 +260,7 @@ Describe 'Read-NeedleFile - DEFENDER RuleNameMatch validation' {
         'DEFENDER||6|Bogus_Rule|all' | Set-Content -Path $script:NeedleFile -Encoding UTF8
 
         @(Read-NeedleFile -Path $script:NeedleFile -SourceTag 'local').Count | Should -Be 0
-        ($script:LogBuffer | Where-Object { $_.Message -match 'RuleNameMatch is empty' }).Count |
+        @($script:LogBuffer | Where-Object { $_.Message -match 'RuleNameMatch is empty' }).Count |
             Should -BeGreaterThan 0
     }
 }
