@@ -3,7 +3,6 @@
   "_version": "1.0.0",
   "_author": "steve.horton@optum.com",
   "_description": "Maps flare tags to Event IDs and execution contexts",
-  
   "flare_events": {
     "user_tun": {
       "event_id": 780,
@@ -130,9 +129,29 @@
       "flare_tag": "xml_vault_restore",
       "description": "XmlVault: restore VPN profile XML from local vault to client profile dir (island self-heal)",
       "source": "WhiteWalkerFlareGun"
+    },
+    "vpn_connecting": {
+      "event_id": 803,
+      "context": "SYSTEM",
+      "flare_tag": "vpn_connecting",
+      "description": "HostScan/posture scan in progress - VPN connecting, run ended without acting",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "cpr_error": {
+      "event_id": 804,
+      "context": "SYSTEM",
+      "flare_tag": "cpr_error",
+      "description": "CPR could not complete the run (missing Cisco binaries, unhandled exception, unknown state)",
+      "source": "WhiteWalkerFlareGun"
+    },
+    "captive_portal": {
+      "event_id": 805,
+      "context": "SYSTEM",
+      "flare_tag": "captive_portal",
+      "description": "Exit state: machine is behind a captive portal / walled garden / waiting on user auth",
+      "source": "WhiteWalkerFlareGun"
     }
   },
-  
   "paths": {
     "config_file": "C:\\ProgramData\\WhiteWalker\\WW_flaregun_config.json",
     "main_script_dir": "C:\\ProgramData\\WhiteWalker",

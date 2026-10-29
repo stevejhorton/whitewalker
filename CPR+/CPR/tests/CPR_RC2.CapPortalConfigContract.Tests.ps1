@@ -141,7 +141,7 @@ Describe 'Required D - Wait-CprNetworkReady' {
 Describe 'Required D - gate is wired in front of the authoritative preflight' {
     It 'MAIN runs the gate between network-ready and Get-NwCheckResult, and keeps preflight_timing' {
         $gateIndex     = $script:entrySource.IndexOf('Wait-CprNetworkReady')
-        $nwCheckIndex  = $script:entrySource.IndexOf('$nwCheck = Get-NwCheckResult')
+        $nwCheckIndex  = $script:entrySource.IndexOf('$nwCheck = Invoke-GatedNwCheck')
         $gateIndex     | Should -BeGreaterThan 0
         $nwCheckIndex  | Should -BeGreaterThan $gateIndex
         $script:entrySource | Should -Match 'network_ready_gate network_ready_wait_ms=\{0\} signal='
@@ -159,7 +159,7 @@ Describe 'Required D - gate is wired in front of the authoritative preflight' {
 
     It 'uses configured thresholds, never literals, at the MAIN call site' {
         $script:entrySource | Should -Match 'Wait-CprNetworkReady -GatewayAddress \$networkInfo\.DefaultGateway'
-        $script:entrySource | Should -Match '-Disabled:\(-not \$NetworkReadyEnabled\)'
+        $script:entrySource | Should -Match '-Disabled:\(\(-not \$NetworkReadyEnabled\)'
         $script:entrySource | Should -Not -Match 'Wait-CprNetworkReady[^\r\n]*-MaxWaitMs \d'
     }
 

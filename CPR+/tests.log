@@ -1,0 +1,762 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261028201725
+Username: MS\shorto39
+RunAs User: MS\shorto39
+Configuration Name: 
+Machine: LHTU05CD1503KF5 (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 24684
+PSVersion: 5.1.22621.7582
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.7582
+BuildVersion: 10.0.22621.7582
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Pester 5.3.3  host LHTU05CD1503KF5  files 23
+
+Starting discovery in 23 files.
+Discovery found 739 tests in 2.31s.
+Running tests.
+[+] C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1
+ 201ms (38ms|105ms)
+[+] C:\ProgramData\WhiteWalker\tests\CPR_RC2.BaseEvidence.Tests.ps1
+ 170ms (20ms|98ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "The term 'Remove-InstallDirectory' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again."
+[-] Uninstall removes everything.deletes the whole install dir including logs
+ 40ms (38ms|2ms)
+ CommandNotFoundException: The term 'Remove-InstallDirectory' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.BuildIdentity.Tests.ps1:52
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] Uninstall removes everything.uninstall no longer preserves logs or diagnostics, and returns a failure code when incomplete
+ 13ms (11ms|2ms)
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.BuildIdentity.Tests.ps1:56
+PS C:\ProgramData\WhiteWalker> TerminatingError(WW_set_tee_level.ps1): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: -Level must be 0..5"
+>> TerminatingError(WW_set_tee_level.ps1): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: -Level must be 0..5"
+PS C:\ProgramData\WhiteWalker> TerminatingError(Resolve-Path): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\136f1c18-0a37-4a0b-b928-3af82f352b6c\missing.psd1' because it does not exist."
+>> TerminatingError(Resolve-Path): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\136f1c18-0a37-4a0b-b928-3af82f352b6c\missing.psd1' because it does not exist."
+>> TerminatingError(Resolve-Path): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\136f1c18-0a37-4a0b-b928-3af82f352b6c\missing.psd1' because it does not exist."
+>> TerminatingError(Resolve-Path): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\136f1c18-0a37-4a0b-b928-3af82f352b6c\missing.psd1' because it does not exist."
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] Describe Installer tee profile handling failed
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.BuildIdentity.Tests.ps1:401
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] Combined update + tee flag.uninstall removes every cpr_update_*.flag
+ 5ms (2ms|3ms)
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.BuildIdentity.Tests.ps1:603
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] Describe Installer registers and validates HayStack_Monitor like every other task failed
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.BuildIdentity.Tests.ps1:917
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "icmp exploded"
+>> TerminatingError(): "dns exploded"
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "icmp exploded"
+>> TerminatingError(): "dns exploded"
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "icmp exploded"
+>> TerminatingError(): "dns exploded"
+[+] C:\ProgramData\WhiteWalker\tests\CPR_RC2.CapPortalConfigContract.Tests.ps1
+ 2.5s (2.15s|260ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "boom"
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected $false, but got $true."
+>> TerminatingError(): "Expected $false, but got $true."
+>> TerminatingError(): "Expected $false, but got $true."
+[-] Truthful, fail-soft telemetry.reports access_denied rather than throwing when the queue cannot be written
+ 52ms (49ms|3ms)
+ Expected $false, but got $true.
+ at $result.Queued | Should -BeFalse, C:\ProgramData\WhiteWalker\tests\CPR_RC2.CapPortalControlPlane.Tests.ps1:489
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.CapPortalControlPlane.Tests.ps1:489
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Method invocation failed because [System.Collections.Specialized.OrderedDictionary] does not contain a method named 'ContainsKey'."
+[+] C:\ProgramData\WhiteWalker\tests\CPR_RC2.CapPortalDispatchRecovery.Tests.ps1
+ 25s (24.69s|234ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected $false, but got $true."
+>> TerminatingError(): "Expected $false, but got $true."
+>> TerminatingError(): "Expected $false, but got $true."
+[-] Required G - USER spool / SYSTEM ingestion.only diverts to the spool on Windows in a non-SYSTEM context
+ 30ms (28ms|2ms)
+ Expected $false, but got $true.
+ at Test-TeeSpoolRequired | Should -BeFalse, C:\ProgramData\WhiteWalker\tests\CPR_RC2.CapPortalRecovery.Tests.ps1:587
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.CapPortalRecovery.Tests.ps1:587
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] Required G - USER spool / SYSTEM ingestion.grants nothing on the script or configuration directories
+ 20ms (19ms|2ms)
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.CapPortalRecovery.Tests.ps1:610
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] Required G - USER spool / SYSTEM ingestion.creates and repairs the spool directory idempotently at install/upgrade
+ 17ms (16ms|2ms)
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.CapPortalRecovery.Tests.ps1:622
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+[-] Read-NeedleFile - DEFENDER RuleNameMatch validation.skips a RuleNameMatch that contains no letters or digits
+ 68ms (66ms|1ms)
+ Expected the actual value to be greater than 0, but got $null.
+ at Should -BeGreaterThan 0, C:\ProgramData\WhiteWalker\tests\CPR_RC2.DefenderRuleNameMatch.Tests.ps1:256
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.DefenderRuleNameMatch.Tests.ps1:255
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+[-] Read-NeedleFile - DEFENDER RuleNameMatch validation.skips an empty RuleNameMatch
+ 66ms (64ms|2ms)
+ Expected the actual value to be greater than 0, but got $null.
+ at Should -BeGreaterThan 0, C:\ProgramData\WhiteWalker\tests\CPR_RC2.DefenderRuleNameMatch.Tests.ps1:264
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.DefenderRuleNameMatch.Tests.ps1:263
+[+] C:\ProgramData\WhiteWalker\tests\CPR_RC2.EarlyVpnGate.Tests.ps1
+ 1.77s (1.48s|221ms)
+[+] C:\ProgramData\WhiteWalker\tests\CPR_RC2.ExitReason.Tests.ps1
+ 1.35s (1.05s|217ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+[-] Read-NeedleFile - HEADER directives.skips an unknown FieldName with a WARN
+ 76ms (74ms|2ms)
+ Expected the actual value to be greater than 0, but got $null.
+ at Should -BeGreaterThan 0, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:106
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:105
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+[-] Read-NeedleFile - HEADER directives.WARNs on an unrecognized trailing token but keeps the needle
+ 68ms (66ms|1ms)
+ Expected the actual value to be greater than 0, but got $null.
+ at Should -BeGreaterThan 0, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:129
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:128
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+[-] Read-NeedleFile - HEADER directives.skips a HEADER line with an unsafe label
+ 70ms (68ms|2ms)
+ Expected the actual value to be greater than 0, but got $null.
+ at Should -BeGreaterThan 0, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:139
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:138
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+>> TerminatingError(): "Expected the actual value to be greater than 0, but got $null."
+[-] Read-NeedleFile - HEADER directives.skips a HEADER line with too few fields
+ 72ms (70ms|2ms)
+ Expected the actual value to be greater than 0, but got $null.
+ at Should -BeGreaterThan 0, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:149
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:148
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected 1, but got $null."
+>> TerminatingError(): "Expected 1, but got $null."
+>> TerminatingError(): "Expected 1, but got $null."
+[-] Read-NeedleFile - HEADER directives.does not disturb existing directive types on the same file
+ 61ms (60ms|2ms)
+ Expected 1, but got $null.
+ at ($result | Where-Object Type -eq 'NEEDLE').Count   | Should -Be 1, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:162
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.HeaderNeedle.Tests.ps1:162
+PS C:\ProgramData\WhiteWalker> TerminatingError(Select-String): "Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Select-String): "Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] CPR task folder consistency.uses the same task folder in install.ps1, Main.Configuration.ps1 and haystack.ps1
+ 17ms (15ms|2ms)
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.LegacyTaskMigration.Tests.ps1:6
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] CPR task folder consistency.installer registers every task XML under the CPR folder
+ 15ms (14ms|2ms)
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.LegacyTaskMigration.Tests.ps1:14
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected 2, but got 1."
+>> TerminatingError(): "Expected 2, but got 1."
+>> TerminatingError(): "Expected 2, but got 1."
+[-] Legacy task migration.removes legacy tasks, logs, and writes the done-flag
+ 267ms (265ms|2ms)
+ Expected 2, but got 1.
+ at $r.Removed.Count | Should -Be 2, C:\ProgramData\WhiteWalker\tests\CPR_RC2.LegacyTaskMigration.Tests.ps1:47
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.LegacyTaskMigration.Tests.ps1:47
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] C:\ProgramData\WhiteWalker\tests\CPR_RC2.LogLayout.Tests.ps1 failed with:
+ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.LogLayout.Tests.ps1:3
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] CPR RC2 main loader.uses RC2 version markers only in the new line
+ 16ms (15ms|2ms)
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.Main.Tests.ps1:56
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] C:\ProgramData\WhiteWalker\tests\CPR_RC2.ServiceFastPath.Tests.ps1 failed with:
+ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\CPR_RC2.ServiceFastPath.Tests.ps1:31
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+[+] C:\ProgramData\WhiteWalker\tests\CPR_RC2.WebHelper301First.Tests.ps1
+ 2.39s (2.06s|220ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "tee engine unavailable"
+[+] C:\ProgramData\WhiteWalker\tests\CPR_RC2.XfinityCaptivePortal.Tests.ps1
+ 2.4s (2.01s|283ms)
+[+] C:\ProgramData\WhiteWalker\tests\HaystackStandalone.Tests.ps1
+ 215ms (41ms|101ms)
+2026-10-28 20:18:30.747 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmp4C33.tmp
+2026-10-28 20:18:30.789 [WARN] [HayStack] [wizard_preview] Line 1 : EventID 'abc' is not numeric - skipping
+2026-10-28 20:18:30.794 [INFO] [HayStack] [wizard_preview] Parsed 0 needle(s) from: tmp4C63.tmp
+2026-10-28 20:18:30.836 [WARN] [HayStack] [wizard_preview] Line 1 : Label 'Bad Label' contains invalid characters (no spaces, no \/:*?"<>|) - skipping
+2026-10-28 20:18:30.842 [INFO] [HayStack] [wizard_preview] Parsed 0 needle(s) from: tmp4C93.tmp
+2026-10-28 20:18:30.902 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmp4CD2.tmp
+2026-10-28 20:18:30.958 [WARN] [HayStack] [wizard_preview] Line 1 : SESSION StateChange 'NotARealState' is not valid (must be one of: SessionLock, SessionUnlock, RemoteConnect, RemoteDisconnect, ConsoleConnect, ConsoleDisconnect) - skipping
+2026-10-28 20:18:30.964 [INFO] [HayStack] [wizard_preview] Parsed 0 needle(s) from: tmp4D02.tmp
+2026-10-28 20:18:31.003 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmp4D32.tmp
+2026-10-28 20:18:31.038 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmp4D62.tmp
+2026-10-28 20:18:31.071 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmp4D82.tmp
+2026-10-28 20:18:31.111 [WARN] [HayStack] [wizard_preview] Line 1 : HEADER FieldName 'not_a_real_field' is not a known run-header field (known: ww_version, os, model, serial, last_boot, csc_version, csc_source, vpn_profile or * for all) - skipping
+2026-10-28 20:18:31.117 [INFO] [HayStack] [wizard_preview] Parsed 0 needle(s) from: tmp4DA3.tmp
+EventID must be numeric.
+Valid StateChange values: SessionLock, SessionUnlock, RemoteConnect, RemoteDisconnect, ConsoleConnect, ConsoleDisconnect
+Valid StateChange values: SessionLock, SessionUnlock, RemoteConnect, RemoteDisconnect, ConsoleConnect, ConsoleDisconnect
+StateChange is not valid.
+Matching is literal (never regex), case-insensitive and separator-tolerant:
+spaces, - _ / . and repeated whitespace are normalized away before the substring
+test. Use a distinctive, stable descriptive substring of the rule name.
+ExtendedLogging must be 0, 1, 2, all, or empty.
+
+This touches the restore flag so the next WW_main run (lock/unlock
+or log off/on) restores the VPN profile XML from the local vault.
+Flag: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\xml_restore.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or log off/on) to complete the restore.
+  2. Verify success by checking: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\white_walker.xml_vault.log
+
+This touches the restore flag so the next WW_main run (lock/unlock
+or log off/on) restores the VPN profile XML from the local vault.
+Flag: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\xml_restore.flag
+Cancelled.
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+
+This touches the flag: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\cpr_update_dev.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or wait for the next trigger) to complete the update.
+  2. Review results in: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\white_walker_install.log
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+
+This touches the flag: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\cpr_update_prod.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or wait for the next trigger) to complete the update.
+  2. Review results in: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\white_walker_install.log
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+
+This touches the flag: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\cpr_update_dev_tee_5_keep.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or wait for the next trigger) to complete the update.
+  2. Review results in: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\white_walker_install.log
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+
+This touches the flag: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\cpr_update_prod_tee_3.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or wait for the next trigger) to complete the update.
+  2. Review results in: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\white_walker_install.log
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+Invalid tee level '9' - use 1-5 or Enter.
+2026-10-28 20:18:33.963 [INFO] [HayStack] [test] Parsed 2 needle(s) from: append_test.cfg
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected 1, but got $null."
+>> TerminatingError(): "Expected 1, but got $null."
+>> TerminatingError(): "Expected 1, but got $null."
+[-] Invoke-WhiteWalkerAction - Add-WWNeedleLine (newline preservation + provenance).produces a provenance-commented needle that Read-NeedleFile still parses correctly
+ 51ms (49ms|2ms)
+ Expected 1, but got $null.
+ at ($parsed | Where-Object { $_.Label -eq 'New_One' }).Count | Should -Be 1, C:\ProgramData\WhiteWalker\tests\Invoke-WhiteWalkerAction.Tests.ps1:607
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\Invoke-WhiteWalkerAction.Tests.ps1:607
+
+Which needle type do you want to add to needles_local.cfg?
+  1. NEEDLE   - Event Log trigger
+  2. SESSION  - session state change trigger
+  3. DEFENDER - inline MDM firewall rule check
+  4. HEADER   - run-header field telemetry
+Invalid selection.
+
+Which needle type do you want to add to needles_local.cfg?
+  1. NEEDLE   - Event Log trigger
+  2. SESSION  - session state change trigger
+  3. DEFENDER - inline MDM firewall rule check
+  4. HEADER   - run-header field telemetry
+EventID must be numeric.
+Cancelled - no line written.
+
+Which needle type do you want to add to needles_local.cfg?
+  1. NEEDLE   - Event Log trigger
+  2. SESSION  - session state change trigger
+  3. DEFENDER - inline MDM firewall rule check
+  4. HEADER   - run-header field telemetry
+2026-10-28 20:18:34.225 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmp59D9.tmp
+
+Candidate line: NEEDLE|Application|1000||Wizard_Needle
+This will be appended to: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\wizard_needles_local.cfg
+Cancelled.
+
+Which needle type do you want to add to needles_local.cfg?
+  1. NEEDLE   - Event Log trigger
+  2. SESSION  - session state change trigger
+  3. DEFENDER - inline MDM firewall rule check
+  4. HEADER   - run-header field telemetry
+2026-10-28 20:18:34.343 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmp5A37.tmp
+
+Candidate line: NEEDLE|Application|2000||Wizard_Needle
+This will be appended to: C:\Users\shorto39\AppData\Local\Temp\74120bda-935d-4f5d-a8fb-4b526ba800bf\wizard_needles_local.cfg
+
+Done. Remember:
+  - HayStack needs to reroll to pick this up: wait for the next automatic
+    reroll, or trigger one now with: haystack.ps1 -reroll -Force
+  - needles_local.cfg entries always win on label collision with the share copy.
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist."
+[-] Describe CPR RC1.25 package source of truth failed
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\install.ps1' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\RC1.25.Package.Tests.ps1:7
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Pass
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-MOCK-FLOW
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_restore_1348078444\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_restore_1348078444\queue.jsonl
+  Syslog Target: 127.0.0.1:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] Saved original content of C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_restore_1348078444\state.json for post-test restoration.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:23144/ (login URL: http://127.0.0.1:23144/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+[OK] Real redirect detected: URL redirected to http://127.0.0.1:23144/portal/login?from=cpr_mock
+[OK] Portal type classified: NON_ISE
+[OK] Redirect telemetry parsed: url='http://127.0.0.1:23144/portal/login?from=cpr_mock' port='23144' protocol='http' fqdn='127.0.0.1'
+[STEP 3/7] Browser substitution (Stub mode) and completion signaling...
+[OK] Stub browser mode: no browser process launched, bypassing WebView2 WDAC restrictions completely.
+[OK] Completion flag written to C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_restore_1348078444\test.flag (status=SUCCESS_NATIVE)
+Security Warning: Script Execution Risk
+Invoke-WebRequest parses the content of the web page. Script code in the web page might be run when the page is parsed.
+      RECOMMENDED ACTION:
+      Use the -UseBasicParsing switch to avoid script code execution.
+
+      Do you want to continue?
+&Yes  Yes to &All  &No  No to A&ll  &Suspend
+A
+[OK] Clearance poll confirmed: portal cleared (200 OK, no redirect).
+[STEP 4/7] Forcing off-network state & asserting offline queueing...
+[OK] Test-SyslogReachable correctly returned false (offline gating confirmed).
+[STEP] Writing 'cap_portal_redirect' tee event...
+[OK] 'cap_portal_redirect' successfully queued (Queued=True, Reason=spooled)
+[STEP] Writing 'cap_portal_remediation_passed' tee event...
+[OK] 'cap_portal_remediation_passed' successfully queued (Queued=True, Reason=spooled)
+[STEP 5/7] Inspecting queued events and validating required fields...
+[OK] Queue grew by 0 line(s) during this test (total: 0)
+[FAIL] Expected at least 2 mock events matching ssid='CPR-MOCK-FLOW', found 0
+[ERROR] Mock flow execution error: Incomplete queue capture for mock run.
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Restored original content of C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_restore_1348078444\state.json
+[OK] Loopback HTTP listener terminated and disposed.
+[OK] Cleaned up temporary test flag file: C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_restore_1348078444\test.flag
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[FAIL] Mock captive portal flow did not complete all pass criteria.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-MOCK-FLOW" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-MOCK-FLOW"
+
+[OK] Time-boxed run query (2026-10-28T20:18:35 to 2026-10-28T20:18:54):
+index=cba_cpr_logging ssid="CPR-MOCK-FLOW" earliest="2026-10-28T20:18:35" latest="2026-10-28T20:18:54" | sort 0 - _time
+================================================================================
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Pass
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-MOCK-FLOW
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_clean_1584862866\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_clean_1584862866\queue.jsonl
+  Syslog Target: 127.0.0.1:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_clean_1584862866\state.json does not exist; will be cleanly removed in post-test cleanup.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:23160/ (login URL: http://127.0.0.1:23160/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+[OK] Real redirect detected: URL redirected to http://127.0.0.1:23160/portal/login?from=cpr_mock
+[OK] Portal type classified: NON_ISE
+[OK] Redirect telemetry parsed: url='http://127.0.0.1:23160/portal/login?from=cpr_mock' port='23160' protocol='http' fqdn='127.0.0.1'
+[STEP 3/7] Browser substitution (Stub mode) and completion signaling...
+[OK] Stub browser mode: no browser process launched, bypassing WebView2 WDAC restrictions completely.
+[OK] Completion flag written to C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_clean_1584862866\test.flag (status=SUCCESS_NATIVE)
+[OK] Clearance poll confirmed: portal cleared (200 OK, no redirect).
+[STEP 4/7] Forcing off-network state & asserting offline queueing...
+[OK] Test-SyslogReachable correctly returned false (offline gating confirmed).
+[STEP] Writing 'cap_portal_redirect' tee event...
+[OK] 'cap_portal_redirect' successfully queued (Queued=True, Reason=spooled)
+[STEP] Writing 'cap_portal_remediation_passed' tee event...
+[OK] 'cap_portal_remediation_passed' successfully queued (Queued=True, Reason=spooled)
+[STEP 5/7] Inspecting queued events and validating required fields...
+[OK] Queue grew by 0 line(s) during this test (total: 0)
+[FAIL] Expected at least 2 mock events matching ssid='CPR-MOCK-FLOW', found 0
+[ERROR] Mock flow execution error: Incomplete queue capture for mock run.
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Removed temporary test state file: C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_clean_1584862866\state.json
+[OK] Loopback HTTP listener terminated and disposed.
+[OK] Cleaned up temporary test flag file: C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_clean_1584862866\test.flag
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[FAIL] Mock captive portal flow did not complete all pass criteria.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-MOCK-FLOW" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-MOCK-FLOW"
+
+[OK] Time-boxed run query (2026-10-28T20:18:54 to 2026-10-28T20:18:54):
+index=cba_cpr_logging ssid="CPR-MOCK-FLOW" earliest="2026-10-28T20:18:54" latest="2026-10-28T20:18:54" | sort 0 - _time
+================================================================================
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Pass
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-MOCK-FLOW
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_error_1662591245\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_error_1662591245\queue.jsonl
+  Syslog Target: cpr-syslog.uhc.com:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] Saved original content of C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_error_1662591245\state.json for post-test restoration.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:999999/ (login URL: http://127.0.0.1:999999/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+PS C:\ProgramData\WhiteWalker> TerminatingError(Invoke-WebRequest): "Cannot bind parameter 'Uri'. Cannot convert value "http://127.0.0.1:999999/probe" to type "System.Uri". Error: "Invalid URI: Invalid port specified.""
+[FAIL] Test-Redirect did not detect redirect from http://127.0.0.1:999999/probe (IsRedirect is false)
+[ERROR] Mock flow execution error: Redirect detection failed against mock listener.
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Restored original content of C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\state_error_1662591245\state.json
+PS C:\ProgramData\WhiteWalker> TerminatingError(Invoke-WebRequest): "Cannot bind parameter 'Uri'. Cannot convert value "http://127.0.0.1:999999/shutdown" to type "System.Uri". Error: "Invalid URI: Invalid port specified.""
+[OK] Loopback HTTP listener terminated and disposed.
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[FAIL] Mock captive portal flow did not complete all pass criteria.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-MOCK-FLOW" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-MOCK-FLOW"
+
+[OK] Time-boxed run query (2026-10-28T20:18:55 to 2026-10-28T20:18:55):
+index=cba_cpr_logging ssid="CPR-MOCK-FLOW" earliest="2026-10-28T20:18:55" latest="2026-10-28T20:18:55" | sort 0 - _time
+================================================================================
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Pass
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-UNIT-TEST-PASS
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_pass_1924214156\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_pass_1924214156\queue.jsonl
+  Syslog Target: 127.0.0.1:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] Saved original content of C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_pass_1924214156\state.json for post-test restoration.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:23162/ (login URL: http://127.0.0.1:23162/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+[OK] Real redirect detected: URL redirected to http://127.0.0.1:23162/portal/login?from=cpr_mock
+[OK] Portal type classified: NON_ISE
+[OK] Redirect telemetry parsed: url='http://127.0.0.1:23162/portal/login?from=cpr_mock' port='23162' protocol='http' fqdn='127.0.0.1'
+[STEP 3/7] Browser substitution (Stub mode) and completion signaling...
+[OK] Stub browser mode: no browser process launched, bypassing WebView2 WDAC restrictions completely.
+[OK] Completion flag written to C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_pass_1924214156\test.flag (status=SUCCESS_NATIVE)
+[OK] Clearance poll confirmed: portal cleared (200 OK, no redirect).
+[STEP 4/7] Forcing off-network state & asserting offline queueing...
+[OK] Test-SyslogReachable correctly returned false (offline gating confirmed).
+[STEP] Writing 'cap_portal_redirect' tee event...
+[OK] 'cap_portal_redirect' successfully queued (Queued=True, Reason=spooled)
+[STEP] Writing 'cap_portal_remediation_passed' tee event...
+[OK] 'cap_portal_remediation_passed' successfully queued (Queued=True, Reason=spooled)
+[STEP 5/7] Inspecting queued events and validating required fields...
+[OK] Queue grew by 0 line(s) during this test (total: 0)
+[FAIL] Expected at least 2 mock events matching ssid='CPR-UNIT-TEST-PASS', found 0
+[ERROR] Mock flow execution error: Incomplete queue capture for mock run.
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Restored original content of C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_pass_1924214156\state.json
+[OK] Loopback HTTP listener terminated and disposed.
+[OK] Cleaned up temporary test flag file: C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_pass_1924214156\test.flag
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[FAIL] Mock captive portal flow did not complete all pass criteria.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-UNIT-TEST-PASS" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-UNIT-TEST-PASS"
+
+[OK] Time-boxed run query (2026-10-28T20:18:55 to 2026-10-28T20:18:56):
+index=cba_cpr_logging ssid="CPR-UNIT-TEST-PASS" earliest="2026-10-28T20:18:55" latest="2026-10-28T20:18:56" | sort 0 - _time
+================================================================================
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected 0, but got 1."
+>> TerminatingError(): "Expected 0, but got 1."
+>> TerminatingError(): "Expected 0, but got 1."
+[-] TEST_mock_cap_portal_flow.ps1 - End-to-End Execution and Telemetry Verification.executes Outcome=Pass flow, verifies queueing, drain, and schema compliance
+ 934ms (931ms|3ms)
+ Expected 0, but got 1.
+ at $LASTEXITCODE | Should -Be 0, C:\ProgramData\WhiteWalker\tests\TEST_mock_cap_portal_flow.Tests.ps1:202
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\TEST_mock_cap_portal_flow.Tests.ps1:202
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Fail
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-UNIT-TEST-FAIL
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_fail_349368196\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_fail_349368196\queue.jsonl
+  Syslog Target: 127.0.0.1:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] Saved original content of C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_fail_349368196\state.json for post-test restoration.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:23164/ (login URL: http://127.0.0.1:23164/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+[OK] Real redirect detected: URL redirected to http://127.0.0.1:23164/portal/login?from=cpr_mock
+[OK] Portal type classified: NON_ISE
+[OK] Redirect telemetry parsed: url='http://127.0.0.1:23164/portal/login?from=cpr_mock' port='23164' protocol='http' fqdn='127.0.0.1'
+[STEP 3/7] Browser substitution (Stub mode) and completion signaling...
+[OK] Stub browser mode: no browser process launched, bypassing WebView2 WDAC restrictions completely.
+[OK] Completion flag written to C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_fail_349368196\test.flag (status=TIMEOUT_NATIVE)
+[OK] Failure poll confirmed: portal remained captive (302 redirect persists).
+[STEP 4/7] Forcing off-network state & asserting offline queueing...
+[OK] Test-SyslogReachable correctly returned false (offline gating confirmed).
+[STEP] Writing 'cap_portal_redirect' tee event...
+[OK] 'cap_portal_redirect' successfully queued (Queued=True, Reason=spooled)
+[STEP] Writing 'cap_portal_remediation_failed' tee event...
+[OK] 'cap_portal_remediation_failed' successfully queued (Queued=True, Reason=spooled)
+[STEP 5/7] Inspecting queued events and validating required fields...
+[OK] Queue grew by 0 line(s) during this test (total: 0)
+[FAIL] Expected at least 2 mock events matching ssid='CPR-UNIT-TEST-FAIL', found 0
+[ERROR] Mock flow execution error: Incomplete queue capture for mock run.
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Restored original content of C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_fail_349368196\state.json
+[OK] Loopback HTTP listener terminated and disposed.
+[OK] Cleaned up temporary test flag file: C:\Users\shorto39\AppData\Local\Temp\9f44b843-4686-4af7-979f-a6c21735fbce\flow_fail_349368196\test.flag
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[FAIL] Mock captive portal flow did not complete all pass criteria.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-UNIT-TEST-FAIL" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-UNIT-TEST-FAIL"
+
+[OK] Time-boxed run query (2026-10-28T20:18:56 to 2026-10-28T20:18:57):
+index=cba_cpr_logging ssid="CPR-UNIT-TEST-FAIL" earliest="2026-10-28T20:18:56" latest="2026-10-28T20:18:57" | sort 0 - _time
+================================================================================
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected 0, but got 1."
+>> TerminatingError(): "Expected 0, but got 1."
+>> TerminatingError(): "Expected 0, but got 1."
+[-] TEST_mock_cap_portal_flow.ps1 - End-to-End Execution and Telemetry Verification.executes Outcome=Fail flow and produces cap_portal_remediation_failed with TIMEOUT_NATIVE status
+ 859ms (856ms|3ms)
+ Expected 0, but got 1.
+ at $LASTEXITCODE | Should -Be 0, C:\ProgramData\WhiteWalker\tests\TEST_mock_cap_portal_flow.Tests.ps1:227
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\TEST_mock_cap_portal_flow.Tests.ps1:227
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\logs\README.md' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\logs\README.md' because it does not exist."
+>> TerminatingError(Get-Content): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\ProgramData\WhiteWalker\logs\README.md' because it does not exist."
+[-] Describe Watch-WhiteWalkerLog failed
+ ItemNotFoundException: Cannot find path 'C:\ProgramData\WhiteWalker\logs\README.md' because it does not exist.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\Watch-WhiteWalkerLog.Tests.ps1:12
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Item): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\dd7301a9-702e-4960-8401-c70f7d711203\white_walker.main.log' because it does not exist."
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "Cannot bind argument to parameter 'Path' because it is null."
+>> TerminatingError(Get-Content): "Cannot bind argument to parameter 'Path' because it is null."
+[-] Watch-WhiteWalkerLog byte-offset tailer.tracks position by byte offset, not by line count
+ 23ms (22ms|2ms)
+ ParameterBindingValidationException: Cannot bind argument to parameter 'Path' because it is null.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\Watch-WhiteWalkerLog.Tests.ps1:165
+PS C:\ProgramData\WhiteWalker> TerminatingError(Get-Content): "Cannot bind argument to parameter 'Path' because it is null."
+>> TerminatingError(Get-Content): "Cannot bind argument to parameter 'Path' because it is null."
+[-] Watch-WhiteWalkerLog byte-offset tailer.exits the follow loop on Q or Esc using a NON-BLOCKING key check
+ 23ms (22ms|2ms)
+ ParameterBindingValidationException: Cannot bind argument to parameter 'Path' because it is null.
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\tests\Watch-WhiteWalkerLog.Tests.ps1:172
+[Main] line one
+[Main] line two
+
+-- live tail: press Q or Esc to return to the menu --
+Stopped tailing Main.
+PS C:\ProgramData\WhiteWalker> TerminatingError(PesterMock_script_Wait-Job_772dcaf9-4942-450b-a10c-540a4d83a6b2): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+>> TerminatingError(PesterMock_script_Wait-Job_772dcaf9-4942-450b-a10c-540a4d83a6b2): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+[-] WW_cap_portal_runner.ps1 - Cisco Browser Killer.Stop-CiscoBrowserKiller Cleanup.Should wait for job with timeout
+ 10ms (8ms|2ms)
+ PSInvalidCastException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ ArgumentTransformationMetadataException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ ParameterBindingArgumentTransformationException: Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:263
+PS C:\ProgramData\WhiteWalker> TerminatingError(PesterMock_script_Wait-Job_e64f671a-d212-464a-b69a-325a017f3eb9): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+>> TerminatingError(PesterMock_script_Wait-Job_e64f671a-d212-464a-b69a-325a017f3eb9): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+[-] WW_cap_portal_runner.ps1 - Cisco Browser Killer.Stop-CiscoBrowserKiller Cleanup.Should receive job results
+ 17ms (15ms|2ms)
+ PSInvalidCastException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ ArgumentTransformationMetadataException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ ParameterBindingArgumentTransformationException: Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:275
+PS C:\ProgramData\WhiteWalker> TerminatingError(PesterMock_script_Stop-Job_5948e771-3474-433f-af8f-c6a6ce649ed8): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+>> TerminatingError(PesterMock_script_Stop-Job_5948e771-3474-433f-af8f-c6a6ce649ed8): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+[-] WW_cap_portal_runner.ps1 - Cisco Browser Killer.Stop-CiscoBrowserKiller Cleanup.Should clean up job after completion
+ 21ms (16ms|5ms)
+ PSInvalidCastException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ ArgumentTransformationMetadataException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ ParameterBindingArgumentTransformationException: Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:285
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected the value to have type [array] or any of its subtypes, but got '--start-maximized' with type [string]."
+>> TerminatingError(): "Expected the value to have type [array] or any of its subtypes, but got '--start-maximized' with type [string]."
+>> TerminatingError(): "Expected the value to have type [array] or any of its subtypes, but got '--start-maximized' with type [string]."
+[-] WW_cap_portal_runner.ps1 v1.7.0_ER3 - Edge ArgumentList Fix.Open-ValidationBrowser Argument Syntax.Should use array syntax for ArgumentList
+ 8ms (6ms|2ms)
+ Expected the value to have type [array] or any of its subtypes, but got '--start-maximized' with type [string].
+ at $correctSyntax | Should -BeOfType [System.Array], C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:633
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:633
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected 'redirect' to be found in collection https://portal.company.com/auth?redirect=https://app.com, but it was not found."
+>> TerminatingError(): "Expected 'redirect' to be found in collection https://portal.company.com/auth?redirect=https://app.com, but it was not found."
+>> TerminatingError(): "Expected 'redirect' to be found in collection https://portal.company.com/auth?redirect=https://app.com, but it was not found."
+[-] WW_cap_portal_runner.ps1 v1.7.0_ER3 - Edge ArgumentList Fix.Open-ValidationBrowser Argument Syntax.Should handle URL with special characters in array
+ 12ms (8ms|4ms)
+ Expected 'redirect' to be found in collection https://portal.company.com/auth?redirect=https://app.com, but it was not found.
+ at $args[1] | Should -Contain "redirect", C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:649
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:649
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected a value, but got $null or empty."
+>> TerminatingError(): "Expected a value, but got $null or empty."
+>> TerminatingError(): "Expected a value, but got $null or empty."
+[-] WW_cap_portal_runner.ps1 v1.7.0_ER3 - Network Reconnect Function.Invoke-NetworkReconnect Function.Should detect current SSID using netsh
+ 5ms (4ms|1ms)
+ Expected a value, but got $null or empty.
+ at $ssidMatch | Should -Not -BeNullOrEmpty, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:877
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:877
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected a value, but got $null or empty."
+>> TerminatingError(): "Expected a value, but got $null or empty."
+>> TerminatingError(): "Expected a value, but got $null or empty."
+[-] WW_cap_portal_runner.ps1 v1.7.0_ER3 - Network Reconnect Function.Invoke-NetworkReconnect Function.Should detect WiFi interface name using netsh
+ 5ms (3ms|1ms)
+ Expected a value, but got $null or empty.
+ at $interfaceMatch | Should -Not -BeNullOrEmpty, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:890
+ at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:890
+Tests completed in 95s
+Tests Passed: 658,
+Failed: 81,
+Skipped: 0
+
+NotRun: 0
+BeforeAll \ AfterAll failed: 4
+  - Installer tee profile handling
+  - Installer registers and validates HayStack_Monitor like every other task
+  - CPR RC1.25 package source of truth
+  - Watch-WhiteWalkerLog
+Container failed: 2
+  - C:\ProgramData\WhiteWalker\tests\CPR_RC2.LogLayout.Tests.ps1
+  - C:\ProgramData\WhiteWalker\tests\CPR_RC2.ServiceFastPath.Tests.ps1
+
+TOTAL  passed=658  failed=81  skipped=0  not-run=0
+2 test file(s) failed to load - scroll up for the parse/discovery error.
+**********************
+Windows PowerShell transcript end
+End time: 20261028201901
+**********************

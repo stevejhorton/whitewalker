@@ -568,7 +568,7 @@ function VPN-Gatekeeper-AndMaybeExit {
     Send-FlareEvent $flavor
     
     Clear-CaptiveEventHistory "VPN connected"
-    $script:exitReason = "vpn_connected:$flavor"
+    Set-CprRunExit -Reason 'vpn_connected' -State $flavor
     return
   }
 

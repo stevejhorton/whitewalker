@@ -45,7 +45,7 @@ Describe "WW_cap_portal_runner_base.ps1 - Write-TeeLog outcome telemetry" {
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
         if ($errors) { throw "Failed to parse WW_cap_portal_runner_base.ps1" }
 
-        $wanted = @('Write-BaseCapLog', 'Write-BaseCapOutcomeTelemetry')
+        $wanted = @('Write-BaseCapLog', 'Write-BaseCapTee', 'Write-BaseCapOutcomeTelemetry')
         $functionAsts = $ast.FindAll({
             param($node)
             $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
@@ -59,7 +59,7 @@ Describe "WW_cap_portal_runner_base.ps1 - Write-TeeLog outcome telemetry" {
         # C:\ProgramData\WhiteWalker path, same pattern as WW_main.ps1) - stub it
         # here so these are pure unit tests of the wiring, not an integration test
         # of the real tee engine.
-        function Write-TeeLog { param([string]$Tag, [hashtable]$Data) }
+        function Write-TeeLog { param([string]$Tag, [hashtable]$Data, [switch]$PassThru) }
 
         # Confirm the script still contains both the dot-source line and the
         # hardcoded Haystack/Tee globals required for Write-TeeLog to fire when
@@ -84,7 +84,9 @@ Describe "WW_cap_portal_runner_base.ps1 - Write-TeeLog outcome telemetry" {
     }
 
     It "still contains Write-CompletionFlag call in TIMEOUT_NATIVE branch" {
-        $script:rawSource | Should -Match 'Write-CompletionFlag -Status "TIMEOUT_NATIVE"'
+        # The status is chosen into $timeoutStatus (TIMEOUT_NATIVE when full escalation is allowed).
+        $script:rawSource | Should -Match "'TIMEOUT_NATIVE'"
+        $script:rawSource | Should -Match 'Write-CompletionFlag -Status \$timeoutStatus'
     }
 
     It "calls Write-TeeLog 'cap_portal_remediation_passed' with expected field shape on SUCCESS_NATIVE" {
@@ -136,7 +138,7 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$errors)
         if ($errors) { throw "Failed to parse WW_cap_portal_runner_base.ps1" }
 
-        $wanted = @('Write-BaseCapLog', 'Write-BaseCapOutcomeTelemetry', 'Get-BaseCapTelemetryUrl')
+        $wanted = @('Write-BaseCapLog', 'Write-BaseCapTee', 'Write-BaseCapOutcomeTelemetry', 'Get-BaseCapTelemetryUrl')
         $functionAsts = $ast.FindAll({
             param($node)
             $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
@@ -145,7 +147,7 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
 
         Invoke-Expression (($functionAsts | ForEach-Object { $_.Extent.Text }) -join "`n`n")
 
-        function Write-TeeLog { param([string]$Tag, [hashtable]$Data) }
+        function Write-TeeLog { param([string]$Tag, [hashtable]$Data, [switch]$PassThru) }
 
         $script:rawSource = Get-Content -Path $scriptPath -Raw
     }
@@ -159,7 +161,8 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
             if ($errors) { throw "Failed to parse WW_cap_portal_runner_base.ps1" }
             $wanted = @('Write-BaseCapLog', 'Get-CiscoWebHelperQueryParameter',
                 'Get-CiscoWebHelperFinalUrlPort', 'ConvertFrom-CiscoWebHelperNavigationBody',
-                'Get-CiscoWebHelperNavigationEvent')
+                'Get-CiscoWebHelperNavigationEvent', 'Get-CiscoWebHelperQueryParameterAny',
+                'ConvertFrom-CiscoWebHelperEventText', 'Get-CiscoWebHelperUrlFromText', 'Get-CiscoWebHelperDedupeKey')
             $functionAsts = $ast.FindAll({
                 param($node)
                 $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and

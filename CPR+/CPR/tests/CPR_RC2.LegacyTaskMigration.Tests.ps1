@@ -19,6 +19,10 @@ Describe 'CPR task folder consistency' {
 
 Describe 'Legacy task migration' {
     BeforeAll {
+        # Non-Windows runs: Pester's Mock needs the ScheduledTasks cmdlets to exist.
+        foreach ($c in 'Get-ScheduledTask', 'Unregister-ScheduledTask') {
+            if (-not (Get-Command $c -ErrorAction SilentlyContinue)) { Set-Item "function:global:$c" { param($TaskName, $TaskPath, $InputObject, $Confirm, $ErrorAction) } }
+        }
         . (Join-Path (Split-Path -Parent $PSScriptRoot) 'WW_migrate_legacy_tasks.ps1')
     }
     BeforeEach {
