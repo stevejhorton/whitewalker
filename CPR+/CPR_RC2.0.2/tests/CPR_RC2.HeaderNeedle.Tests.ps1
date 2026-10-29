@@ -159,10 +159,10 @@ Describe 'Read-NeedleFile - HEADER directives' {
 
         $result = @(Read-NeedleFile -Path $script:NeedleFile -SourceTag 'local')
 
-        ($result | Where-Object Type -eq 'NEEDLE').Count   | Should -Be 1
-        ($result | Where-Object Type -eq 'SESSION').Count  | Should -Be 1
-        ($result | Where-Object Type -eq 'DEFENDER').Count | Should -Be 1
-        ($result | Where-Object Type -eq 'HEADER').Count   | Should -Be 1
+        @($result | Where-Object Type -eq 'NEEDLE').Count   | Should -Be 1
+        @($result | Where-Object Type -eq 'SESSION').Count  | Should -Be 1
+        @($result | Where-Object Type -eq 'DEFENDER').Count | Should -Be 1
+        @($result | Where-Object Type -eq 'HEADER').Count   | Should -Be 1
     }
 }
 
