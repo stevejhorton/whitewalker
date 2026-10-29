@@ -90,6 +90,11 @@ function ConvertFrom-WWJsonLine {
                 if ($timestamp -is [datetime]) {
                     $timestamp = $timestamp.ToString('yyyy-MM-ddTHH:mm:ss.fffK',
                         [Globalization.CultureInfo]::InvariantCulture)
+                } elseif ($timestamp -is [string] -and $timestamp -match '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z$') {
+                    # Windows PowerShell 5.1 leaves ISO-8601 'Z' strings as text: format them like PowerShell 7 does.
+                    $dt = [datetime]::Parse($timestamp, [Globalization.CultureInfo]::InvariantCulture,
+                        [Globalization.DateTimeStyles]::AdjustToUniversal -bor [Globalization.DateTimeStyles]::AssumeUniversal)
+                    $timestamp = $dt.ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", [Globalization.CultureInfo]::InvariantCulture)
                 }
                 break
             }

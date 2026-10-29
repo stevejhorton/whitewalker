@@ -35,6 +35,7 @@ Describe 'Legacy task migration' {
         Set-Content (Join-Path $script:tasks 'WW_main') 'x'
         Set-Content (Join-Path $script:tasks 'HayStack\HayStack_Monitor') 'x'
         Mock Unregister-ScheduledTask {
+            param($TaskName, $TaskPath, $Confirm, $ErrorAction)
             $rel = (($TaskPath.Trim('\')), $TaskName | Where-Object { $_ }) -join '\'
             Remove-Item (Join-Path $script:tasks $rel) -Force
         }

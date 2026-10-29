@@ -55,6 +55,8 @@ Describe 'ConvertTo-NormalizedCapPortalData' {
 
 Describe 'Write-TeeLog payload' {
     BeforeEach {
+        # Write-TeeLog reads the GLOBAL switches first; another test file may have left them set.
+        Remove-Variable -Name TeeEnabled, HaystackEnabled -Scope Global -ErrorAction SilentlyContinue
         $script:HaystackEnabled = $true
         $script:TeeEnabled      = $true
         # The active profile is generated at install time and is not in the repo: build a max-level one from the master.
@@ -133,6 +135,8 @@ Describe 'Get-TeeUserContextFallback' {
 
 Describe 'Write-TeeLog -PassThru result contract (opt-in failure surfacing)' {
     BeforeEach {
+        # Write-TeeLog reads the GLOBAL switches first; another test file may have left them set.
+        Remove-Variable -Name TeeEnabled, HaystackEnabled -Scope Global -ErrorAction SilentlyContinue
         $script:HaystackEnabled = $true
         $script:TeeEnabled      = $true
         # The active profile is generated at install time and is not in the repo: build a max-level one from the master.

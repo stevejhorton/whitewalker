@@ -102,7 +102,7 @@ Describe 'Read-NeedleFile - HEADER directives' {
         $result = @(Read-NeedleFile -Path $script:NeedleFile -SourceTag 'local')
 
         $result.Count | Should -Be 0
-        ($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match "not a known run-header field" }).Count |
+        @($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match "not a known run-header field" }).Count |
             Should -BeGreaterThan 0
     }
 
@@ -115,7 +115,7 @@ Describe 'Read-NeedleFile - HEADER directives' {
         $result.Count           | Should -Be 1
         $result[0].RefreshHours | Should -BeNullOrEmpty
         $result[0].SendHours    | Should -BeNullOrEmpty
-        ($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match 'is invalid - using global default' }).Count |
+        @($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match 'is invalid - using global default' }).Count |
             Should -Be 2
     }
 
@@ -125,7 +125,7 @@ Describe 'Read-NeedleFile - HEADER directives' {
         $result = @(Read-NeedleFile -Path $script:NeedleFile -SourceTag 'local')
 
         $result.Count | Should -Be 1
-        ($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match 'is not recognized' }).Count |
+        @($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match 'is not recognized' }).Count |
             Should -BeGreaterThan 0
     }
 
@@ -135,7 +135,7 @@ Describe 'Read-NeedleFile - HEADER directives' {
         $result = @(Read-NeedleFile -Path $script:NeedleFile -SourceTag 'local')
 
         $result.Count | Should -Be 0
-        ($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match 'invalid characters' }).Count |
+        @($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match 'invalid characters' }).Count |
             Should -BeGreaterThan 0
     }
 
@@ -145,7 +145,7 @@ Describe 'Read-NeedleFile - HEADER directives' {
         $result = @(Read-NeedleFile -Path $script:NeedleFile -SourceTag 'local')
 
         $result.Count | Should -Be 0
-        ($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match 'expected at least 3' }).Count |
+        @($script:LogBuffer | Where-Object { $_.Level -eq 'WARN' -and $_.Message -match 'expected at least 3' }).Count |
             Should -BeGreaterThan 0
     }
 
