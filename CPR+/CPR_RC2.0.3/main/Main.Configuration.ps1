@@ -329,7 +329,7 @@ $TeeEventsFile = "C:\ProgramData\WhiteWalker\WW_tee_events.psd1"
 # next run applies that level, then reverts it after $TeeFlagRevertHours (or keeps it for cpr_tee_<N>_keep.flag).
 $TeeMasterFile            = "C:\ProgramData\WhiteWalker\WW_tee_master.psd1"
 $TeeSetScript             = "C:\ProgramData\WhiteWalker\WW_set_tee_level.ps1"
-$TeeDefaultLevel          = 1      # KEEP IN SYNC with $TeeDefaultLevel in install.ps1 (no marker / fresh install)
+$TeeDefaultLevel          = 1      # single source: install.ps1 reads this (no marker / fresh install)
 $TeeFlagEnabled           = $true
 $TeeFlagDir               = "C:\Windows\Temp"
 $TeeFlagCooldownMinutes   = 10     # minimum minutes between flag-applied level changes (extra flags wait)
@@ -361,7 +361,7 @@ $SelfUpdateZipName           = "cpr_current.zip"
 $SelfUpdateInstallScript     = "install.ps1"
 
 # Task Scheduler folder that holds ALL CPR jobs (WW_* and HayStack_Monitor).
-# KEEP IN SYNC with $CprTaskFolder in install.ps1 and $TsTaskPath in haystack.ps1
+# single source: install.ps1 reads this; haystack.ps1 reads it too (its $TsTaskPath is only a fallback)
 # (a Pester test enforces it). Existence checks read System32\Tasks\CPR directly.
 $CprTaskFolder = "\CPR\"
 

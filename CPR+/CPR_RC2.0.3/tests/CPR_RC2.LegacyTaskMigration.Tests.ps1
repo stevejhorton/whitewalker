@@ -2,13 +2,14 @@
 Describe 'CPR task folder consistency' {
     BeforeAll { $script:root = Split-Path -Parent $PSScriptRoot }
 
-    It 'uses the same task folder in install.ps1, Main.Configuration.ps1 and haystack.ps1' {
-        $i = (Select-String -Path (Join-Path $root 'install.ps1') -Pattern '^\$CprTaskFolder\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+    It 'installer reads the task folder from Main.Configuration.ps1; haystack.ps1 falls back to the same value' {
+        $inst = Get-Content (Join-Path $root 'install.ps1') -Raw
+        $inst | Should -Match "\`$CprTaskFolder\s*=\s*Get-CprConfigLiteral -Name 'CprTaskFolder'"
+        $inst | Should -Not -Match '(?m)^\$CprTaskFolder\s*=\s*"'
         $c = (Select-String -Path (Join-Path $root 'main\Main.Configuration.ps1') -Pattern '^\$CprTaskFolder\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
         $h = (Select-String -Path (Join-Path $root 'haystack.ps1') -Pattern '^\$TsTaskPath\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
-        $i | Should -Be '\CPR\'
-        $c | Should -Be $i
-        $h | Should -Be $i
+        $c | Should -Be '\CPR\'
+        $h | Should -Be $c
     }
     It 'installer registers every task XML under the CPR folder' {
         $src = Get-Content (Join-Path $root 'install.ps1') -Raw

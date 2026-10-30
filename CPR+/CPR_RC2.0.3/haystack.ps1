@@ -82,7 +82,14 @@ $ActionScriptPath           = Join-Path $LocalCacheDir "haystack_action.ps1"
 
 # Task Scheduler registration
 $TsTaskName                 = "HayStack_Monitor"
-$TsTaskPath                 = "\CPR\"   # keep in sync with $CprTaskFolder (Main.Configuration.ps1, install.ps1)
+$TsTaskPath                 = "\CPR\"   # FALLBACK only; the real value is $CprTaskFolder in main\Main.Configuration.ps1 (read just below)
+try {
+    $hsCfg = Join-Path $LocalCacheDir "main\Main.Configuration.ps1"
+    if (Test-Path -LiteralPath $hsCfg) {
+        $hsCfgHit = Select-String -LiteralPath $hsCfg -Pattern '^\$CprTaskFolder\s*=\s*"([^"]+)"' | Select-Object -First 1
+        if ($hsCfgHit) { $TsTaskPath = $hsCfgHit.Matches[0].Groups[1].Value }
+    }
+} catch { }
 
 # Heartbeat trigger - guarantees a periodic opportunity to drain the syslog
 # queue even when no needle event fires (e.g. quiet box sitting on VPN).

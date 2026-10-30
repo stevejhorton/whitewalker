@@ -409,11 +409,12 @@ Describe 'Installer tee profile handling' {
     }
     It 'honours the Custom opt-out and the default level' {
         $inst | Should -Match '\$info\.Custom'
-        $inst | Should -Match '\$TeeDefaultLevel\s*=\s*1'
+        $inst | Should -Match "\`$TeeDefaultLevel\s*=\s*\[int\]\(Get-CprConfigLiteral -Name 'TeeDefaultLevel'\)"
+        $inst | Should -Not -Match '(?m)^\$TeeDefaultLevel\s*=\s*\d'
     }
-    It 'default level matches between installer and configuration' {
+    It 'the default level has exactly one definition: the configuration (the installer reads it)' {
         $cfg = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.Configuration.ps1') -Raw
-        $cfg | Should -Match '\$TeeDefaultLevel\s*=\s*1'
+        $cfg | Should -Match '(?m)^\$TeeDefaultLevel\s*=\s*\d+'
     }
 }
 

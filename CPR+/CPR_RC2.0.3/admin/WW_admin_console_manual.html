@@ -98,6 +98,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <div class="wrap">
 <nav class="side" id="side" aria-label="Sections">
   <a href="#start">Start here</a>
+  <a href="#new">New in RC2.0.3</a>
   <a href="#finder">What do I do when...?</a>
   <a href="#console">The console, item by item</a>
   <a href="#flags">Flag files</a>
@@ -114,7 +115,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
   <div>
     <h1>Tech Action Console Manual</h1>
     <p>How to use <code>Invoke-WhiteWalkerAction.ps1</code> to restore, refresh, update, and debug WhiteWalker (CPR+) on an endpoint without editing files by hand.</p>
-    <div class="chips"><span class="chip">CPR 3.14.0_RC2.0.2</span><span class="chip">Console 1.0.0</span><span class="chip">Windows PowerShell 5.1</span><span class="chip">Needs an elevated or ASAM Powershell prompt</span></div>
+    <div class="chips"><span class="chip">CPR 3.14.0_RC2.0.3</span><span class="chip">Console 1.0.0</span><span class="chip">Windows PowerShell 5.1</span><span class="chip">Needs an elevated or ASAM Powershell prompt</span></div>
   </div>
 </section>
 
@@ -150,6 +151,18 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 </div>
 </section>
 
+<section id="new">
+<h2>New in RC2.0.3<small>what changed since RC2.0.2</small></h2>
+<ul>
+<li><b>Needle bundles (menu B).</b> Canned sets of needles for a symptom (network flap, power resume, app crashes). Pick one, choose how many days, and it is added to <code>needles_local.cfg</code> in one step.</li>
+<li><b>Needles expire.</b> A needle line can end with <code>|expires=2026-11-13</code> (or a full UTC time). Expired lines are skipped and removed at the next reroll. Local needles can last at most 30 days; the wizard (menu 6) and bundles default to 14.</li>
+<li><b>Duplicates are skipped.</b> If two needles watch the same log, event ID and filter, the first one wins and the repeat is logged and ignored. Labels and extended-logging flags do not count.</li>
+<li><b>Reroll offer.</b> After the wizard or a bundle changes <code>needles_local.cfg</code>, the console offers to reroll HayStack right away (Y is the default).</li>
+<li><b>Run, then watch.</b> Items 1 and 2, 3 (self-update) and quick actions 1 and 3 now show the relevant log while they work, then return you to the menu.</li>
+<li><b>One source for shared settings.</b> The installer reads the version, task folder and default tee level from <code>main\Main.Configuration.ps1</code> instead of keeping its own copies. A package missing that file now fails the install loudly.</li>
+</ul>
+</section>
+
 <section id="finder" class="finder">
 <h2>What do I do when...?<small>type a symptom or pick one</small></h2>
 <input id="q" type="search" placeholder="e.g. vpn profile, no logs in splunk, browser, debug" aria-label="Search symptoms" autocomplete="off">
@@ -164,7 +177,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <dl class="kv"><dt>Use when</dt><dd>The Secure Client VPN profile XML is missing, damaged, or wrong, and you want the saved good copy put back.</dd>
 <dt>What it does</dt><dd>Creates <code>C:\Windows\Temp\xml_restore.flag</code>. On the next WhiteWalker run it restores the profile XML from the <b>local vault</b> into the VPN client profile folder.</dd>
 <dt>You'll be asked</dt><dd>"Create the restore flag now? (y/n)"</dd>
-<dt>Then</dt><dd>Lock and unlock the screen (or log off and on) to let the restore run.</dd>
+<dt>Then</dt><dd>Lock and unlock the screen (or log off and on) to let the restore run. The console also offers to follow the XmlVault log; answer <kbd>y</kbd> to watch it and return to the menu.</dd>
 <dt>Verify</dt><dd>Check <code>C:\ProgramData\WhiteWalker\logs\white_walker.xml_vault.log</code> for the restore entry.</dd></dl>
 <div class="note"><b>Restores from the local vault only.</b>If the vault copy is stale or missing, run item 2 first to refresh the vault from the share (needs the corporate network or VPN).</div>
 </div></details>
@@ -173,6 +186,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <dl class="kv"><dt>Use when</dt><dd>A new or fixed profile XML was published to the share and you do not want to wait for the 24-hour sync cooldown.</dd>
 <dt>What it does</dt><dd>Runs <code>WW_xml_vault.ps1 -Force</code> right now, in your window, refreshing the local vault from the NETLOGON share.</dd>
 <dt>You'll be asked</dt><dd>"Force a vault sync now? (y/n)"</dd>
+<dt>While it runs</dt><dd>The last 15 lines of the XmlVault log are shown, then you return to the menu.</dd>
 <dt>Verify</dt><dd><code>white_walker.xml_vault.log</code>. If the share is unreachable (off network, no VPN) the sync cannot complete.</dd></dl>
 </div></details>
 
@@ -272,9 +286,9 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <details class="item" id="m9"><summary><span class="key">9</span>Quick Actions <span class="sp"></span><span class="badge b-chg">CHANGES THINGS</span></summary><div class="body">
 <p>A sub-menu of one-step actions. Each asks for confirmation first, and Enter cancels.</p>
 <div class="tw"><table><tr><th>#</th><th>Action</th><th>What it runs</th><th>Use when</th></tr>
-<tr><td>1</td><td>Force HayStack reroll</td><td><code>haystack.ps1 -reroll -Force</code></td><td>You added a needle or the needles are out of sync, and you do not want to wait</td></tr>
+<tr><td>1</td><td>Force HayStack reroll</td><td><code>haystack.ps1 -reroll -Force</code></td><td>You added a needle or the needles are out of sync, and you do not want to wait. Expired local needles are pruned first</td></tr>
 <tr><td>2</td><td>Clear stale flag files</td><td>The runtime's own <code>Clear-StaleFlagFiles</code></td><td>Old flag files from a crash or reboot may be confusing a run</td></tr>
-<tr><td>3</td><td>Force an immediate WW_main run</td><td><code>WW_main.ps1</code></td><td>You do not want to wait for the next DHCP or unlock trigger</td></tr>
+<tr><td>3</td><td>Force an immediate WW_main run</td><td><code>WW_main.ps1</code></td><td>You do not want to wait for the next DHCP or unlock trigger. Shows the last 25 Main log lines afterwards</td></tr>
 <tr><td>4</td><td>Clear Blackhole VPN hosts entries</td><td><code>Set-VpnHostsEntry.ps1 -rm</code></td><td>Hosts-file entries are stopping the VPN from connecting</td></tr>
 <tr><td>5</td><td>Syslog path test</td><td><code>Test-CprSyslogPath.ps1 -Send</code></td><td>Events are not reaching Splunk. Checks state, DNS, route, queue, and sends one <code>CPR_TESTER</code> message (label <code>cpr_syslog_path_test</code>) to search for</td></tr></table></div>
 <div class="note"><b>Action 3 runs WhiteWalker in your window as the admin account.</b>The normal run is SYSTEM from Task Scheduler, so a manual run can behave a little differently (for example, user-context pieces). For true behavior, trigger it the normal way: lock and unlock.</div>
@@ -347,6 +361,8 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <tr><td>Lost-log-line spill file</td><td><code>C:\ProgramData\WhiteWalker\logs\log_write_failures.txt</code></td></tr>
 <tr><td>Telemetry queue</td><td><code>logs\haystack_syslog_queue.jsonl</code> and <code>logs\spool\</code></td></tr>
 <tr><td>Local needles</td><td><code>C:\ProgramData\WhiteWalker\needles_local.cfg</code></td></tr>
+<tr><td>Bundle catalog</td><td><code>C:\ProgramData\WhiteWalker\bundles\needle_bundles.cfg</code> (the share copy is preferred when reachable)</td></tr>
+<tr><td>Reroll state (incl. next needle expiry)</td><td><code>haystack_reroll.stamp</code> in the install root</td></tr>
 <tr><td>Tee master / active profile</td><td><code>WW_tee_master.psd1</code> / <code>WW_tee_events.psd1</code> in the install root</td></tr>
 <tr><td>Flag files</td><td><code>C:\Windows\Temp</code></td></tr>
 <tr><td>This console</td><td><code>C:\ProgramData\WhiteWalker\admin\Invoke-WhiteWalkerAction.ps1</code></td></tr></table></div>
@@ -371,7 +387,8 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <tr><td>3 Self-update</td><td>Installs a new CPR build</td><td>Update to another build</td></tr>
 <tr><td>4 Check-in</td><td>Queues one telemetry event</td><td>No (harmless)</td></tr>
 <tr><td>5 Needle check, W logs</td><td>Nothing</td><td>n/a</td></tr>
-<tr><td>6 Needle wizard</td><td>Appends a line to <code>needles_local.cfg</code></td><td>Remove the line, then reroll</td></tr>
+<tr><td>6 Needle wizard</td><td>Appends a line to <code>needles_local.cfg</code> (expires on its own)</td><td>Remove the line, then reroll</td></tr>
+<tr><td>B Needle bundles</td><td>Adds or removes a bundle block in <code>needles_local.cfg</code>; may reroll</td><td>Remove the bundle from the same menu, or let it expire</td></tr>
 <tr><td>7 / T Tee</td><td>Rewrites the active tee profile</td><td>Pick another level</td></tr>
 <tr><td>8 Diagnostics</td><td>Depends on the tool (see its badge)</td><td>Depends</td></tr>
 <tr><td>9 Quick actions</td><td>1 reroll, 2 flag cleanup, 3 full run, 4 hosts cleanup, 5 one test message</td><td>Mostly self-correcting on the next run</td></tr></table></div>
@@ -379,7 +396,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 </section>
 
 <footer>
-  WhiteWalker / CPR+ &middot; Tech Action Console Manual &middot; CPR 3.14.0_RC2.0.2 &middot; Console 1.0.0 &middot; Last updated October 2026.<br>
+  WhiteWalker / CPR+ &middot; Tech Action Console Manual &middot; CPR 3.14.0_RC2.0.3 &middot; Console 1.0.0 &middot; Last updated 30 October 2026.<br>
   This manual describes the console as built. If the menu on your machine differs, the installed build is a different version.
 </footer>
 </main>
@@ -427,6 +444,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
    {k:'ticket marker splunk checkin check-in note',t:'Leave a marker in Splunk that a tech worked on this machine',s:['Menu <b>4</b>, enter the ticket number as the note, confirm.','It ships to Splunk on HayStack\'s next wake (lock/unlock or the heartbeat), not instantly.']},
    {k:'not in splunk logs missing syslog events not arriving',t:'Events are not reaching Splunk',s:['Menu <b>9</b> then <b>5</b>: the syslog path test. It checks state, DNS, route, and queue and sends one <code>CPR_TESTER</code> message.','Search Splunk for <code>cpr_syslog_path_test</code>.','Menu <b>W</b>, then <b>A</b>: look at <code>haystack_syslog_queue.jsonl</code> and the spool folder to see whether events are piling up locally.']},
    {k:'needle haystack not detecting new event watch add',t:'HayStack should watch for something new',s:['Menu <b>8</b>: preview the needle first with <code>New-NeedlePreview.ps1</code> or <code>New-DefenderNeedlePreview.ps1</code>.','Menu <b>6</b>: build and add the needle.','Menu <b>9</b> then <b>1</b>: force a reroll so it takes effect.']},
+   {k:'bundle canned needles network flapping power resume crash investigate expire',t:'Collect extra evidence for a user problem',s:['Menu <b>B</b>: pick a bundle (network flap, power resume, app crashes) and the number of days (default 14).','Say <b>Y</b> to the reroll offer.','Later, menu <b>W</b>, stream <b>Haystack</b>, to see what fired. The needles remove themselves when they expire.']},
    {k:'needles sync share different out of sync',t:'Are this machine\'s needles in sync with the share?',s:['Menu <b>5</b> (read-only).','If out of sync, menu <b>9</b> then <b>1</b> to force a reroll.']},
    {k:'captive portal browser not opening guest wifi xfinity',t:'The captive portal browser did not open',s:['Menu <b>W</b>: watch <b>Main</b>, <b>CapPortal</b>, and <b>CapPortalBase</b> while you reproduce it.','Menu <b>7</b>: set level 3 or higher first so the portal detail is logged.','Look for <code>cap_portal_redirect</code> (a redirect was seen) or <code>captive_portal_suspected</code> (no redirect, dead DNS likely).','Menu <b>8</b>: <code>Monitor-CaptivePortalRemediation.ps1</code> shows remediation live.']},
    {k:'vpn stuck connecting posture hostscan hung disconnect',t:'The VPN is stuck connecting or posturing',s:['Menu <b>W</b>, stream <b>Main</b>: look for <code>vpn_hostscan_posturing_hold</code> (a real scan is running: wait) or <code>vpncli_timeout</code> (the client is not answering).','See the <a href="#markers">log line lookup</a> for each marker.']},

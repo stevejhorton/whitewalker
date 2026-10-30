@@ -53,7 +53,8 @@ Describe 'CPR RC2 main loader' {
     }
 
     It 'uses RC2 version markers only in the new line' {
-        (Get-Content (Join-Path $script:ReleaseRoot 'install.ps1') -Raw) | Should -Match '\$WW_Version\s*=\s*"RC2\.0(\.\d+)?"'
+        (Get-Content (Join-Path $script:ReleaseRoot 'install.ps1') -Raw) | Should -Match '\$WW_Version\s*=\s*\$CprVersionFull'
+        (Get-Content (Join-Path $script:ReleaseRoot 'main\Main.Configuration.ps1') -Raw) | Should -Match '\$ver\s*=\s*"3\.14\.0_RC2\.0(\.\d+)?"'
         $script:Loader | Should -Match 'Version:\s*3\.14\.0_RC2\.0(\.\d+)?'
         $script:Loader | Should -Not -Match 'Version:\s*3\.14\.0_RC1\.25'
     }
