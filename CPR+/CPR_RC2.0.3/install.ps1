@@ -126,19 +126,24 @@ $ScriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 # -----------------------------------------------------------------------------
 # Single source of truth: main\Main.Configuration.ps1 ($ver, $CprTaskFolder, $TeeDefaultLevel).
 # Read as TEXT and never executed (that file is runtime configuration, not installer code).
-# No fallback on purpose: a silent default here would recreate the duplicated-constant
-# problem, and a package without its configuration is broken anyway.
+# A MISSING file always throws (the package is broken). Only $TeeDefaultLevel may fall back,
+# and only to 1, when the file is present but the value is absent or not a number (WARN).
 # -----------------------------------------------------------------------------
 function Get-CprConfigLiteral {
     param(
         [Parameter(Mandatory)][string]$Name,
-        [string]$Path = (Join-Path $ScriptRoot 'main\Main.Configuration.ps1')
+        [string]$Path = (Join-Path $ScriptRoot 'main\Main.Configuration.ps1'),
+        [string]$Default
     )
     if (-not (Test-Path -LiteralPath $Path)) {
         throw "Cannot read `$$Name from $Path - file not found; the install package is incomplete."
     }
     $pattern = '^\$' + [regex]::Escape($Name) + '\s*=\s*(?:"([^"]*)"|''([^'']*)''|(\d+))'
     $m = Select-String -LiteralPath $Path -Pattern $pattern | Select-Object -First 1
+    if (-not $m -and $PSBoundParameters.ContainsKey('Default')) {
+        Write-Warning "`$$Name not found in $Path - using default '$Default'."
+        return $Default
+    }
     if (-not $m) { throw "Cannot find a literal `$$Name assignment in $Path." }
     foreach ($i in 1..3) {
         if ($m.Matches[0].Groups[$i].Success) { return $m.Matches[0].Groups[$i].Value }
@@ -148,7 +153,9 @@ function Get-CprConfigLiteral {
 $CprVersionFull  = Get-CprConfigLiteral -Name 'ver'              # e.g. 3.14.0_RC2.0.3
 $WW_Version      = $CprVersionFull -replace '^.*_', ''           # e.g. RC2.0.3
 $CprTaskFolder   = Get-CprConfigLiteral -Name 'CprTaskFolder'    # Task Scheduler folder for ALL CPR jobs
-$TeeDefaultLevel = [int](Get-CprConfigLiteral -Name 'TeeDefaultLevel')
+$teeRaw = Get-CprConfigLiteral -Name 'TeeDefaultLevel' -Default '1'   # default only if value absent/non-numeric
+$TeeDefaultLevel = if ($teeRaw -match '^\d+$') { [int]$teeRaw } else { 1 }
+if ($teeRaw -notmatch '^\d+$') { Write-Warning "TeeDefaultLevel '$teeRaw' is not numeric - using 1." }
 
 # Deployment paths (variablized for future relocation)
 $MainScriptDeployDir = "C:\ProgramData\WhiteWalker"      # TODO: Move to protected dir when OS team identifies location

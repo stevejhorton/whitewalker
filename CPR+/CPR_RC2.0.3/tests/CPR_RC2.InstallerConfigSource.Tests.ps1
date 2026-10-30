@@ -1,6 +1,6 @@
 # The installer must not carry its own copies of the version, the CPR task folder or the default
 # tee level (RC2.0.3). It reads them from main\Main.Configuration.ps1 as text via
-# Get-CprConfigLiteral, with NO fallback (a package without its configuration is broken).
+# Get-CprConfigLiteral, and throws if the file is missing (broken package); only TeeDefaultLevel may default, to 1, if the value is absent.
 # haystack.ps1 reads the task folder from the same file and keeps a fallback only because it must
 # keep running on a box where the file cannot be read; a test pins that fallback to the config value.
 
@@ -37,6 +37,21 @@ Describe 'Get-CprConfigLiteral' {
     }
 }
 
+Describe 'Get-CprConfigLiteral -Default' {
+    BeforeAll { $script:Cfg2 = Join-Path $TestDrive 'cfg2.ps1' }
+    It 'returns the default when the file exists but the value is absent' {
+        '$other = 1' | Set-Content $script:Cfg2
+        Get-CprConfigLiteral -Name 'TeeDefaultLevel' -Path $script:Cfg2 -Default '1' 3>$null | Should -Be '1'
+    }
+    It 'still throws when the file is missing, even with a default' {
+        { Get-CprConfigLiteral -Name 'TeeDefaultLevel' -Path (Join-Path $TestDrive 'nope.ps1') -Default '1' } | Should -Throw '*package is incomplete*'
+    }
+    It 'prefers the real value over the default' {
+        '$TeeDefaultLevel = 2' | Set-Content $script:Cfg2
+        Get-CprConfigLiteral -Name 'TeeDefaultLevel' -Path $script:Cfg2 -Default '1' | Should -Be '2'
+    }
+}
+
 Describe 'install.ps1 and haystack.ps1 parse cleanly' {
     It 'has no PowerShell syntax errors (a bad message string once slipped into the reader)' -ForEach @(@{ F = 'install.ps1' }, @{ F = 'haystack.ps1' }) {
         $tokens = $null; $errors = $null
@@ -58,7 +73,7 @@ Describe 'the installer takes its constants from the configuration' {
     It 'reads all three through Get-CprConfigLiteral' {
         $script:Inst | Should -Match "\`$CprVersionFull\s*=\s*Get-CprConfigLiteral -Name 'ver'"
         $script:Inst | Should -Match "\`$CprTaskFolder\s*=\s*Get-CprConfigLiteral -Name 'CprTaskFolder'"
-        $script:Inst | Should -Match "\`$TeeDefaultLevel\s*=\s*\[int\]\(Get-CprConfigLiteral -Name 'TeeDefaultLevel'\)"
+        $script:Inst | Should -Match "Get-CprConfigLiteral -Name 'TeeDefaultLevel' -Default"
     }
     It 'the configuration defines each one as a literal the reader can parse, and the values are sane' {
         $ver = Get-CprConfigLiteral -Name 'ver' -Path $script:ConfigPath

@@ -409,7 +409,7 @@ Describe 'Installer tee profile handling' {
     }
     It 'honours the Custom opt-out and the default level' {
         $inst | Should -Match '\$info\.Custom'
-        $inst | Should -Match "\`$TeeDefaultLevel\s*=\s*\[int\]\(Get-CprConfigLiteral -Name 'TeeDefaultLevel'\)"
+        $inst | Should -Match "Get-CprConfigLiteral -Name 'TeeDefaultLevel' -Default"
         $inst | Should -Not -Match '(?m)^\$TeeDefaultLevel\s*=\s*\d'
     }
     It 'the default level has exactly one definition: the configuration (the installer reads it)' {
