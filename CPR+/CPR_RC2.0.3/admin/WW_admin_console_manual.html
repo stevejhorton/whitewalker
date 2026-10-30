@@ -158,6 +158,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <li><b>Needles expire.</b> A needle line can end with <code>|expires=2026-11-13</code> (or a full UTC time). Expired lines are skipped and removed at the next reroll. Local needles can last at most 30 days; the wizard (menu 6) and bundles default to 14.</li>
 <li><b>Duplicates are skipped.</b> If two needles watch the same log, event ID and filter, the first one wins and the repeat is logged and ignored. Labels and extended-logging flags do not count.</li>
 <li><b>Reroll offer.</b> After the wizard or a bundle changes <code>needles_local.cfg</code>, the console offers to reroll HayStack right away (Y is the default).</li>
+<li><b>Log timing (quick action 6, test only).</b> Adds <code>[+ms | elapsed]</code> to every main-log line so slow steps stand out. Also available as <code>WW_main.ps1 -WWTiming</code>.</li>
 <li><b>Run, then watch.</b> Items 1 and 2, 3 (self-update) and quick actions 1 and 3 now show the relevant log while they work, then return you to the menu.</li>
 <li><b>One source for shared settings.</b> The installer reads the version, task folder and default tee level from <code>main\Main.Configuration.ps1</code> instead of keeping its own copies. A package missing that file now fails the install loudly.</li>
 </ul>
@@ -290,7 +291,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <tr><td>2</td><td>Clear stale flag files</td><td>The runtime's own <code>Clear-StaleFlagFiles</code></td><td>Old flag files from a crash or reboot may be confusing a run</td></tr>
 <tr><td>3</td><td>Force an immediate WW_main run</td><td><code>WW_main.ps1</code></td><td>You do not want to wait for the next DHCP or unlock trigger. Shows the last 25 Main log lines afterwards</td></tr>
 <tr><td>4</td><td>Clear Blackhole VPN hosts entries</td><td><code>Set-VpnHostsEntry.ps1 -rm</code></td><td>Hosts-file entries are stopping the VPN from connecting</td></tr>
-<tr><td>5</td><td>Syslog path test</td><td><code>Test-CprSyslogPath.ps1 -Send</code></td><td>Events are not reaching Splunk. Checks state, DNS, route, queue, and sends one <code>CPR_TESTER</code> message (label <code>cpr_syslog_path_test</code>) to search for</td></tr></table></div>
+<tr><td>5</td><td>Syslog path test</td><td><code>Test-CprSyslogPath.ps1 -Send</code></td><td>Events are not reaching Splunk. Checks state, DNS, route, queue, and sends one <code>CPR_TESTER</code> message (label <code>cpr_syslog_path_test</code>) to search for</td></tr><tr><td>6</td><td>Log timing on/off</td><td>Creates or removes <code>C:\Windows\Temp\cpr_logtiming.flag</code></td><td>TEST ONLY: you want to see where a run spends its time. Every main-log line then ends with <code>[+ms since previous line | seconds since run start]</code>. Turn it off when done</td></tr></table></div>
 <div class="note"><b>Action 3 runs WhiteWalker in your window as the admin account.</b>The normal run is SYSTEM from Task Scheduler, so a manual run can behave a little differently (for example, user-context pieces). For true behavior, trigger it the normal way: lock and unlock.</div>
 </div></details>
 

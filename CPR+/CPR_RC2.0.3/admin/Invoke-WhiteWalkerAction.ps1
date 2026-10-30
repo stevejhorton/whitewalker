@@ -1469,6 +1469,22 @@ function Invoke-WWQuickSyslogPathTest {
     Write-Host "`nDone." -ForegroundColor Green
 }
 
+$script:WWTimingFlag = 'C:\Windows\Temp\cpr_logtiming.flag'
+function Invoke-WWQuickLogTimingToggle {
+    $on = Test-Path -LiteralPath $script:WWTimingFlag
+    Write-Host "`nLog timing is currently $(if ($on) { 'ON' } else { 'OFF' })." -ForegroundColor Cyan
+    Write-Host "When ON, every main-log line ends with [+ms since previous line | seconds since run start]. TEST ONLY: turn it off when done." -ForegroundColor Cyan
+    if (-not (Confirm-WWAction "Turn log timing $(if ($on) { 'OFF' } else { 'ON' }) now?")) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
+    if ($on) {
+        Remove-Item -LiteralPath $script:WWTimingFlag -Force
+        Write-WWAdminLog "Log timing turned OFF (removed $script:WWTimingFlag)"
+    } else {
+        Set-Content -LiteralPath $script:WWTimingFlag -Value "cpr log timing flag $(Get-Date -Format o)" -Encoding ASCII
+        Write-WWAdminLog "Log timing turned ON (created $script:WWTimingFlag)"
+    }
+    Write-Host "`nDone. Takes effect on the next WhiteWalker run." -ForegroundColor Green
+}
+
 function Invoke-WWQuickActionsMenu {
     Write-Host "`nQuick Actions:" -ForegroundColor Cyan
     Write-Host "  1. Force HayStack reroll"
@@ -1476,6 +1492,7 @@ function Invoke-WWQuickActionsMenu {
     Write-Host "  3. Force an immediate WW_main run"
     Write-Host "  4. Clear Blackhole VPN hosts entries"
     Write-Host "  5. Syslog path test (checks the route to the syslog VIP, sends one CPR_TESTER message)"
+    Write-Host "  6. Log timing on/off (TEST: adds [+ms | elapsed] to every main-log line)"
     $choice = Read-Host "Select a quick action (or press Enter to cancel)"
     switch ($choice) {
         '1' { Invoke-WWAction -Name 'QuickAction:HaystackReroll' -Action { Invoke-WWQuickHaystackReroll } }
@@ -1483,6 +1500,7 @@ function Invoke-WWQuickActionsMenu {
         '3' { Invoke-WWAction -Name 'QuickAction:ForceMainRun' -Action { Invoke-WWQuickForceMainRun } }
         '4' { Invoke-WWAction -Name 'QuickAction:ClearVpnHosts' -Action { Invoke-WWQuickClearVpnHosts } }
         '5' { Invoke-WWAction -Name 'QuickAction:SyslogPathTest' -Action { Invoke-WWQuickSyslogPathTest } }
+        '6' { Invoke-WWAction -Name 'QuickAction:LogTiming' -Action { Invoke-WWQuickLogTimingToggle } }
         default { Write-Host "Cancelled." -ForegroundColor Yellow }
     }
 }

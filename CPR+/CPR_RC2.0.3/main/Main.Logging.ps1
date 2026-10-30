@@ -59,9 +59,27 @@ function Add-LogLine([string]$line) {
     Add-Content -LiteralPath $failFile -Value ("{0} run={1} err={2} line={3}" -f (Get-Date -Format 'o'), $RunId, $lastErr, $line) -ErrorAction Stop
   } catch { }
 }
+# TEST-ONLY timing suffix. On when WW_main.ps1 is run with -WWTiming, or when the flag file
+# C:\Windows\Temp\cpr_logtiming.flag exists. Appends " [+<ms since previous line>ms | <s since run start>s]".
+# Off by default: the log text is then identical to what it always was.
+$script:WWTimingFlagPath = 'C:\Windows\Temp\cpr_logtiming.flag'
+$script:WWLogTiming = $false
+try {
+  $swSwitch = Get-Variable -Name WWTiming -ValueOnly -ErrorAction SilentlyContinue
+  $script:WWLogTiming = ([bool]$swSwitch) -or (Test-Path -LiteralPath $script:WWTimingFlagPath)
+} catch { $script:WWLogTiming = $false }
+$script:WWLogClock = [System.Diagnostics.Stopwatch]::StartNew()
+$script:WWLogLastMs = 0
+function Get-LogTimingSuffix {
+  $now = $script:WWLogClock.ElapsedMilliseconds
+  $delta = $now - $script:WWLogLastMs
+  $script:WWLogLastMs = $now
+  return (" [+{0}ms | {1}s]" -f $delta, ([math]::Round($now / 1000.0, 2)).ToString([System.Globalization.CultureInfo]::InvariantCulture))
+}
 function Write-Log { param([Parameter(Mandatory=$true)][string]$Message, [string]$Level = "INFO")
   $ts = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss.fff zzz")
   $logLine = "$ts [WW] [$Level] $Message"
+  if ($script:WWLogTiming) { $logLine += (Get-LogTimingSuffix) }
   Add-LogLine $logLine
 }
 function Write-DebugBlock {

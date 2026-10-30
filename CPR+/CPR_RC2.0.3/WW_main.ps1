@@ -3,6 +3,7 @@
 param(
   [switch]$WWDebug,
   [switch]$WWTrace,
+  [switch]$WWTiming,   # TEST: append [+delta | elapsed] to each main-log line (or touch C:\Windows\Temp\cpr_logtiming.flag)
   [switch]$WhatIf
 )
 
