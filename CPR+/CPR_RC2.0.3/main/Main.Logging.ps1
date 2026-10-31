@@ -50,7 +50,18 @@ function Add-LogLine([string]$line) {
   # If the line still cannot be written, leave a trace in log_write_failures.txt instead of dropping it silently.
   $lastErr = ''
   for ($i=1; $i -le 6; $i++) {
-    try   { Add-Content -Path $LogPath -Value $line -Encoding UTF8 -ErrorAction Stop; return }
+    try   {
+      $wSw = [System.Diagnostics.Stopwatch]::StartNew()
+      Add-Content -Path $LogPath -Value $line -Encoding UTF8 -ErrorAction Stop
+      # Diagnostic: a write that took >500 ms or needed a retry leaves one trace line (best effort, never throws).
+      if ($wSw.ElapsedMilliseconds -gt 500 -or $i -gt 1) {
+        try {
+          $slow = "{0} [WW] [WARN] log_write_slow ms={1} tries={2} lasterr='{3}'" -f (Get-Date).ToString("yyyy-MM-dd HH:mm:ss.fff zzz"), $wSw.ElapsedMilliseconds, $i, $lastErr
+          Add-Content -Path $LogPath -Value $slow -Encoding UTF8 -ErrorAction Stop
+        } catch { }
+      }
+      return
+    }
     catch { $lastErr = $_.Exception.Message; Start-Sleep -Milliseconds (50 * $i) }
   }
   Write-Host "LOG WRITE FAILED: $lastErr"
