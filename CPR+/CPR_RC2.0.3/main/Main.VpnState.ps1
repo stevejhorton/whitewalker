@@ -177,7 +177,7 @@ function Test-RecentWakeFromSleep {
 # text. On timeout the child process is killed, a WARN is logged and '' is returned, which callers already
 # treat as "state unknown". A launch failure is NOT swallowed, so existing try/catch blocks still see it.
 # Per-run cache of read-only vpncli 'stats' output. Every call refreshes it; it is READ only when a
-# caller passes -MaxAgeSec (Get-VpnTunnelFlavor does, with a few seconds), so the polling loops that
+# caller passes -MaxAgeSec (Get-VpnTunnelFlavor does, with 6 s: the state call ahead of it takes ~2 s and other work ~1 s), so the polling loops that
 # need a fresh value never see a stale one. Each real vpncli call costs ~2 s on a managed endpoint.
 $script:VpnCliStatsCache = $null
 function Invoke-VpnCliBounded {
@@ -187,6 +187,8 @@ function Invoke-VpnCliBounded {
     [int]$MaxAgeSec = 0
   )
   $isStats = ($Arguments.Trim() -ieq 'stats')
+  # Anything that can change the tunnel invalidates the cached stats.
+  if ($Arguments -match '(?i)^\s*(connect|disconnect)\b') { $script:VpnCliStatsCache = $null }
   if ($isStats -and $MaxAgeSec -gt 0 -and $script:VpnCliStatsCache) {
     $ageMs = ([datetime]::UtcNow - $script:VpnCliStatsCache.At).TotalMilliseconds
     if ($ageMs -ge 0 -and $ageMs -le ($MaxAgeSec * 1000)) {
@@ -479,7 +481,7 @@ function Get-VpnStateStable {
 function Get-VpnTunnelFlavor {
   $statsText  = ""
   $statusText = ""
-  try { $statsText  = (Invoke-VpnCliBounded -Arguments 'stats' -MaxAgeSec 3) }  catch { Write-Log "Get-VpnTunnelFlavor: stats error: $_" }
+  try { $statsText  = (Invoke-VpnCliBounded -Arguments 'stats' -MaxAgeSec 6) }  catch { Write-Log "Get-VpnTunnelFlavor: stats error: $_" }
   try { $statusText = (Invoke-VpnCliBounded -Arguments 'status') }  catch { Write-Log "Get-VpnTunnelFlavor: status error: $_" }
 
   if ($WWDebug) { Write-Log "DEBUG: classifying tunnel flavor from vpncli stats/status." }
