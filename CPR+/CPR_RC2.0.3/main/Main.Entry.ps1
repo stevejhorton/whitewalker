@@ -187,12 +187,16 @@ function Invoke-WhiteWalkerMain {
 
     $mainStartedAt = Get-Date
     $script:LastWebHelper301Evidence = $null
+    $swBoot = [System.Diagnostics.Stopwatch]::StartNew()
     $ciscoPath = Get-CiscoInstallPath
+    $msCiscoPath = $swBoot.ElapsedMilliseconds; $swBoot.Restart()
 
     Initialize-Logger
+    $msLoggerInit = $swBoot.ElapsedMilliseconds; $swBoot.Restart()
     Write-RunHeader
-    Write-Log ("phase_timing phase='startup_bootstrap' elapsed_ms={0} startup_elapsed_ms={0}" -f `
-        [math]::Round(((Get-Date) - $mainStartedAt).TotalMilliseconds)) "INFO"
+    $msHeader = $swBoot.ElapsedMilliseconds
+    Write-Log ("phase_timing phase='startup_bootstrap' elapsed_ms={0} startup_elapsed_ms={0} cisco_path_ms={1} logger_init_ms={2} header_ms={3} {4}" -f `
+        [math]::Round(((Get-Date) - $mainStartedAt).TotalMilliseconds), $msCiscoPath, $msLoggerInit, $msHeader, $script:RunHeaderTimingText) "INFO"
 
     if (-not $ciscoPath) { 
         Write-Log "Error: Cisco Secure Client install path not found."

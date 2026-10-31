@@ -63,6 +63,7 @@ $script:DiagToolInventory = @(
     [pscustomobject]@{ Path = "diagnostics\Get-CapPortalDiag.ps1";                     Description = "Consolidated captive-portal telemetry diagnostic (Haystack/Tee config, queue, state.json, HayStack_Monitor task)." }
     [pscustomobject]@{ Path = "diagnostics\New-NeedlePreview.ps1";                     Description = "Read-only: preview a NEEDLE candidate against real Event Log data before committing it." }
     [pscustomobject]@{ Path = "diagnostics\New-DefenderNeedlePreview.ps1";             Description = "Read-only: list MDM firewall rules and generate a ready-to-paste DEFENDER needle line." }
+    [pscustomobject]@{ Path = "diagnostics\Test-VpncliParallel.ps1";                 Description = "Read-only: times vpncli stats/state/status one after another vs all at once and checks the results agree (never connects or disconnects)." }
     [pscustomobject]@{ Path = "diagnostics\Test-CprSyslogPath.ps1";                  Description = "Read-only: can this box reach the syslog VIP? (state, DNS, route, queue). Quick Actions option 5 also sends a CPR_TESTER test message." }
     [pscustomobject]@{ Path = "diagnostics\Test-DefenderFwRuleExists.ps1";             Description = "Read-only: check whether a specific MDM-delivered firewall rule exists in the registry." }
     [pscustomobject]@{ Path = "diagnostics\browser_test.ps1";                         Description = "Launches a test browser session the same way CPR does from SYSTEM context." }

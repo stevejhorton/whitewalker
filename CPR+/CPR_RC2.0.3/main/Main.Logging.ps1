@@ -362,7 +362,9 @@ function Write-RunHeader {
   Add-LogLine ("log_path={0}" -f $LogPath)
   
   # Add system context
+  $hdrSw = [System.Diagnostics.Stopwatch]::StartNew()
   $sysCtx = Get-SystemContext
+  $msSysctx = $hdrSw.ElapsedMilliseconds; $hdrSw.Restart()
   Add-LogLine ("system={0}" -f $sysCtx.OS)
   Add-LogLine ("model={0}" -f $sysCtx.Model)
   Add-LogLine ("serial={0}" -f $sysCtx.SerialNumber)
@@ -372,6 +374,7 @@ function Write-RunHeader {
   # zero manifest I/O on the fast path; see WW_csc_client_info.ps1 header)
   $cscVersion = "Unknown"
   $cscSource  = "Unknown"
+  $hdrSw.Restart()
   try {
     $cscInfo = Get-CiscoSecureClientInfo
     $cscVersion = [string]$cscInfo.CoreVersion
@@ -394,7 +397,9 @@ function Write-RunHeader {
   Add-LogLine ("tee_enabled={0}  events_file={1}" -f $TeeEnabled, $TeeEventsFile)
   Add-LogLine ("xml_vault_enabled={0}  script={1}" -f $XmlVaultEnabled, $XmlVaultScriptPath)
   Add-LogLine ("cap_portal_runner_mode={0}  base_script={1}" -f $CapPortalRunnerMode, $CapPortalBaseScriptPath)
+  $msCsc = $hdrSw.ElapsedMilliseconds; $hdrSw.Restart()
   $vpnProfile = (Get-ItemProperty -Path "HKLM:\SYSTEM\UHG\DSM" -ErrorAction SilentlyContinue).VPN
+  $msDsm = $hdrSw.ElapsedMilliseconds; $hdrSw.Restart()
   if ($vpnProfile) {
       Add-LogLine ("vpn_profile={0}" -f $vpnProfile)
   } else {
@@ -419,6 +424,9 @@ function Write-RunHeader {
   } catch {
       Write-Log "HeaderCache: refresh skipped - $_" "DEBUG"
   }
+
+  $msHdrCache = $hdrSw.ElapsedMilliseconds
+  $script:RunHeaderTimingText = "sysctx_ms=$msSysctx csc_ms=$msCsc dsm_ms=$msDsm hdrcache_ms=$msHdrCache"
 
   Add-LogLine $bar
 }
