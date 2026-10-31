@@ -90,7 +90,7 @@ function Get-CprNetworkFingerprint {
     ) -join '|').ToLowerInvariant()
 }
 
-function Get-NetworkInfo {
+function Get-NetworkInfoLegacy {
     <#
     .SYNOPSIS
     Gather network state for ALL active physical adapters (RC1.24).
@@ -405,6 +405,260 @@ function Get-NetworkInfo {
         [math]::Round($ssidDiscoveryMs), $netInfo.ActiveAdapterCount, [math]::Round($adapterEnumerationMs), `
         [math]::Round($ipAddressMs), [math]::Round($gatewayMs), [math]::Round($dnsMs), [math]::Round($leaseMs)) "INFO"
     return $netInfo
+}
+
+# =============================================================================
+# RC2.0.3 fast network probe
+# -----------------------------------------------------------------------------
+# The legacy Get-NetworkInfoLegacy calls five or six NetTCPIP / DnsClient cmdlets, each of which
+# loads a module and makes its own CIM round trip in a fresh powershell.exe (~2-3.5 s per run).
+# This path reads the same facts in-process from .NET (NetworkInterface) and the registry (DHCP
+# lease times) in tens of milliseconds. It is locale independent (no ipconfig text parsing).
+#
+# $NetProbeMode (Main.Configuration.ps1):
+#   legacy - old cmdlet path only (also the behaviour when the variable is not defined)
+#   parity - run legacy (its result is used) AND the fast probe, log net_probe_parity=ok|DIFF
+#   fast   - use the fast probe; fall back to legacy for 0 or >1 active adapters (primary-adapter
+#            selection needs route metrics) or on any error
+# =============================================================================
+function Get-CprNicSnapshot {
+    # Plain-data view of the Up, non-loopback/tunnel NICs. Never throws.
+    $out = New-Object System.Collections.Generic.List[object]
+    try {
+        $skip = @([System.Net.NetworkInformation.NetworkInterfaceType]::Loopback,
+                  [System.Net.NetworkInformation.NetworkInterfaceType]::Tunnel,
+                  [System.Net.NetworkInformation.NetworkInterfaceType]::Ppp)
+        foreach ($nic in [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces()) {
+            try {
+                if ($nic.OperationalStatus -ne [System.Net.NetworkInformation.OperationalStatus]::Up) { continue }
+                if ($skip -contains $nic.NetworkInterfaceType) { continue }
+                $ip = $nic.GetIPProperties()
+                $v4 = $null; try { $v4 = $ip.GetIPv4Properties() } catch { }
+                $uni = @($ip.UnicastAddresses | Where-Object {
+                    $_.Address.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and $_.Address.ToString() -notmatch '^127\.' })
+                $first = $uni | Select-Object -First 1
+                $macBytes = $nic.GetPhysicalAddress().GetAddressBytes()
+                $out.Add([pscustomobject]@{
+                    Name         = [string]$nic.Name
+                    Description  = [string]$nic.Description
+                    Type         = [string]$nic.NetworkInterfaceType
+                    Id           = [string]$nic.Id
+                    Index        = if ($v4) { [int]$v4.Index } else { $null }
+                    IsDhcp       = if ($v4) { [bool]$v4.IsDhcpEnabled } else { $false }
+                    Mac          = (($macBytes | ForEach-Object { $_.ToString('X2') }) -join '-')
+                    IPv4         = if ($first) { $first.Address.ToString() } else { $null }
+                    PrefixLength = if ($first) { [int]$first.PrefixLength } else { $null }
+                    Gateways     = @($ip.GatewayAddresses | Where-Object {
+                        $_.Address.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork -and $_.Address.ToString() -ne '0.0.0.0' } |
+                        ForEach-Object { $_.Address.ToString() })
+                    Dns          = @($ip.DnsAddresses | Where-Object {
+                        $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork } | ForEach-Object { $_.ToString() })
+                    DnsSuffix    = [string]$ip.DnsSuffix
+                }) | Out-Null
+            } catch { }
+        }
+    } catch { }
+    return ,@($out)
+}
+
+function Test-CprPhysicalNic {
+    # Same exclusion regex the legacy path applies to InterfaceDescription.
+    param($Nic)
+    if ($null -eq $Nic) { return $false }
+    if ([string]$Nic.Description -match 'Cisco|VPN|TAP|Virtual|Tunnel|WAN Miniport|AnyConnect') { return $false }
+    if ([string]$Nic.Type -in @('Loopback','Tunnel','Ppp')) { return $false }
+    return $true
+}
+
+function ConvertFrom-CprLeaseEpoch {
+    param($Value)
+    if ($null -eq $Value) { return $null }
+    try {
+        $secs = [double]([int64]$Value -band 0xFFFFFFFFL)
+        if ($secs -le 0) { return $null }
+        $epoch = New-Object DateTime 1970, 1, 1, 0, 0, 0, ([DateTimeKind]::Utc)
+        return $epoch.AddSeconds($secs).ToLocalTime()
+    } catch { return $null }
+}
+
+function Get-CprDhcpLeaseFromRegistry {
+    param([string]$Guid)
+    if ([string]::IsNullOrWhiteSpace($Guid)) { return $null }
+    try {
+        $k = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey("SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$Guid")
+        if (-not $k) { return $null }
+        try {
+            return [pscustomobject]@{ Obtained = $k.GetValue('LeaseObtainedTime'); Terminates = $k.GetValue('LeaseTerminatesTime') }
+        } finally { $k.Close() }
+    } catch { return $null }
+}
+
+function Get-CprGlobalDnsSuffixes {
+    # Machine-wide search list: policy value wins, else the TCP/IP parameter (what Get-DnsClientGlobalSetting reports).
+    $specs = @(
+        @{ Path = 'SOFTWARE\Policies\Microsoft\Windows NT\DNSClient'; Name = 'SearchList' },
+        @{ Path = 'SYSTEM\CurrentControlSet\Services\Tcpip\Parameters'; Name = 'SearchList' }
+    )
+    foreach ($spec in $specs) {
+        try {
+            $k = [Microsoft.Win32.Registry]::LocalMachine.OpenSubKey($spec.Path)
+            if (-not $k) { continue }
+            try { $v = [string]$k.GetValue($spec.Name) } finally { $k.Close() }
+            if (-not [string]::IsNullOrWhiteSpace($v)) {
+                return @($v.Split(',') | ForEach-Object { $_.Trim().ToLower() } | Where-Object { $_ })
+            }
+        } catch { }
+    }
+    return @()
+}
+
+function ConvertTo-CprAdapterRecordFast {
+    param($Nic, $Lease = $null, [string]$Ssid = 'N/A')
+    $mediaType = if ([string]$Nic.Type -match 'Wireless80211') { 'Native 802.11' } elseif ([string]$Nic.Type -match 'Ethernet') { '802.3' } else { '' }
+    $adapterLike = [pscustomobject]@{ Name = $Nic.Name; InterfaceDescription = $Nic.Description; MediaType = $mediaType; NdisPhysicalMedium = ''; Virtual = $false }
+    $class = Get-CprAdapterClass -Adapter $adapterLike
+    $record = @{
+        InterfaceName            = $Nic.Name
+        InterfaceIndex           = $Nic.Index
+        InterfaceGuid            = [string]$Nic.Id
+        AdapterIdentifier        = if ($Nic.Id) { [string]$Nic.Id } else { [string]$Nic.Index }
+        AdapterClass             = $class
+        OperationalState         = 'Up'
+        MACAddress               = $Nic.Mac
+        ConnectionType           = if ($class -eq 'wifi') { 'WiFi' } elseif ($class -eq 'ethernet') { 'Ethernet' } else { 'Unknown' }
+        SSID                     = if ($class -eq 'wifi') { $Ssid } else { 'N/A' }
+        IPAddress                = if ($Nic.IPv4) { $Nic.IPv4 } else { 'N/A' }
+        PrefixLength             = $Nic.PrefixLength
+        SubnetMask               = if ($Nic.IPv4) { $Nic.PrefixLength } else { 'N/A' }
+        DefaultGateway           = if (@($Nic.Gateways).Count -gt 0) { [string]@($Nic.Gateways)[0] } else { 'N/A' }
+        DNSServers               = @($Nic.Dns)
+        ConnectionSpecificSuffix = if (-not [string]::IsNullOrWhiteSpace($Nic.DnsSuffix)) { $Nic.DnsSuffix.ToLower().Trim() } else { 'N/A' }
+        LeaseObtained            = 'N/A'
+        LeaseExpires             = 'N/A'
+        LeaseDurationSeconds     = $null
+        RouteMetric              = $null
+    }
+    if ($Nic.IsDhcp -and $Lease) {
+        $o = ConvertFrom-CprLeaseEpoch $Lease.Obtained
+        $e = ConvertFrom-CprLeaseEpoch $Lease.Terminates
+        if ($o -and $e) {
+            $record.LeaseObtained        = $o.ToString('dddd, MMMM d, yyyy h:mm:ss tt')
+            $record.LeaseExpires         = $e.ToString('dddd, MMMM d, yyyy h:mm:ss tt')
+            $record.LeaseDurationSeconds = [int][math]::Round(($e - $o).TotalSeconds)
+        }
+    }
+    return $record
+}
+
+function Get-NetworkInfoFast {
+    # Returns a $netInfo hashtable in the same shape as Get-NetworkInfoLegacy, or $null when the
+    # fast path does not apply (no active adapter, or more than one: primary selection needs route metrics).
+    param([hashtable]$SsidByName = @{}, [switch]$LogDetails, $Nics = $null)
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    if ($null -eq $Nics) { $Nics = Get-CprNicSnapshot }
+    $active = @($Nics | Where-Object { Test-CprPhysicalNic $_ })
+    if ($active.Count -ne 1) { return $null }
+    $nic = $active[0]
+
+    $ssid = 'N/A'
+    if ($SsidByName.ContainsKey($nic.Name)) { $ssid = [string]$SsidByName[$nic.Name] }
+    else {
+        $probe = ConvertTo-CprAdapterRecordFast -Nic $nic
+        if ($probe.AdapterClass -eq 'wifi') { $ssid = Get-WlanSsidForAdapter -AdapterName $nic.Name }
+    }
+    $lease  = if ($nic.IsDhcp) { Get-CprDhcpLeaseFromRegistry -Guid $nic.Id } else { $null }
+    $record = ConvertTo-CprAdapterRecordFast -Nic $nic -Lease $lease -Ssid $ssid
+
+    $netInfo = @{
+        CapturedAt = (Get-Date).ToString('o')
+        SSID = $record.SSID; InterfaceName = $record.InterfaceName; InterfaceIndex = $record.InterfaceIndex
+        InterfaceGuid = $record.InterfaceGuid; AdapterIdentifier = $record.AdapterIdentifier
+        AdapterClass = $record.AdapterClass; OperationalState = $record.OperationalState
+        IPAddress = $record.IPAddress; PrefixLength = $record.PrefixLength; SubnetMask = $record.SubnetMask
+        DefaultGateway = $record.DefaultGateway; DNSServers = $record.DNSServers; DNSSuffixes = @()
+        MACAddress = $record.MACAddress; ConnectionType = $record.ConnectionType
+        ConnectionSpecificSuffix = $record.ConnectionSpecificSuffix
+        LeaseObtained = $record.LeaseObtained; LeaseExpires = $record.LeaseExpires; LeaseDurationSeconds = $record.LeaseDurationSeconds
+        Adapters = @($record); ActiveAdapterCount = 1; MultipleActiveAdapters = $false
+    }
+
+    $suffixes = New-Object System.Collections.Generic.List[string]
+    if ($record.ConnectionSpecificSuffix -ne 'N/A') { $suffixes.Add($record.ConnectionSpecificSuffix) }
+    foreach ($s in (Get-CprGlobalDnsSuffixes)) { if ($suffixes -notcontains $s) { $suffixes.Add($s) } }
+    try {
+        $dom = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties().DomainName
+        if (-not [string]::IsNullOrWhiteSpace($dom)) {
+            $c = $dom.ToLower().Trim()
+            if ($c -notin @('(none)','none') -and $suffixes -notcontains $c) { $suffixes.Add($c) }
+        }
+    } catch { }
+    $netInfo.DNSSuffixes = @($suffixes | Select-Object -Unique)
+
+    if ($LogDetails -and $record.LeaseDurationSeconds -ne $null) {
+        if ($record.LeaseDurationSeconds -lt $DhcpLeaseShortWarnSeconds) {
+            Write-Log ("DHCP lease on $($record.InterfaceName) is abnormally short ($($record.LeaseDurationSeconds)s) - " +
+                       "possible DHCP scope/relay misconfiguration, may cause frequent renewal/CPR re-trigger") "WARN"
+        } else {
+            Write-Log "DHCP lease on $($record.InterfaceName): $($record.LeaseDurationSeconds)s (obtained $($record.LeaseObtained), expires $($record.LeaseExpires))" "DEBUG"
+        }
+    } elseif ($LogDetails) {
+        Write-Log "No DHCP lease data for $($record.InterfaceName) (static address or lease info unavailable)" "DEBUG"
+    }
+
+    $netInfo.Fingerprint = Get-CprNetworkFingerprint -NetworkInfo $netInfo
+    $script:LastFastProbeMs = $sw.ElapsedMilliseconds
+    return $netInfo
+}
+
+function Compare-CprNetworkInfo {
+    # Field-by-field comparison of two netInfo results. Returns a list of "name(fast='x' legacy='y')" strings; empty = parity.
+    param($Fast, $Legacy)
+    $diffs = New-Object System.Collections.Generic.List[string]
+    $norm = { param($v) if ($null -eq $v) { '' } elseif ($v -is [System.Array]) { (@($v) | ForEach-Object { [string]$_ }) -join ',' } else { [string]$v } }
+    foreach ($f in 'InterfaceName','InterfaceIndex','InterfaceGuid','AdapterClass','OperationalState','MACAddress','ConnectionType',
+                   'SSID','IPAddress','PrefixLength','DefaultGateway','DNSServers','ConnectionSpecificSuffix','LeaseObtained','LeaseExpires','ActiveAdapterCount') {
+        $a = & $norm $Fast[$f]; $b = & $norm $Legacy[$f]
+        if ($a -ine $b) { $diffs.Add("$f(fast='$a' legacy='$b')") }
+    }
+    $fd = $Fast['LeaseDurationSeconds']; $ld = $Legacy['LeaseDurationSeconds']
+    if (($null -eq $fd) -ne ($null -eq $ld) -or ($null -ne $fd -and [math]::Abs([int]$fd - [int]$ld) -gt 2)) { $diffs.Add("LeaseDurationSeconds(fast='$fd' legacy='$ld')") }
+    $fs = ((@($Fast['DNSSuffixes']) | Sort-Object) -join ','); $ls = ((@($Legacy['DNSSuffixes']) | Sort-Object) -join ',')
+    if ($fs -ine $ls) { $diffs.Add("DNSSuffixes(fast='$fs' legacy='$ls')") }
+    return $diffs.ToArray()
+}
+
+function Get-NetworkInfo {
+    $mode = 'legacy'
+    try { $v = Get-Variable -Name NetProbeMode -ValueOnly -ErrorAction Stop; if ($v) { $mode = ([string]$v).ToLowerInvariant() } } catch { }
+
+    if ($mode -eq 'fast') {
+        try {
+            $fast = Get-NetworkInfoFast -LogDetails
+            if ($fast) {
+                Write-Log ("phase_timing phase='network_context_snapshot' elapsed_ms={0} probe='fast' adapter_count=1" -f $script:LastFastProbeMs) "INFO"
+                return $fast
+            }
+            Write-Log "net_probe fast not applicable (no active adapter or more than one) - using legacy" "DEBUG"
+        } catch { Write-Log "net_probe fast failed: $_ - using legacy" "WARN" }
+        return (Get-NetworkInfoLegacy)
+    }
+
+    $legacy = Get-NetworkInfoLegacy
+    if ($mode -eq 'parity') {
+        try {
+            $ssidMap = @{}
+            foreach ($a in @($legacy.Adapters)) { $ssidMap[[string]$a.InterfaceName] = [string]$a.SSID }
+            $fast = Get-NetworkInfoFast -SsidByName $ssidMap
+            if (-not $fast) {
+                Write-Log "net_probe_parity=skipped reason=adapter_count_$($legacy.ActiveAdapterCount)" "DEBUG"
+            } else {
+                $diffs = @(Compare-CprNetworkInfo -Fast $fast -Legacy $legacy)
+                if ($diffs.Count -eq 0) { Write-Log ("net_probe_parity=ok fast_ms={0}" -f $script:LastFastProbeMs) "INFO" }
+                else { Write-Log ("net_probe_parity=DIFF fast_ms={0} fields={1} :: {2}" -f $script:LastFastProbeMs, $diffs.Count, ($diffs -join '; ')) "WARN" }
+            }
+        } catch { Write-Log "net_probe_parity=error $_" "WARN" }
+    }
+    return $legacy
 }
 
 function Test-CprNetworkSnapshotFresh {

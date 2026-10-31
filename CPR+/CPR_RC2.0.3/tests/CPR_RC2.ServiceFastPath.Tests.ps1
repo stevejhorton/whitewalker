@@ -30,7 +30,7 @@ BeforeAll {
     $script:baseSource = Get-Content $script:basePath -Raw
     $script:install = Get-Content $script:installPath -Raw
     $script:schema = Get-Content $script:schemaPath -Raw
-    $script:networkInfoFunction = Get-CprFunctionText $script:networkPath @('Get-NetworkInfo')
+    $script:networkInfoFunction = Get-CprFunctionText $script:networkPath @('Get-NetworkInfoLegacy')
     $script:baseNetworkFunction = Get-CprFunctionText $script:basePath @('Get-BaseCapNetworkContext')
 
     function global:Write-Log { param($Message, $Level = 'INFO') }

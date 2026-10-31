@@ -159,6 +159,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <li><b>Duplicates are skipped.</b> If two needles watch the same log, event ID and filter, the first one wins and the repeat is logged and ignored. Labels and extended-logging flags do not count.</li>
 <li><b>Reroll offer.</b> After the wizard or a bundle changes <code>needles_local.cfg</code>, the console offers to reroll HayStack right away (Y is the default).</li>
 <li><b>Log timing (quick action 6, test only).</b> Adds <code>[+ms | elapsed]</code> to every main-log line so slow steps stand out. Also available as <code>WW_main.ps1 -WWTiming</code>.</li>
+<li><b>Faster network snapshot (soak).</b> A fast in-process probe now runs beside the old cmdlet path and logs <code>net_probe_parity=ok</code> (or <code>DIFF</code> with the fields that differ). The old result is still the one used until <code>$NetProbeMode</code> in <code>Main.Configuration.ps1</code> is switched from <code>parity</code> to <code>fast</code>.</li>
 <li><b>Run, then watch.</b> Items 1 and 2, 3 (self-update) and quick actions 1 and 3 now show the relevant log while they work, then return you to the menu.</li>
 <li><b>One source for shared settings.</b> The installer reads the version, task folder and default tee level from <code>main\Main.Configuration.ps1</code> instead of keeping its own copies. A package missing that file now fails the install loudly.</li>
 </ul>

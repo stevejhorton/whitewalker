@@ -365,6 +365,11 @@ $SelfUpdateInstallScript     = "install.ps1"
 # (a Pester test enforces it). Existence checks read System32\Tasks\CPR directly.
 $CprTaskFolder = "\CPR\"
 
+# Network snapshot source (RC2.0.3). legacy = NetTCPIP/DnsClient cmdlets (~2-3 s per run);
+# parity = run legacy AND the fast .NET/registry probe, log net_probe_parity=ok|DIFF (legacy result is used);
+# fast = use the fast probe (falls back to legacy for 0 or >1 active adapters, or on any error).
+$NetProbeMode = "parity"
+
 # TEMPORARY pivot for WW_migrate_legacy_tasks.ps1 (run by install.ps1): removes CPR
 # jobs from their old root / \HayStack\ locations. Set $false to turn it off.
 # Retire the whole thing once no endpoint runs a pre-RC2.1 build (see that script's header).
