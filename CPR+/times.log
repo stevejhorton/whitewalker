@@ -1,0 +1,179 @@
+[Main] ================================================================================
+[Main] RUN START  White Walker v3.14.0_RC2.0.3
+[Main] run_id=20261030210042170-21044 host=LHTU05CD1503KF5 user=NT AUTHORITY\SYSTEM
+[Main] build=1cb9dc12f963 files=13
+[Main] ts_local=2026-10-30 21:00:43.291 -04:00  ts_utc=2026-10-31 01:00:43.288 UTC
+[Main] log_path=C:\ProgramData\WhiteWalker\logs\white_walker.main.log
+[Main] system=Microsoft Windows 11 Enterprise 10.0.22631
+[Main] model=HP HP ZBook Power 15.6 inch G8 Mobile Workstation PC
+[Main] serial=5CD1503KF5
+[Main] last_boot=2026-10-30 11:27:31
+[Main] 2026-10-30 21:00:43.804 -04:00 [WW] [DEBUG] CscInfo: cache hit (hash match, 11.3h old) - skipping manifest scan [+1639ms | 1.64s]
+[Main] csc_version=5.1.17.3394  source=manifest (cached)
+[Main] preflight_mode=RC1.6 gateway.optum.com (https, 200/404=online, 3xx=route-to-workflow)
+[Main] blackhole_enabled=False  script=C:\ProgramData\WhiteWalker\Set-VpnHostsEntry.ps1
+[Main] blackhole_flag_present=False
+[Main] haystack_enabled=True  script=C:\ProgramData\WhiteWalker\haystack.ps1
+[Main] tee_enabled=True  events_file=C:\ProgramData\WhiteWalker\WW_tee_events.psd1
+[Main] xml_vault_enabled=True  script=C:\ProgramData\WhiteWalker\WW_xml_vault.ps1
+[Main] cap_portal_runner_mode=base  base_script=C:\ProgramData\WhiteWalker\WW_cap_portal_runner_base.ps1
+[Main] vpn_profile=uhg_always_on_exception_elevated
+[Main] ================================================================================
+[Main] 2026-10-30 21:00:43.930 -04:00 [WW] [INFO] phase_timing phase='startup_bootstrap' elapsed_ms=684 startup_elapsed_ms=684 [+122ms | 1.76s]
+[Main] 2026-10-30 21:00:43.934 -04:00 [WW] [INFO] CiscoPath=C:\Program Files (x86)\Cisco\Cisco Secure Client [+3ms | 1.76s]
+[Main] 2026-10-30 21:00:43.935 -04:00 [WW] [INFO] vpncli=C:\Program Files (x86)\Cisco\Cisco Secure Client\vpncli.exe [+1ms | 1.76s]
+[Main] 2026-10-30 21:00:43.937 -04:00 [WW] [INFO] posturecli=C:\Program Files (x86)\Cisco\Cisco Secure Client\posturecli.exe [+2ms | 1.77s]
+[Main] 2026-10-30 21:00:43.942 -04:00 [WW] [INFO] CPR+ v3.14.0_RC2.0.3 starting... [+5ms | 1.77s]
+[Main] 2026-10-30 21:00:43.955 -04:00 [WW] [DEBUG] Flag file present but fresh (age: 12min): network_interrupt.flag [+13ms | 1.78s]
+[Main] 2026-10-30 21:00:43.958 -04:00 [WW] [DEBUG] No stale flag files found [+3ms | 1.79s]
+[Main] 2026-10-30 21:00:43.965 -04:00 [WW] [DEBUG] Network interrupt flag set for any active instances [+7ms | 1.8s]
+[Main] 2026-10-30 21:00:45.551 -04:00 [WW] [DEBUG] WiFi SSID detected on 'Wi-Fi': cia_van [+1588ms | 3.38s]
+[Main] 2026-10-30 21:00:46.094 -04:00 [WW] [DEBUG] DHCP lease on Wi-Fi: 86400s (obtained Friday, October 30, 2026 7:57:26 PM, expires Saturday, October 31, 2026 7:57:26 PM) [+542ms | 3.92s]
+[Main] 2026-10-30 21:00:46.186 -04:00 [WW] [INFO] phase_timing phase='network_context_snapshot' elapsed_ms=2199 adapter_ip_gateway_ms=2061 ssid_discovery_ms=138 adapter_count=1 adapter_enumeration_ms=698 ip_address_ms=49 gateway_ms=3 dns_ms=442 lease_ms=49 [+92ms | 4.02s]
+[Main] 2026-10-30 21:00:50.431 -04:00 [WW] [DEBUG] Truncated very long vpncli output for parsing [+4246ms | 8.26s]
+[Main] 2026-10-30 21:00:50.443 -04:00 [WW] [DEBUG] VPN state from >> state: line: Connected [+11ms | 8.27s]
+[Main] 2026-10-30 21:00:50.447 -04:00 [WW] [DEBUG] User tunnel active (management disconnected) [+4ms | 8.28s]
+[Main] 2026-10-30 21:00:50.947 -04:00 [WW] [DEBUG] No recent wake from sleep detected in last 120s [+500ms | 8.78s]
+[Main] 2026-10-30 21:00:50.964 -04:00 [WW] [INFO] early_vpn_gate state='Connected' has_ip=True acted=False reason='no_action' [+17ms | 8.8s]
+[Main] 2026-10-30 21:00:50.973 -04:00 [WW] [INFO] === Network Information === [+8ms | 8.8s]
+[Main] 2026-10-30 21:00:50.975 -04:00 [WW] [INFO]   Connection Type: WiFi [+3ms | 8.81s]
+[Main] 2026-10-30 21:00:50.980 -04:00 [WW] [INFO]   Interface: Wi-Fi [+5ms | 8.81s]
+[Main] 2026-10-30 21:00:50.983 -04:00 [WW] [INFO]   SSID: cia_van [+3ms | 8.81s]
+[Main] 2026-10-30 21:00:50.989 -04:00 [WW] [INFO]   IP Address: 10.10.69.217/24 [+5ms | 8.82s]
+[Main] 2026-10-30 21:00:50.990 -04:00 [WW] [INFO]   Default Gateway: 10.10.69.1 [+1ms | 8.82s]
+[Main] 2026-10-30 21:00:50.993 -04:00 [WW] [INFO]   MAC Address: F4-A4-75-A8-95-2B [+3ms | 8.82s]
+[Main] 2026-10-30 21:00:50.995 -04:00 [WW] [INFO]   DNS Servers: 10.10.69.1 [+3ms | 8.83s]
+[Main] 2026-10-30 21:00:50.998 -04:00 [WW] [INFO]   Connection-Specific Suffix: horton.lan [+2ms | 8.83s]
+[Main] 2026-10-30 21:00:51.000 -04:00 [WW] [INFO]   Lease Obtained. . . . . . . . . . : Friday, October 30, 2026 7:57:26 PM [+3ms | 8.83s]
+[Main] 2026-10-30 21:00:51.002 -04:00 [WW] [INFO]   Lease Expires . . . . . . . . . . : Saturday, October 31, 2026 7:57:26 PM [+1ms | 8.83s]
+[Main] 2026-10-30 21:00:51.004 -04:00 [WW] [INFO]   Lease Duration (seconds). . . . . : 86400 [+2ms | 8.83s]
+[Main] 2026-10-30 21:00:51.007 -04:00 [WW] [INFO]   DNS Suffixes: horton.lan, uhc.com, ms.ds.uhc.com, ds.uhc.com [+4ms | 8.84s]
+[Main] 2026-10-30 21:00:51.010 -04:00 [WW] [INFO]   Active adapters: 1 [+3ms | 8.84s]
+[Main] 2026-10-30 21:00:51.014 -04:00 [WW] [INFO]   Adapter: WiFi 'Wi-Fi' ip=10.10.69.217/24 gw=10.10.69.1 mac=F4-A4-75-A8-95-2B suffix=horton.lan ssid=cia_van dns=10.10.69.1 lease_obtained='Friday, October 30, 2026 7:57:26 PM' lease_expires='Saturday, October 31, 2026 7:57:26 PM' lease_sec=86400 [PRIMARY] [+3ms | 8.84s]
+[Main] 2026-10-30 21:00:51.017 -04:00 [WW] [INFO] =========================== [+4ms | 8.85s]
+[Main] 2026-10-30 21:00:51.029 -04:00 [WW] [DEBUG] MacRandState: MAC=F4-A4-75-A8-95-2B second-char='4' randomized=False [+11ms | 8.86s]
+[Main] 2026-10-30 21:00:51.034 -04:00 [WW] [DEBUG]   MAC randomization: mode=disabled (value=0) - permanent MAC, portal-safe [+6ms | 8.86s]
+[Main] 2026-10-30 21:00:54.671 -04:00 [WW] [DEBUG] User tunnel detected via 'Management Connection State: Disconnected (user tunnel active)' [+3636ms | 12.5s]
+[Main] 2026-10-30 21:00:54.742 -04:00 [WW] [INFO] VPN Connected at run start (flavor=user_tun wake=False jump=False) - skipping preflight and captive-portal checks [+71ms | 12.57s]
+[Main] 2026-10-30 21:00:54.747 -04:00 [WW] [DEBUG] maintenance_step name='handback' elapsed_ms=2 [+5ms | 12.58s]
+[Main] 2026-10-30 21:00:54.750 -04:00 [WW] [DEBUG] Blackhole: disabled - already cleared (marker present) - skipping -rm [+4ms | 12.58s]
+[Main] 2026-10-30 21:00:54.752 -04:00 [WW] [DEBUG] maintenance_step name='blackhole_startup' elapsed_ms=6 [+2ms | 12.58s]
+[Main] 2026-10-30 21:00:55.128 -04:00 [WW] [DEBUG] WW_tee: queued 'network_state' -> action="network_state" machine="LHTU05CD1503KF5" user="MS\shorto39" EvtTime="2026-10-30T21:00:55.0018496-04:00" connection_type="WiFi" lease_sec="86400" gw="10.10.69.1" ip="10.10.69.217" ssid="cia_van" vpn_state="Connected" dns="10.10.69.1" [+376ms | 12.96s]
+[Main] 2026-10-30 21:00:55.147 -04:00 [WW] [DEBUG] FlareGun config loaded: C:\ProgramData\WhiteWalker\WW_flaregun_config.json [+18ms | 12.98s]
+[Main] 2026-10-30 21:00:55.153 -04:00 [WW] [INFO] FlareEvent queued for USER context: user_tun (Event ID 780) [+7ms | 12.98s]
+[Main] 2026-10-30 21:00:56.218 -04:00 [WW] [INFO] Event log message written successfully: FLARE:user_tun (Event ID: 780) [+1064ms | 14.05s]
+[Main] 2026-10-30 21:00:56.474 -04:00 [WW] [DEBUG] WW_tee: queued 'flare_dispatched' -> action="flare_dispatched" machine="LHTU05CD1503KF5" user="MS\shorto39" EvtTime="2026-10-30T21:00:56.2596138-04:00" vpn_state="" dispatch_method="eventcreate" reason="event_written" event_id="780" ssid="cia_van" status="dispatched" context="USER" flare_tag="user_tun" [+257ms | 14.3s]
+[Main] 2026-10-30 21:00:56.477 -04:00 [WW] [DEBUG] FlareTelemetry: tee 'flare_dispatched' for 'user_tun' queued=True reason=queued [+3ms | 14.31s]
+[Main] 2026-10-30 21:00:56.488 -04:00 [WW] [DEBUG] State: currentState updated to 'user_tun' [+11ms | 14.32s]
+[Main] 2026-10-30 21:00:56.499 -04:00 [WW] [DEBUG] Blackhole: disabled - already cleared (marker present) - skipping -rm [+11ms | 14.33s]
+[Main] 2026-10-30 21:00:56.507 -04:00 [WW] [DEBUG] FlareEvent de-duped (already sent this run): user_tun [+8ms | 14.34s]
+[Main] 2026-10-30 21:00:56.714 -04:00 [WW] [DEBUG] WW_tee: queued 'flare_suppressed' -> action="flare_suppressed" machine="LHTU05CD1503KF5" user="MS\shorto39" EvtTime="2026-10-30T21:00:56.5136964-04:00" vpn_state="" dispatch_method="" reason="per_run_dedupe" event_id="" ssid="cia_van" status="suppressed" context="" flare_tag="user_tun" [+207ms | 14.54s]
+[Main] 2026-10-30 21:00:56.717 -04:00 [WW] [DEBUG] FlareTelemetry: tee 'flare_suppressed' for 'user_tun' queued=True reason=queued [+3ms | 14.55s]
+[Main] 2026-10-30 21:00:56.727 -04:00 [WW] [DEBUG] maintenance_stage begin exit_reason='vpn_connected:user_tun' offline=False [+10ms | 14.56s]
+[Main] 2026-10-30 21:00:56.736 -04:00 [WW] [DEBUG] BlackholeShutdown: task not present (disabled) - OK [+9ms | 14.57s]
+[Main] 2026-10-30 21:00:56.741 -04:00 [WW] [DEBUG] maintenance_step name='blackhole_task_sync' elapsed_ms=14 [+5ms | 14.57s]
+[Main] 2026-10-30 21:00:56.745 -04:00 [WW] [INFO] HayStack: enabled - invoking reroll check [+3ms | 14.58s]
+[Main] 2026-10-30 21:00:56.785 -04:00 [WW] [DEBUG] maintenance_step name='haystack' elapsed_ms=44 [+41ms | 14.62s]
+[Main] 2026-10-30 21:00:56.789 -04:00 [WW] [DEBUG] XmlVault: task already registered - OK [+4ms | 14.62s]
+[Main] 2026-10-30 21:00:56.792 -04:00 [WW] [DEBUG] maintenance_step name='xmlvault_task_sync' elapsed_ms=8 [+3ms | 14.62s]
+[Main] 2026-10-30 21:00:56.821 -04:00 [WW] [DEBUG] OnPremSuffix: non-corp suffix 'horton.lan' present - off-prem [+29ms | 14.65s]
+[Main] 2026-10-30 21:00:56.842 -04:00 [WW] [DEBUG] maintenance_step name='self_update' elapsed_ms=48 [+20ms | 14.67s]
+[Main] 2026-10-30 21:00:56.845 -04:00 [WW] [INFO] XmlVault: enabled - invoking startup sync [+3ms | 14.68s]
+[Main] 2026-10-30 21:00:56.890 -04:00 [WW] [DEBUG] maintenance_step name='xmlvault' elapsed_ms=48 [+45ms | 14.72s]
+[Main] 2026-10-30 21:01:02.050 -04:00 [WW] [INFO] haystack_drain_kick started task='\CPR\HayStack_Monitor' state='user_tun' [+5161ms | 19.88s]
+[Main] 2026-10-30 21:01:02.053 -04:00 [WW] [DEBUG] maintenance_step name='haystack_drain_kick' elapsed_ms=5164 [+2ms | 19.88s]
+[Main] 2026-10-30 21:01:02.055 -04:00 [WW] [INFO] phase_timing phase='maintenance_stage' elapsed_ms=5329 [+2ms | 19.89s]
+[Main] 2026-10-30 21:01:02.151 -04:00 [WW] [DEBUG] TeeLevelInfo: not due (sent 0.6h ago, profile unchanged) [+96ms | 19.98s]
+[Main] 2026-10-30 21:01:02.299 -04:00 [WW] [DEBUG] WiFi SSID detected on 'Wi-Fi': cia_van [+149ms | 20.13s]
+[Main] 2026-10-30 21:01:02.363 -04:00 [WW] [DEBUG] end_run_network_recheck changed=False elapsed_ms=205 [+63ms | 20.19s]
+[Main] 2026-10-30 21:01:02.370 -04:00 [WW] [DEBUG] SSID cache updated: cia_van [+7ms | 20.2s]
+[Main] --------------------------------------------------------------------------------
+[Main] RUN END    run_id=20261030210042170-21044 exit_reason="vpn_connected:user_tun"
+[Main] ================================================================================
+[Main] RUN START  White Walker v3.14.0_RC2.0.3
+[Main] run_id=20261030210118818-28592 host=LHTU05CD1503KF5 user=NT AUTHORITY\SYSTEM
+[Main] build=1cb9dc12f963 files=13
+[Main] ts_local=2026-10-30 21:01:19.787 -04:00  ts_utc=2026-10-31 01:01:19.783 UTC
+[Main] log_path=C:\ProgramData\WhiteWalker\logs\white_walker.main.log
+[Main] system=Microsoft Windows 11 Enterprise 10.0.22631
+[Main] model=HP HP ZBook Power 15.6 inch G8 Mobile Workstation PC
+[Main] serial=5CD1503KF5
+[Main] last_boot=2026-10-30 11:27:31
+[Main] 2026-10-30 21:01:20.360 -04:00 [WW] [DEBUG] CscInfo: cache hit (hash match, 11.3h old) - skipping manifest scan [+1546ms | 1.55s]
+[Main] csc_version=5.1.17.3394  source=manifest (cached)
+[Main] preflight_mode=RC1.6 gateway.optum.com (https, 200/404=online, 3xx=route-to-workflow)
+[Main] blackhole_enabled=False  script=C:\ProgramData\WhiteWalker\Set-VpnHostsEntry.ps1
+[Main] blackhole_flag_present=False
+[Main] haystack_enabled=True  script=C:\ProgramData\WhiteWalker\haystack.ps1
+[Main] tee_enabled=True  events_file=C:\ProgramData\WhiteWalker\WW_tee_events.psd1
+[Main] xml_vault_enabled=True  script=C:\ProgramData\WhiteWalker\WW_xml_vault.ps1
+[Main] cap_portal_runner_mode=base  base_script=C:\ProgramData\WhiteWalker\WW_cap_portal_runner_base.ps1
+[Main] vpn_profile=uhg_always_on_exception_elevated
+[Main] ================================================================================
+[Main] 2026-10-30 21:01:20.514 -04:00 [WW] [INFO] phase_timing phase='startup_bootstrap' elapsed_ms=777 startup_elapsed_ms=777 [+150ms | 1.7s]
+[Main] 2026-10-30 21:01:20.517 -04:00 [WW] [INFO] CiscoPath=C:\Program Files (x86)\Cisco\Cisco Secure Client [+3ms | 1.7s]
+[Main] 2026-10-30 21:01:20.519 -04:00 [WW] [INFO] vpncli=C:\Program Files (x86)\Cisco\Cisco Secure Client\vpncli.exe [+2ms | 1.7s]
+[Main] 2026-10-30 21:01:20.520 -04:00 [WW] [INFO] posturecli=C:\Program Files (x86)\Cisco\Cisco Secure Client\posturecli.exe [+2ms | 1.7s]
+[Main] 2026-10-30 21:01:20.526 -04:00 [WW] [INFO] CPR+ v3.14.0_RC2.0.3 starting... [+5ms | 1.71s]
+[Main] 2026-10-30 21:01:20.545 -04:00 [WW] [DEBUG] Flag file present but fresh (age: 1min): network_interrupt.flag [+20ms | 1.73s]
+[Main] 2026-10-30 21:01:20.548 -04:00 [WW] [DEBUG] No stale flag files found [+3ms | 1.73s]
+[Main] 2026-10-30 21:01:20.555 -04:00 [WW] [DEBUG] Network interrupt flag set for any active instances [+7ms | 1.74s]
+[Main] 2026-10-30 21:01:22.413 -04:00 [WW] [DEBUG] WiFi SSID detected on 'Wi-Fi': cia_van [+1859ms | 3.6s]
+[Main] 2026-10-30 21:01:22.915 -04:00 [WW] [DEBUG] DHCP lease on Wi-Fi: 86400s (obtained Friday, October 30, 2026 7:57:26 PM, expires Saturday, October 31, 2026 7:57:26 PM) [+500ms | 4.1s]
+[Main] 2026-10-30 21:01:22.988 -04:00 [WW] [INFO] phase_timing phase='network_context_snapshot' elapsed_ms=2409 adapter_ip_gateway_ms=2261 ssid_discovery_ms=148 adapter_count=1 adapter_enumeration_ms=1038 ip_address_ms=57 gateway_ms=4 dns_ms=383 lease_ms=36 [+74ms | 4.17s]
+[Main] 2026-10-30 21:01:26.792 -04:00 [WW] [DEBUG] Truncated very long vpncli output for parsing [+3803ms | 7.97s]
+[Main] 2026-10-30 21:01:26.801 -04:00 [WW] [DEBUG] VPN state from >> state: line: Connected [+9ms | 7.98s]
+[Main] 2026-10-30 21:01:26.844 -04:00 [WW] [DEBUG] User tunnel active (management disconnected) [+43ms | 8.03s]
+[Main] 2026-10-30 21:01:27.363 -04:00 [WW] [DEBUG] No recent wake from sleep detected in last 120s [+519ms | 8.54s]
+[Main] 2026-10-30 21:01:27.377 -04:00 [WW] [INFO] early_vpn_gate state='Connected' has_ip=True acted=False reason='no_action' [+14ms | 8.56s]
+[Main] 2026-10-30 21:01:27.382 -04:00 [WW] [INFO] === Network Information === [+6ms | 8.56s]
+[Main] 2026-10-30 21:01:27.385 -04:00 [WW] [INFO]   Connection Type: WiFi [+2ms | 8.57s]
+[Main] 2026-10-30 21:01:27.388 -04:00 [WW] [INFO]   Interface: Wi-Fi [+3ms | 8.57s]
+[Main] 2026-10-30 21:01:27.390 -04:00 [WW] [INFO]   SSID: cia_van [+2ms | 8.57s]
+[Main] 2026-10-30 21:01:27.393 -04:00 [WW] [INFO]   IP Address: 10.10.69.217/24 [+4ms | 8.58s]
+[Main] 2026-10-30 21:01:27.395 -04:00 [WW] [INFO]   Default Gateway: 10.10.69.1 [+1ms | 8.58s]
+[Main] 2026-10-30 21:01:27.399 -04:00 [WW] [INFO]   MAC Address: F4-A4-75-A8-95-2B [+4ms | 8.58s]
+[Main] 2026-10-30 21:01:27.401 -04:00 [WW] [INFO]   DNS Servers: 10.10.69.1 [+3ms | 8.58s]
+[Main] 2026-10-30 21:01:27.404 -04:00 [WW] [INFO]   Connection-Specific Suffix: horton.lan [+3ms | 8.59s]
+[Main] 2026-10-30 21:01:27.407 -04:00 [WW] [INFO]   Lease Obtained. . . . . . . . . . : Friday, October 30, 2026 7:57:26 PM [+2ms | 8.59s]
+[Main] 2026-10-30 21:01:27.409 -04:00 [WW] [INFO]   Lease Expires . . . . . . . . . . : Saturday, October 31, 2026 7:57:26 PM [+3ms | 8.59s]
+[Main] 2026-10-30 21:01:27.413 -04:00 [WW] [INFO]   Lease Duration (seconds). . . . . : 86400 [+4ms | 8.6s]
+[Main] 2026-10-30 21:01:27.416 -04:00 [WW] [INFO]   DNS Suffixes: horton.lan, uhc.com, ms.ds.uhc.com, ds.uhc.com [+2ms | 8.6s]
+[Main] 2026-10-30 21:01:27.417 -04:00 [WW] [INFO]   Active adapters: 1 [+2ms | 8.6s]
+[Main] 2026-10-30 21:01:27.420 -04:00 [WW] [INFO]   Adapter: WiFi 'Wi-Fi' ip=10.10.69.217/24 gw=10.10.69.1 mac=F4-A4-75-A8-95-2B suffix=horton.lan ssid=cia_van dns=10.10.69.1 lease_obtained='Friday, October 30, 2026 7:57:26 PM' lease_expires='Saturday, October 31, 2026 7:57:26 PM' lease_sec=86400 [PRIMARY] [+2ms | 8.6s]
+[Main] 2026-10-30 21:01:27.421 -04:00 [WW] [INFO] =========================== [+2ms | 8.6s]
+[Main] 2026-10-30 21:01:27.431 -04:00 [WW] [DEBUG] MacRandState: MAC=F4-A4-75-A8-95-2B second-char='4' randomized=False [+10ms | 8.61s]
+[Main] 2026-10-30 21:01:27.437 -04:00 [WW] [DEBUG]   MAC randomization: mode=disabled (value=0) - permanent MAC, portal-safe [+6ms | 8.62s]
+[Main] 2026-10-30 21:01:31.185 -04:00 [WW] [DEBUG] User tunnel detected via 'Management Connection State: Disconnected (user tunnel active)' [+3748ms | 12.37s]
+[Main] 2026-10-30 21:01:31.188 -04:00 [WW] [INFO] VPN Connected at run start (flavor=user_tun wake=False jump=False) - skipping preflight and captive-portal checks [+2ms | 12.37s]
+[Main] 2026-10-30 21:01:31.194 -04:00 [WW] [DEBUG] maintenance_step name='handback' elapsed_ms=3 [+6ms | 12.38s]
+[Main] 2026-10-30 21:01:31.198 -04:00 [WW] [DEBUG] Blackhole: disabled - already cleared (marker present) - skipping -rm [+4ms | 12.38s]
+[Main] 2026-10-30 21:01:31.231 -04:00 [WW] [DEBUG] maintenance_step name='blackhole_startup' elapsed_ms=37 [+33ms | 12.41s]
+[Main] 2026-10-30 21:01:31.595 -04:00 [WW] [DEBUG] WW_tee: queued 'network_state' -> action="network_state" machine="LHTU05CD1503KF5" user="MS\shorto39" EvtTime="2026-10-30T21:01:31.4765698-04:00" connection_type="WiFi" lease_sec="86400" gw="10.10.69.1" ip="10.10.69.217" ssid="cia_van" vpn_state="Connected" dns="10.10.69.1" [+364ms | 12.78s]
+[Main] 2026-10-30 21:01:31.606 -04:00 [WW] [WARN] FlareEvent suppressed (cooldown 1m): user_tun [+12ms | 12.79s]
+[Main] 2026-10-30 21:01:31.794 -04:00 [WW] [DEBUG] WW_tee: queued 'flare_suppressed' -> action="flare_suppressed" machine="LHTU05CD1503KF5" user="MS\shorto39" EvtTime="2026-10-30T21:01:31.6182343-04:00" vpn_state="" dispatch_method="" reason="cooldown" event_id="" ssid="cia_van" status="suppressed" context="" flare_tag="user_tun" [+187ms | 12.98s]
+[Main] 2026-10-30 21:01:31.796 -04:00 [WW] [DEBUG] FlareTelemetry: tee 'flare_suppressed' for 'user_tun' queued=True reason=queued [+2ms | 12.98s]
+[Main] 2026-10-30 21:01:31.801 -04:00 [WW] [WARN] FlareEvent suppressed (cooldown 1m): user_tun [+6ms | 12.98s]
+[Main] 2026-10-30 21:01:31.970 -04:00 [WW] [DEBUG] WW_tee: queued 'flare_suppressed' -> action="flare_suppressed" machine="LHTU05CD1503KF5" user="MS\shorto39" EvtTime="2026-10-30T21:01:31.8063983-04:00" vpn_state="" dispatch_method="" reason="cooldown" event_id="" ssid="cia_van" status="suppressed" context="" flare_tag="user_tun" [+169ms | 13.15s]
+[Main] 2026-10-30 21:01:31.973 -04:00 [WW] [DEBUG] FlareTelemetry: tee 'flare_suppressed' for 'user_tun' queued=True reason=queued [+3ms | 13.16s]
+[Main] 2026-10-30 21:01:31.983 -04:00 [WW] [DEBUG] maintenance_stage begin exit_reason='vpn_connected:user_tun' offline=False [+10ms | 13.17s]
+[Main] 2026-10-30 21:01:31.991 -04:00 [WW] [DEBUG] BlackholeShutdown: task not present (disabled) - OK [+8ms | 13.17s]
+[Main] 2026-10-30 21:01:31.994 -04:00 [WW] [DEBUG] maintenance_step name='blackhole_task_sync' elapsed_ms=11 [+2ms | 13.18s]
+[Main] 2026-10-30 21:01:31.996 -04:00 [WW] [INFO] HayStack: enabled - invoking reroll check [+3ms | 13.18s]
+[Main] 2026-10-30 21:01:32.157 -04:00 [WW] [DEBUG] maintenance_step name='haystack' elapsed_ms=163 [+161ms | 13.34s]
+[Main] 2026-10-30 21:01:32.162 -04:00 [WW] [DEBUG] XmlVault: task already registered - OK [+4ms | 13.34s]
+[Main] 2026-10-30 21:01:32.163 -04:00 [WW] [DEBUG] maintenance_step name='xmlvault_task_sync' elapsed_ms=7 [+2ms | 13.35s]
+[Main] 2026-10-30 21:01:32.181 -04:00 [WW] [DEBUG] OnPremSuffix: non-corp suffix 'horton.lan' present - off-prem [+18ms | 13.36s]
+[Main] 2026-10-30 21:01:32.192 -04:00 [WW] [DEBUG] maintenance_step name='self_update' elapsed_ms=28 [+10ms | 13.37s]
+[Main] 2026-10-30 21:01:32.193 -04:00 [WW] [INFO] XmlVault: enabled - invoking startup sync [+2ms | 13.38s]
+[Main] 2026-10-30 21:01:32.225 -04:00 [WW] [DEBUG] maintenance_step name='xmlvault' elapsed_ms=33 [+32ms | 13.41s]
+[Main] 2026-10-30 21:01:36.740 -04:00 [WW] [INFO] haystack_drain_kick started task='\CPR\HayStack_Monitor' state='user_tun' [+4515ms | 17.92s]
+[Main] 2026-10-30 21:01:36.744 -04:00 [WW] [DEBUG] maintenance_step name='haystack_drain_kick' elapsed_ms=4519 [+4ms | 17.93s]
+[Main] 2026-10-30 21:01:36.746 -04:00 [WW] [INFO] phase_timing phase='maintenance_stage' elapsed_ms=4764 [+2ms | 17.93s]
+[Main] 2026-10-30 21:01:36.882 -04:00 [WW] [DEBUG] TeeLevelInfo: not due (sent 0.6h ago, profile unchanged) [+136ms | 18.07s]
+[Main] 2026-10-30 21:01:37.066 -04:00 [WW] [DEBUG] WiFi SSID detected on 'Wi-Fi': cia_van [+183ms | 18.25s]
+[Main] 2026-10-30 21:01:37.145 -04:00 [WW] [DEBUG] end_run_network_recheck changed=False elapsed_ms=254 [+79ms | 18.33s]
+[Main] 2026-10-30 21:01:37.152 -04:00 [WW] [DEBUG] SSID cache updated: cia_van [+7ms | 18.33s]
+[Main] --------------------------------------------------------------------------------
+[Main] RUN END    run_id=20261030210118818-28592 exit_reason="vpn_connected:user_tun"
+
