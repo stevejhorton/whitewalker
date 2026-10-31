@@ -389,6 +389,7 @@ function Write-RunHeader {
   Add-LogLine ("preflight_mode=RC1.6 gateway.optum.com (https, 200/404=online, 3xx=route-to-workflow)")
   Add-LogLine ("blackhole_enabled={0}  script={1}" -f $BlackholeEnabled, $BlackholeScriptPath)
   Add-LogLine ("blackhole_flag_present={0}" -f (Test-Path $BlackholeFlagFile))
+  Add-LogLine ("log_timing={0} flag_present={1} flag={2}" -f $(if ($script:WWLogTiming) {"on"} else {"off"}), (Test-Path -LiteralPath $script:WWTimingFlagPath), $script:WWTimingFlagPath)
   Add-LogLine ("haystack_enabled={0}  script={1}" -f $HaystackEnabled, $HaystackScriptPath)
   Add-LogLine ("tee_enabled={0}  events_file={1}" -f $TeeEnabled, $TeeEventsFile)
   Add-LogLine ("xml_vault_enabled={0}  script={1}" -f $XmlVaultEnabled, $XmlVaultScriptPath)
