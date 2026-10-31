@@ -76,10 +76,31 @@ Describe 'which actions show a log afterwards (source contract)' {
     BeforeAll { $script:Src = Get-Content -LiteralPath (Join-Path $script:ReleaseRoot 'admin/Invoke-WhiteWalkerAction.ps1') -Raw }
     It 'synchronous actions tail their result log' {
         $script:Src | Should -Match "(?s)function Invoke-WWForceXmlVaultSync.*?Invoke-WWTailAfter -Stream 'XmlVault'"
-        $script:Src | Should -Match "(?s)function Invoke-WWQuickForceMainRun.*?Invoke-WWTailAfter -Stream 'Main'"
+        $script:Src | Should -Match "(?s)function Invoke-WWQuickForceMainRun.*?Invoke-WWRunMainLive"
     }
     It 'flag-touch actions (work happens at the next run) offer to follow' {
         $script:Src | Should -Match "(?s)function Invoke-WWVpnProfileRestore.*?Invoke-WWOfferFollow -Stream 'XmlVault'"
         $script:Src | Should -Match "(?s)function Invoke-WWSelfUpdateTrigger.*?Invoke-WWOfferFollow -Stream 'Installer'"
+    }
+}
+
+Describe 'Invoke-WWRunMainLive' {
+    BeforeAll {
+        $script:Pwsh = (Get-Process -Id $PID).Path
+        $script:Log  = Join-Path $TestDrive 'main.log'
+        $script:Fake = Join-Path $TestDrive 'fake_main.ps1'
+        Set-Content -LiteralPath $script:Log -Value 'OLD LINE FROM EARLIER RUN'
+        Set-Content -LiteralPath $script:Fake -Value ("Add-Content -LiteralPath '$($script:Log)' 'NEW one'; Start-Sleep -Milliseconds 400; Add-Content -LiteralPath '$($script:Log)' 'NEW two'")
+    }
+    It 'prints only lines written during the run and returns when it ends' {
+        $script:Out = New-Object System.Collections.Generic.List[string]
+        function Write-Host { param([Parameter(Position=0)]$Object, $ForegroundColor) $script:Out.Add([string]$Object) }
+        # Start-Process on Linux ignores -WindowStyle; pass -File through the real pwsh binary
+        $null = Invoke-WWRunMainLive -Script $script:Fake -LogPath $script:Log -Exe $script:Pwsh -PollMs 100
+        $joined = $script:Out -join "`n"
+        $joined | Should -Match 'NEW one'
+        $joined | Should -Match 'NEW two'
+        $joined | Should -Not -Match 'OLD LINE'
+        $joined | Should -Match 'run finished'
     }
 }

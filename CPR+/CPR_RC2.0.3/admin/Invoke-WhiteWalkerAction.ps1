@@ -1439,14 +1439,70 @@ function Invoke-WWQuickClearStaleFlags {
     }
 }
 
+function Invoke-WWRunMainLive {
+    <#
+    Runs WW_main.ps1 in a child process and prints ONLY this run's main-log lines as they are written.
+    Returns when the run ends. Q or Esc stops watching early; the run itself keeps going.
+    Fail-soft: if the log cannot be read the run still happens.
+    #>
+    param(
+        [string]$Script = $script:WWMainScript,
+        [string]$LogPath = (Join-Path $script:WWLogDir 'white_walker.main.log'),
+        [string]$Exe = 'powershell.exe',
+        [int]$PollMs = 250
+    )
+    $offset = 0L
+    try { if (Test-Path -LiteralPath $LogPath) { $offset = (Get-Item -LiteralPath $LogPath).Length } } catch { }
+    $procArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$Script)
+    $spArgs = @{ FilePath = $Exe; ArgumentList = $procArgs; PassThru = $true }
+    if ($PSVersionTable.PSEdition -ne 'Core' -or $IsWindows) { $spArgs.WindowStyle = 'Hidden' }
+    $proc = Start-Process @spArgs
+    Write-Host "`n-- live main log for this run (Q or Esc stops watching; the run continues) --" -ForegroundColor DarkCyan
+    $read = {
+        param([long]$From)
+        $text = ''; $newOff = $From
+        try {
+            $fs = [System.IO.File]::Open($LogPath, 'Open', 'Read', 'ReadWrite')
+            try {
+                if ($fs.Length -lt $From) { $From = 0 }            # log rotated: start over
+                $fs.Seek($From, 'Begin') | Out-Null
+                $sr = New-Object System.IO.StreamReader($fs, [System.Text.Encoding]::UTF8)
+                $text = $sr.ReadToEnd(); $newOff = $fs.Position
+            } finally { $fs.Dispose() }
+        } catch { }
+        [pscustomobject]@{ Text = $text; Offset = $newOff }
+    }
+    $stoppedEarly = $false
+    while (-not $proc.HasExited) {
+        $r = & $read $offset; $offset = $r.Offset
+        if ($r.Text) { Write-Host $r.Text.TrimEnd([char]13,[char]10) }
+        try {
+            if ([Console]::KeyAvailable) {
+                $k = [Console]::ReadKey($true)
+                if ($k.Key -in 'Q','Escape') { $stoppedEarly = $true; break }
+            }
+        } catch { }
+        Start-Sleep -Milliseconds $PollMs
+    }
+    if (-not $stoppedEarly) {
+        try { $proc.WaitForExit() } catch { }
+        $r = & $read $offset
+        if ($r.Text) { Write-Host $r.Text.TrimEnd([char]13,[char]10) }
+        $code = try { $proc.ExitCode } catch { '?' }
+        Write-Host "`n-- run finished (exit code $code) --" -ForegroundColor DarkCyan
+    } else {
+        Write-Host "`n-- stopped watching; WW_main is still running (pid $($proc.Id)) --" -ForegroundColor Yellow
+    }
+    return $stoppedEarly
+}
+
 function Invoke-WWQuickForceMainRun {
     Write-Host "`nThis runs WW_main.ps1 directly (bypasses waiting for the next DHCP/lock-event trigger)." -ForegroundColor Cyan
     if (-not (Confirm-WWAction "Force an immediate WW_main run now?")) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
     if (-not (Test-Path -LiteralPath $script:WWMainScript)) { Write-Host "WW_main.ps1 not found at $script:WWMainScript" -ForegroundColor Red; return }
-    & $script:WWMainScript
-    Write-WWAdminLog "Forced immediate WW_main run via: $script:WWMainScript"
+    $null = Invoke-WWRunMainLive
+    Write-WWAdminLog "Forced immediate WW_main run (live log) via: $script:WWMainScript"
     Write-Host "`nDone." -ForegroundColor Green
-    Invoke-WWTailAfter -Stream 'Main' -Lines 25
 }
 
 function Invoke-WWQuickClearVpnHosts {
