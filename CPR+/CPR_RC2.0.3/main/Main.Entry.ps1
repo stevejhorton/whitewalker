@@ -60,20 +60,34 @@ function Invoke-HaystackDrainKick {
         $cur = ''
         try { $cur = [string](Get-Content $StateFile -Raw -ErrorAction Stop | ConvertFrom-Json).currentState } catch { }
         if ($WhatIf) { Write-Log "WHATIF: Would start task $HaystackDrainTaskName (drain kick)" "INFO"; return }
-        # Find the task by name wherever it is registered (the reroll may be
-        # re-registering it, or an older install left it in another folder).
-        $t = @(Get-ScheduledTask -TaskName $HaystackDrainTaskName -ErrorAction SilentlyContinue) | Select-Object -First 1
+        # Fast path: start the task at its known home (\CPR\) with no lookup. A name-only
+        # Get-ScheduledTask walks the whole task store through CIM (~4-5 s on a managed box),
+        # so it is used only if this direct start fails (task moved or missing).
         $started = $false
-        if ($t) {
-            try {
-                Start-ScheduledTask -TaskPath $t.TaskPath -TaskName $t.TaskName -ErrorAction Stop
-                Write-Log "haystack_drain_kick started task='$($t.TaskPath)$($t.TaskName)' state='$cur'" "INFO"
-                $started = $true
-            } catch {
-                Write-Log "haystack_drain_kick task start failed ($($_.Exception.Message)) - trying direct" "WARN"
+        $swKick = [System.Diagnostics.Stopwatch]::StartNew()
+        $kickFolder = if ($CprTaskFolder) { [string]$CprTaskFolder } else { '\CPR\' }
+        try {
+            Start-ScheduledTask -TaskPath $kickFolder -TaskName $HaystackDrainTaskName -ErrorAction Stop
+            Write-Log "haystack_drain_kick started task='$kickFolder$HaystackDrainTaskName' state='$cur' start_ms=$($swKick.ElapsedMilliseconds) lookup=direct" "INFO"
+            $started = $true
+        } catch {
+            Write-Log "haystack_drain_kick direct start failed ($($_.Exception.Message)) - searching all folders" "DEBUG"
+        }
+        if (-not $started) {
+            # Find the task by name wherever it is registered (the reroll may be
+            # re-registering it, or an older install left it in another folder).
+            $t = @(Get-ScheduledTask -TaskName $HaystackDrainTaskName -ErrorAction SilentlyContinue) | Select-Object -First 1
+            if ($t) {
+                try {
+                    Start-ScheduledTask -TaskPath $t.TaskPath -TaskName $t.TaskName -ErrorAction Stop
+                    Write-Log "haystack_drain_kick started task='$($t.TaskPath)$($t.TaskName)' state='$cur' total_ms=$($swKick.ElapsedMilliseconds) lookup=search" "INFO"
+                    $started = $true
+                } catch {
+                    Write-Log "haystack_drain_kick task start failed ($($_.Exception.Message)) - trying direct" "WARN"
+                }
+            } else {
+                Write-Log "haystack_drain_kick task '$HaystackDrainTaskName' not found in any folder - trying direct" "WARN"
             }
-        } else {
-            Write-Log "haystack_drain_kick task '$HaystackDrainTaskName' not found in any folder - trying direct" "WARN"
         }
         if (-not $started) {
             if (Test-Path $HaystackActionScriptPath) {

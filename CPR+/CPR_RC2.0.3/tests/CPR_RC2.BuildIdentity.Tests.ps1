@@ -697,15 +697,15 @@ Describe 'Get-VpnState does not trust the management line when vpncli state is e
         $script:WWDebug = $false
     }
     It 'returns Unknown when state is empty and stats only shows a Disconnected management line' {
-        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Disconnected`n" } else { '' } }
+        function Invoke-VpnCliBounded { param($Arguments, $TimeoutSec, $MaxAgeSec) if ($Arguments -eq 'stats') { "Management Connection State: Disconnected`n" } else { '' } }
         Get-VpnState | Should -Be 'Unknown'
     }
     It 'still returns Disconnected when state answers Disconnected' {
-        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Disconnected`n" } else { "  >> state: Disconnected`n" } }
+        function Invoke-VpnCliBounded { param($Arguments, $TimeoutSec, $MaxAgeSec) if ($Arguments -eq 'stats') { "Management Connection State: Disconnected`n" } else { "  >> state: Disconnected`n" } }
         Get-VpnState | Should -Be 'Disconnected'
     }
     It 'returns Connecting when state says so' {
-        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { '' } else { "  >> state: Connecting`n" } }
+        function Invoke-VpnCliBounded { param($Arguments, $TimeoutSec, $MaxAgeSec) if ($Arguments -eq 'stats') { '' } else { "  >> state: Connecting`n" } }
         Get-VpnState | Should -Be 'Connecting'
     }
 }
@@ -722,7 +722,7 @@ Describe 'Posture activity makes a Disconnected vpncli read count as Connecting'
         $script:VpnPostureLogName = 'Cisco Secure Client - Secure Firewall Posture'
         $script:VpnPostureActiveWindowSec = 15
         $script:VpnPostureScanProvider = 'csc_cscan'
-        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { '' } else { "  >> state: Disconnected`n" } }
+        function Invoke-VpnCliBounded { param($Arguments, $TimeoutSec, $MaxAgeSec) if ($Arguments -eq 'stats') { '' } else { "  >> state: Disconnected`n" } }
     }
     It 'returns Connecting when state reads Disconnected and posture events are recent' {
         Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
@@ -741,7 +741,7 @@ Describe 'Posture activity makes a Disconnected vpncli read count as Connecting'
         $script:VpnPostureDetection = $true
     }
     It 'never changes a Connected read' {
-        function Invoke-VpnCliBounded { param($Arguments) if ($Arguments -eq 'stats') { "Management Connection State: Connected`n" } else { "  >> state: Connected`n" } }
+        function Invoke-VpnCliBounded { param($Arguments, $TimeoutSec, $MaxAgeSec) if ($Arguments -eq 'stats') { "Management Connection State: Connected`n" } else { "  >> state: Connected`n" } }
         Mock Get-WinEvent { [pscustomobject]@{ TimeCreated = Get-Date; ProviderName = 'csc_cscan' } }
         Get-VpnState | Should -Be 'Connected'
     }
@@ -857,10 +857,10 @@ Describe 'HayStack drain kick: end-of-run ship of queued install/update results'
         Set-Content $script:HaystackActionScriptPath '#'
         '{"currentState":"user_tun"}' | Set-Content $script:StateFile
         Mock Get-ScheduledTask { $null }
-        Mock Start-ScheduledTask {}
+        Mock Start-ScheduledTask { throw 'not found' }
         Mock Start-Process {}
         Invoke-HaystackDrainKick -CorpReachable $true
-        Should -Invoke Start-ScheduledTask -Times 0
+        Should -Invoke Get-ScheduledTask -Times 1
         Should -Invoke Start-Process -Times 1
     }
     It 'does nothing when the queue is empty' {

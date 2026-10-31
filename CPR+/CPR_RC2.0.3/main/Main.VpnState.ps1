@@ -176,11 +176,24 @@ function Test-RecentWakeFromSleep {
 # retries a failed connect, e.g. DNS failure on a guest network) can never hang the run. Returns the stdout
 # text. On timeout the child process is killed, a WARN is logged and '' is returned, which callers already
 # treat as "state unknown". A launch failure is NOT swallowed, so existing try/catch blocks still see it.
+# Per-run cache of read-only vpncli 'stats' output. Every call refreshes it; it is READ only when a
+# caller passes -MaxAgeSec (Get-VpnTunnelFlavor does, with a few seconds), so the polling loops that
+# need a fresh value never see a stale one. Each real vpncli call costs ~2 s on a managed endpoint.
+$script:VpnCliStatsCache = $null
 function Invoke-VpnCliBounded {
   param(
     [Parameter(Mandatory = $true)][string]$Arguments,
-    [int]$TimeoutSec = 0
+    [int]$TimeoutSec = 0,
+    [int]$MaxAgeSec = 0
   )
+  $isStats = ($Arguments.Trim() -ieq 'stats')
+  if ($isStats -and $MaxAgeSec -gt 0 -and $script:VpnCliStatsCache) {
+    $ageMs = ([datetime]::UtcNow - $script:VpnCliStatsCache.At).TotalMilliseconds
+    if ($ageMs -ge 0 -and $ageMs -le ($MaxAgeSec * 1000)) {
+      Write-Log ("vpncli_cache_hit cmd='stats' age_ms={0}" -f [math]::Round($ageMs)) "DEBUG"
+      return [string]$script:VpnCliStatsCache.Text
+    }
+  }
   if ($Arguments -match '^\s*disconnect\b') {
     # Safety net for every disconnect path: never cut a client that is mid HostScan scan.
     if ((Get-Command Test-VpnHostscanHold -ErrorAction SilentlyContinue) -and (Test-VpnHostscanHold -Where 'disconnect')) { return '' }
@@ -205,7 +218,9 @@ function Invoke-VpnCliBounded {
     $null    = $proc.StandardError.ReadToEndAsync()
     if ($proc.WaitForExit($TimeoutSec * 1000)) {
       $proc.WaitForExit()   # flush the async readers
-      return [string]$outTask.Result
+      $outText = [string]$outTask.Result
+      if ($isStats) { $script:VpnCliStatsCache = @{ At = [datetime]::UtcNow; Text = $outText } }
+      return $outText
     }
     Write-Log ("vpncli_timeout cmd='{0}' waited_ms={1} - child killed, treating output as empty" -f `
       $Arguments, [math]::Round(((Get-Date) - $startedAt).TotalMilliseconds)) "WARN"
@@ -464,7 +479,7 @@ function Get-VpnStateStable {
 function Get-VpnTunnelFlavor {
   $statsText  = ""
   $statusText = ""
-  try { $statsText  = (Invoke-VpnCliBounded -Arguments 'stats') }  catch { Write-Log "Get-VpnTunnelFlavor: stats error: $_" }
+  try { $statsText  = (Invoke-VpnCliBounded -Arguments 'stats' -MaxAgeSec 3) }  catch { Write-Log "Get-VpnTunnelFlavor: stats error: $_" }
   try { $statusText = (Invoke-VpnCliBounded -Arguments 'status') }  catch { Write-Log "Get-VpnTunnelFlavor: status error: $_" }
 
   if ($WWDebug) { Write-Log "DEBUG: classifying tunnel flavor from vpncli stats/status." }
