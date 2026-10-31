@@ -6,7 +6,7 @@ BeforeAll {
     $script:Root = Split-Path -Parent $PSScriptRoot
     $path = Join-Path $script:Root 'main\Main.Network.ps1'
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
-    foreach ($n in 'Get-CprAdapterClass','Get-CprNetworkFingerprint','Test-CprPhysicalNic','ConvertFrom-CprLeaseEpoch',
+    foreach ($n in 'Get-CprAdapterClass','Get-CprNetworkFingerprint','Get-CprNicSnapshot','Test-CprPhysicalNic','ConvertFrom-CprLeaseEpoch',
                    'ConvertTo-CprAdapterRecordFast','Get-NetworkInfoFast','Compare-CprNetworkInfo','Get-NetworkInfo') {
         $fn = $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $x.Name -eq $n }, $true) | Select-Object -First 1
         . ([scriptblock]::Create($fn.Extent.Text))
@@ -22,6 +22,18 @@ BeforeAll {
         param($Name='Wi-Fi', $Desc='Intel(R) Wi-Fi 6E AX211 160MHz', $Type='Wireless80211', $Ip='10.10.69.217', $Gw='10.10.69.1', $Dhcp=$true)
         [pscustomobject]@{ Name=$Name; Description=$Desc; Type=$Type; Id='{AAAA-1111}'; Index=12; IsDhcp=$Dhcp; Mac='F4-A4-75-A8-95-2B'
             IPv4=$Ip; PrefixLength=24; Gateways=@($Gw); Dns=@('10.10.69.1'); DnsSuffix='Horton.LAN' }
+    }
+}
+
+Describe 'Get-CprNicSnapshot (real .NET call)' {
+    It 'runs against this machine without throwing and returns an array of plain records' {
+        { $null = Get-CprNicSnapshot } | Should -Not -Throw
+        $snap = Get-CprNicSnapshot
+        $snap -is [System.Array] | Should -BeTrue
+        foreach ($n in @($snap)) { $n.PSObject.Properties.Name | Should -Contain 'Mac'; $n.PSObject.Properties.Name | Should -Contain 'Gateways' }
+    }
+    It 'feeds Get-NetworkInfoFast without a type error' {
+        foreach ($n in @(Get-CprNicSnapshot)) { { $null = Get-NetworkInfoFast -Nics @($n) -SsidByName @{ $n.Name = 'x' } } | Should -Not -Throw }
     }
 }
 

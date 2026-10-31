@@ -458,7 +458,8 @@ function Get-CprNicSnapshot {
             } catch { }
         }
     } catch { }
-    return ,@($out)
+    $nicArray = $out.ToArray()
+    return ,$nicArray
 }
 
 function Test-CprPhysicalNic {
@@ -639,7 +640,7 @@ function Get-NetworkInfo {
                 return $fast
             }
             Write-Log "net_probe fast not applicable (no active adapter or more than one) - using legacy" "DEBUG"
-        } catch { Write-Log "net_probe fast failed: $_ - using legacy" "WARN" }
+        } catch { Write-Log ("net_probe fast failed: {0} at line {1} - using legacy" -f $_.Exception.Message, $_.InvocationInfo.ScriptLineNumber) "WARN" }
         return (Get-NetworkInfoLegacy)
     }
 
@@ -656,7 +657,7 @@ function Get-NetworkInfo {
                 if ($diffs.Count -eq 0) { Write-Log ("net_probe_parity=ok fast_ms={0}" -f $script:LastFastProbeMs) "INFO" }
                 else { Write-Log ("net_probe_parity=DIFF fast_ms={0} fields={1} :: {2}" -f $script:LastFastProbeMs, $diffs.Count, ($diffs -join '; ')) "WARN" }
             }
-        } catch { Write-Log "net_probe_parity=error $_" "WARN" }
+        } catch { Write-Log ("net_probe_parity=error {0} at line {1}" -f $_.Exception.Message, $_.InvocationInfo.ScriptLineNumber) "WARN" }
     }
     return $legacy
 }
