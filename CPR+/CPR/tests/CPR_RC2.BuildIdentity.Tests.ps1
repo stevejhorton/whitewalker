@@ -1,3 +1,8 @@
+# Non-Windows runs (CI, Linux): Pester's Mock needs the command to exist.
+BeforeAll {
+    if (-not (Get-Command Get-WinEvent -ErrorAction SilentlyContinue)) { function global:Get-WinEvent { param($LogName, $FilterHashtable, $MaxEvents, $ErrorAction) } }
+}
+
 Describe 'CPR build identity' {
     BeforeAll { $script:root = Split-Path -Parent $PSScriptRoot }
 
@@ -58,7 +63,9 @@ Describe 'Uninstall removes everything' {
 Describe 'Connected VPN short-circuits the unreachable branch' {
     BeforeAll { $script:entry = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.Entry.ps1') -Raw }
     It 'exits on a Connected VPN before testing enroll.cisco.com' {
-        $exit = $entry.IndexOf('skipping enroll.cisco.com and captive-portal checks')
+        # A Connected VPN is settled by the connected-unreachable triage, which returns
+        # before the enroll.cisco.com probe (d76e5cd replaced the old 'skipping ...' message).
+        $exit = $entry.IndexOf('$vpnBeforeEnroll -eq "Connected"')
         $test = $entry.IndexOf('$enrollResult = Test-Redirect -Url $ISERedirectTestURL')
         $exit | Should -BeGreaterThan 0
         $exit | Should -BeLessThan $test
@@ -79,6 +86,7 @@ Describe 'End-of-run network re-check' {
         $script:EndRunRecheckEnabled = $true; $script:EndRunRerunMax = 2; $script:EndRunRerunWindowSec = 60
         $script:EndRunRerunDelaySec = 5; $script:CprTaskFolder = '\CPR\'; $script:WhatIf = $false
         $script:EndRunRerunStateFile = Join-Path $TestDrive 'rerun.txt'
+        Remove-Item -LiteralPath $script:EndRunRerunStateFile -ErrorAction SilentlyContinue   # TestDrive is shared by the Its in this block
         $script:base = [pscustomobject]@{ SSID='SNAFU'; IPAddress='1.1.1.1'; DefaultGateway='1.1.1.254'; InterfaceGuid='{g}'; AdapterClass='wifi' }
         function Write-Log { param($m,$l) }
         function Write-TeeLog { param($a,$f) $script:teeSeen = @{ a = $a; f = $f } }
@@ -147,7 +155,7 @@ Describe 'Tee master and level tool' {
     }
     It 'the tool has no param() block, so dot-sourcing it cannot overwrite the caller''s variables' {
         $text = Get-Content (Join-Path $script:root 'WW_set_tee_level.ps1') -Raw
-        $text | Should -Not -Match '(?m)^\s*(\[CmdletBinding\(\)\]\s*)?param\s*\('
+        $text | Should -Not -Match '(?m)^(\[CmdletBinding\(\)\]\s*)?param\s*\('
         function Test-DotSourceKeepsLocals {
             param([string]$ToolPath)
             $activePath = 'C:\sentinel\active.psd1'; $masterPath = 'C:\sentinel\master.psd1'
@@ -273,7 +281,7 @@ Describe 'cpr_tee_<N>.flag handler' {
         (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 5
         Test-Path (Join-Path $script:flagDir 'cpr_tee_5.flag') | Should -BeFalse
         (Get-Content $script:TeeRevertStateFile -Raw | ConvertFrom-Json).previous_level | Should -Be 1
-        ($script:teeEvents | Where-Object { $_.Tag -eq 'tee_level_set' -and $_.Data.result -eq 'applied' }).Count | Should -Be 1
+        @($script:teeEvents | Where-Object { $_.Tag -eq 'tee_level_set' -and $_.Data.result -eq 'applied' }).Count | Should -Be 1
     }
     It 'ignores file CONTENT: a flag with junk inside is treated the same' {
         Set-Content (Join-Path $script:flagDir 'cpr_tee_3.flag') '& calc.exe; level=99'
@@ -312,7 +320,7 @@ Describe 'cpr_tee_<N>.flag handler' {
         Invoke-TeeLevelFlagCheck
         (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 1
         Test-Path $script:TeeRevertStateFile | Should -BeFalse
-        ($script:teeEvents | Where-Object { $_.Data.result -eq 'reverted' }).Count | Should -Be 1
+        @($script:teeEvents | Where-Object { $_.Data.result -eq 'reverted' }).Count | Should -Be 1
     }
     It 'does not revert when someone else changed the level meanwhile' {
         New-Item (Join-Path $script:flagDir 'cpr_tee_5.flag') -ItemType File | Out-Null
@@ -334,7 +342,7 @@ Describe 'cpr_tee_<N>.flag handler' {
         $st | ConvertTo-Json | Set-Content $script:TeeRevertStateFile
         Invoke-TeeLevelFlagCheck
         (Get-CprActiveTeeLevelInfo -ActivePath $script:TeeEventsFile).Level | Should -Be 5
-        ($script:teeEvents | Where-Object { $_.Data.reason -eq 'keep' }).Count | Should -Be 1
+        @($script:teeEvents | Where-Object { $_.Data.reason -eq 'keep' }).Count | Should -Be 1
     }
     It 'a _keep flag cancels a pending revert and later flags revert to the kept level, not the old one' {
         New-Item (Join-Path $script:flagDir 'cpr_tee_5.flag') -ItemType File | Out-Null
@@ -603,7 +611,7 @@ Describe 'vpncli calls are time-bounded' {
         $def = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Invoke-VpnCliBounded' }, $true)[0]
         . ([scriptblock]::Create($def.Extent.Text))
         function Write-Log { param($m, $l) $script:logged += "$m" }
-        $script:vpn_cmd = Join-Path $env:SystemRoot 'System32\cmd.exe'
+        $script:vpn_cmd = Join-Path $(if ($env:SystemRoot) { $env:SystemRoot } else { $TestDrive }) 'System32\cmd.exe'
         $script:VpnCliTimeoutSec = 8
         $script:VpnCliDisconnectTimeoutSec = 20
     }
@@ -669,7 +677,7 @@ Describe 'Native redirect carries the same portal fields as the 301 row' {
     }
     It 'cap_portal_redirect tee in remediation merges the portal fields' {
         $srcText | Should -Match 'Get-CprPortalUrlFields -Url \(\[string\]\$RedirectUrl\)'
-        $srcText | Should -Match "detection_source = \$\(if \(\$accepted301Carried\)"
+        $srcText | Should -Match 'detection_source = \$\(if \(\$accepted301Carried\)'
     }
     It 'tee master lists the new fields for cap_portal_redirect' {
         $m = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'WW_tee_master.psd1') -Raw
@@ -684,6 +692,7 @@ Describe 'Get-VpnState does not trust the management line when vpncli state is e
         foreach ($d in $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-VpnState' }, $true)) { . ([scriptblock]::Create($d.Extent.Text)) }
         function Write-Log { param($m, $l) }
         function Write-DebugBlock { param($Label, $Text) }
+        function Test-VpnPostureActive { $false }
         $script:WWDebug = $false
     }
     It 'returns Unknown when state is empty and stats only shows a Disconnected management line' {
@@ -773,7 +782,7 @@ Describe 'HostScan hold: never disconnect during a live scan, with a ceiling' {
         $script:VpnHostscanEpisodeFile = Join-Path $TestDrive 'hold.txt'
         $script:VpnCliTimeoutSec = 8; $script:VpnCliDisconnectTimeoutSec = 20
         $script:VpnDisconnectsThisRun = 0
-        $script:vpn_cmd = Join-Path $env:SystemRoot 'System32\cmd.exe'
+        $script:vpn_cmd = Join-Path $(if ($env:SystemRoot) { $env:SystemRoot } else { $TestDrive }) 'System32\cmd.exe'
     }
     BeforeEach { $script:VpnHostscanHoldActive = $false; Remove-Item $script:VpnHostscanEpisodeFile -ErrorAction SilentlyContinue; $script:VpnDisconnectsThisRun = 0 }
     It 'holds while scanner events are fresh and starts an episode' {
@@ -887,7 +896,7 @@ Describe 'HayStack drain kick: end-of-run ship of queued install/update results'
     }
     It 'static: maintenance stage calls the kick after self-update' {
         $en = Get-Content (Join-Path $root 'main\Main.Entry.ps1') -Raw
-        $en | Should -Match "(?s)Invoke-SelfUpdate.*Invoke-HaystackDrainKick -CorpReachable \(\[bool\]\$shareOk\)"
+        $en | Should -Match '(?s)Invoke-SelfUpdate.*Invoke-HaystackDrainKick -CorpReachable \(\[bool\]\$shareOk\)'
     }
 }
 

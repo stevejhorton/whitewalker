@@ -1,0 +1,1362 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260610231841
+Username: MS\shorto39
+RunAs User: MS\shorto39
+Configuration Name: 
+Machine: LHTU05CD1503KF5 (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 22968
+PSVersion: 5.1.22621.6931
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.6931
+BuildVersion: 10.0.22621.6931
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is output.log
+Output also captured to: output.log
+
+
+====================================================
+   WhiteWalker / CPR+ RC1.19 -- Master Test Run
+====================================================
+  Date   : 2026-06-10 23:18:41
+  Host   : LHTU05CD1503KF5
+  Suite  : All
+
+Pester : 5.3.3
+
+--------------------------------------------------
+  Suite: WW Main
+--------------------------------------------------
+Pester v5.3.3
+
+Starting discovery in 1 files.
+Discovery found 158 tests in 302ms.
+Running tests.
+
+Running tests from 'C:\ProgramData\WhiteWalker\WW_Tests_Main.ps1'
+Describing Get-NwCheckResult - RC1 Primary Preflight
+ Context HTTP 200 response (clean internet)
+   [+] Should return Status=online for HTTP 200
+ 22ms (15ms|7ms)
+ Context HTTP 404 with correct gateway body signature
+   [+] Should return Status=online when body contains gateway signature
+ 10ms (8ms|3ms)
+   [+] Should return Status=unreachable when body does NOT match gateway signature
+ 8ms (6ms|2ms)
+   [+] Should return Status=unreachable when body is empty
+ 8ms (6ms|2ms)
+   [+] Should return Status=unreachable when body is a captive portal 404 page
+ 8ms (6ms|2ms)
+ Context Redirect responses (captive/ISE)
+   [+] Should return Status=redirect with location for 302
+ 11ms (8ms|3ms)
+   [+] Should return Status=redirect with location for 301
+ 12ms (9ms|3ms)
+ Context Unreachable / exception
+   [+] Should return Status=unreachable on connection failure
+ 11ms (8ms|3ms)
+   [+] Should return Status=unreachable on timeout
+ 7ms (6ms|2ms)
+ Context Return object contract
+   [+] Should always return object with Status property
+ 20ms (14ms|6ms)
+   [+] Status should only be one of three known values
+ 14ms (12ms|2ms)
+
+Describing Invoke-LogRotation - Size-Based Log Rotation
+ Context No rotation needed
+   [+] Should not rotate when log file does not exist
+ 30ms (24ms|6ms)
+   [+] Should not rotate when log is under 1MB
+ 34ms (30ms|4ms)
+ Context Rotation triggered at 1MB
+   [+] Should trigger rotation when log exceeds 1MB
+ 124ms (121ms|3ms)
+   [+] Should drop oldest log (.5) before shifting
+ 110ms (108ms|2ms)
+   [+] Should not throw when older rotation files are missing
+ 79ms (78ms|2ms)
+ Context Rotation keeps last 5 files
+   [+] LogRotationKeep should be 5
+ 12ms (10ms|3ms)
+   [+] LogRotationMaxBytes should be 1MB
+ 13ms (12ms|2ms)
+
+Describing Invoke-BlackholeAction - VPN Hairpin Prevention
+ Context Feature disabled (BlackholeEnabled = false)
+   [+] Should be a complete no-op when disabled - on_prem tag
+ 51ms (45ms|6ms)
+   [+] Should be a complete no-op when disabled - off_prem_no_vpn tag
+ 31ms (30ms|1ms)
+   [+] Should be a complete no-op when disabled - startup tag
+ 31ms (29ms|1ms)
+   [+] Should be a complete no-op when disabled - no_net_transient
+ 31ms (29ms|2ms)
+ Context Function behavior contract - on-prem tag routing
+   [+] Should define exactly 5 on-prem tags
+ 16ms (14ms|3ms)
+   [+] Should include on_prem in the on-prem tag set
+ 14ms (12ms|2ms)
+   [+] Should include all ISE posture tags in on-prem set
+ 18ms (17ms|2ms)
+ Context Feature enabled - non-on-prem tags trigger -rm when flag exists
+   [+] Should fire -rm for non-on-prem tag: user_tun
+ 69ms (66ms|3ms)
+   [+] Should remove flag file for non-on-prem tag: user_tun
+ 72ms (70ms|2ms)
+   [+] Should fire -rm for non-on-prem tag: mgmt_tun
+ 65ms (63ms|2ms)
+   [+] Should remove flag file for non-on-prem tag: mgmt_tun
+ 67ms (65ms|1ms)
+   [+] Should fire -rm for non-on-prem tag: off_prem_no_vpn
+ 65ms (63ms|2ms)
+   [+] Should remove flag file for non-on-prem tag: off_prem_no_vpn
+ 62ms (61ms|2ms)
+   [+] Should fire -rm for non-on-prem tag: no_net_transient
+ 58ms (56ms|1ms)
+   [+] Should remove flag file for non-on-prem tag: no_net_transient
+ 63ms (62ms|2ms)
+   [+] Should fire -rm for non-on-prem tag: no_network_connection
+ 65ms (64ms|2ms)
+   [+] Should remove flag file for non-on-prem tag: no_network_connection
+ 68ms (66ms|2ms)
+   [+] Should fire -rm for non-on-prem tag: waiting_user_response
+ 62ms (61ms|1ms)
+   [+] Should remove flag file for non-on-prem tag: waiting_user_response
+ 64ms (62ms|2ms)
+   [+] Should fire -rm for non-on-prem tag: startup
+ 62ms (61ms|2ms)
+   [+] Should remove flag file for non-on-prem tag: startup
+ 64ms (63ms|2ms)
+   [+] Should fire -rm for non-on-prem tag: captive_portal_non_ise
+ 63ms (62ms|2ms)
+   [+] Should remove flag file for non-on-prem tag: captive_portal_non_ise
+ 65ms (63ms|2ms)
+   [+] Should fire -rm for non-on-prem tag: captive_portal_ise_guest
+ 61ms (59ms|2ms)
+   [+] Should remove flag file for non-on-prem tag: captive_portal_ise_guest
+ 65ms (64ms|1ms)
+   [+] Should fire -rm for non-on-prem tag: unknown_captive_portal
+ 61ms (60ms|2ms)
+   [+] Should remove flag file for non-on-prem tag: unknown_captive_portal
+ 64ms (62ms|2ms)
+   [+] Should fire -rm for non-on-prem tag: captive_portal_browser
+ 61ms (59ms|2ms)
+   [+] Should remove flag file for non-on-prem tag: captive_portal_browser
+ 65ms (63ms|2ms)
+ Context Feature enabled - -rm fires even when flag does NOT exist
+   [+] Should STILL fire -rm even when flag does not exist
+ 55ms (51ms|4ms)
+   [+] Should fire -rm on startup tag even with no flag
+ 51ms (50ms|2ms)
+   [+] Should fire -rm on no_net_transient even with no flag
+ 52ms (51ms|2ms)
+ Context Script file missing
+   [+] Should not throw when script is missing on -add
+ 29ms (26ms|3ms)
+   [+] Should not call Start-Process when script is missing
+ 33ms (32ms|2ms)
+ Context Startup safety -rm
+   [+] startup tag should NOT be in the on-prem set
+ 14ms (11ms|3ms)
+   [+] startup tag should route to -rm path (not -add)
+ 68ms (65ms|2ms)
+
+Describing Test-CaptivePortalCleared - Uses Get-NwCheckResult
+  [+] Should return true when Get-NwCheckResult returns online
+ 19ms (15ms|3ms)
+  [+] Should return false when Get-NwCheckResult returns redirect
+ 21ms (20ms|2ms)
+  [+] Should return false when Get-NwCheckResult returns unreachable
+ 19ms (18ms|2ms)
+  [+] Should use legacy check when UseNewPreflight is false
+ 453ms (451ms|2ms)
+
+Describing Get-VpnTunnelFlavor - Tunnel Type Detection
+ Context Management tunnel detection
+   [+] Should return mgmt_tun when Management Connection State: Connected
+ 16ms (11ms|4ms)
+   [+] Should detect mgmt_tun before user_tun when both patterns could match
+ 16ms (15ms|2ms)
+ Context User tunnel detection
+   [+] Should return user_tun when Management Connection State: Disconnected (user tunnel active)
+ 16ms (12ms|4ms)
+   [+] Should NOT match mgmt pattern for user tunnel output
+ 16ms (15ms|2ms)
+ Context No VPN / disconnected
+   [+] Should detect no_vpn from Management Connection State: Disconnected alone
+ 17ms (14ms|3ms)
+ Context Fallback detection (no Management Connection State line)
+   [+] Should use fallback when no Management Connection State line present
+ 20ms (17ms|3ms)
+ Context Critical: mgmt_tun not misidentified as on_prem
+   [+] mgmt_tun flavor should NOT fall through to DC check in online branch
+ 15ms (12ms|3ms)
+   [+] no_vpn flavor should fall through to DC check
+ 16ms (14ms|2ms)
+
+Describing APIPA Early Exit - No Real Network Connection
+ Context APIPA detection logic
+   [+] Should detect 169.254.x.x address
+ 10ms (5ms|5ms)
+   [+] Should NOT flag valid corp IP as APIPA
+ 6ms (4ms|2ms)
+   [+] Should NOT flag valid private IP as APIPA
+ 7ms (6ms|2ms)
+   [+] APIPA + N/A gateway = no network
+ 5ms (3ms|2ms)
+   [+] APIPA + valid gateway = should NOT trigger early exit
+ 5ms (3ms|2ms)
+   [+] Valid IP + N/A gateway = should NOT trigger early exit
+ 5ms (4ms|2ms)
+
+Describing WLANi03 - On-Prem Corp SSID Awareness
+ Context SSID identification
+   [+] Should match WLANi03 exactly
+ 12ms (3ms|8ms)
+   [+] Should NOT match partial SSID
+ 5ms (3ms|2ms)
+   [+] PowerShell -eq is case-insensitive so wlani03 matches WLANi03 (by design)
+ 5ms (3ms|2ms)
+ Context IP wait trigger conditions
+   [+] Should trigger wait when SSID is WLANi03 and IP is N/A
+ 6ms (4ms|3ms)
+   [+] Should trigger wait when SSID is WLANi03 and IP is APIPA
+ 5ms (4ms|2ms)
+   [+] Should NOT trigger wait when SSID is WLANi03 but IP is valid
+ 7ms (3ms|4ms)
+   [+] Should NOT trigger wait when SSID is not WLANi03 even with APIPA
+ 5ms (3ms|2ms)
+   [+] WLANi03 wait should allow up to 6 retries (18s at 3s each)
+ 5ms (4ms|2ms)
+ Context Normal preflight still runs after WLANi03 IP wait
+   [+] WLANi03 path does NOT skip Get-NwCheckResult
+ 7ms (4ms|4ms)
+
+Describing VPN Intermediate State - Force Disconnect Before Probing
+ Context Intermediate state detection
+   [+] Should identify Connecting as intermediate
+ 8ms (3ms|4ms)
+   [+] Should identify Reconnecting as intermediate
+ 4ms (3ms|1ms)
+   [+] Should identify Unknown as intermediate
+ 5ms (4ms|2ms)
+   [+] Should NOT flag Connected as intermediate
+ 5ms (3ms|2ms)
+   [+] Should NOT flag Disconnected as intermediate
+ 6ms (4ms|2ms)
+ Context Post-disconnect re-probe logic
+   [+] Should re-probe nwcheck after disconnect before trying enroll.cisco.com
+ 12ms (9ms|3ms)
+   [+] Should skip enroll probe if nwcheck returns online after disconnect
+ 5ms (3ms|2ms)
+   [+] Should proceed to enroll probe if nwcheck still unreachable after disconnect
+ 6ms (4ms|2ms)
+
+Describing RC1 Configuration Defaults
+  [+] Should use gateway.optum.com as preflight URL
+ 7ms (4ms|4ms)
+  [+] Should have UseNewPreflight set to true
+ 5ms (3ms|1ms)
+  [+] Should have BlackholeEnabled set to TRUE (test environment override)
+ 6ms (4ms|2ms)
+  [+] Should have BlackholeScriptPath set correctly
+ 5ms (4ms|1ms)
+  [+] Should have BlackholeFlagFile set correctly
+ 5ms (3ms|1ms)
+  [+] Should have LogRotationMaxBytes set to 1MB
+ 8ms (6ms|1ms)
+  [+] Should have LogRotationKeep set to 5
+ 5ms (3ms|2ms)
+  [+] Should have initial_sleep set to 3 seconds
+ 5ms (3ms|1ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected strings to be the same, but they were different.
+Expected length: 13
+Actual length:   20
+Strings differ at index 12.
+Expected: '3.14.0_RC1.10'
+But was:  '3.14.0_RC1.19_merged'
+           ------------^"
+>> TerminatingError(): "Expected strings to be the same, but they were different.
+Expected length: 13
+Actual length:   20
+Strings differ at index 12.
+Expected: '3.14.0_RC1.10'
+But was:  '3.14.0_RC1.19_merged'
+           ------------^"
+>> TerminatingError(): "Expected strings to be the same, but they were different.
+Expected length: 13
+Actual length:   20
+Strings differ at index 12.
+Expected: '3.14.0_RC1.10'
+But was:  '3.14.0_RC1.19_merged'
+           ------------^"
+  [-] Should have version set to RC1.10
+ 10ms (8ms|2ms)
+   Expected strings to be the same, but they were different.
+   Expected length: 13
+   Actual length:   20
+   Strings differ at index 12.
+   Expected: '3.14.0_RC1.10'
+   But was:  '3.14.0_RC1.19_merged'
+              ------------^
+   at $ver | Should -Be "3.14.0_RC1.10", C:\ProgramData\WhiteWalker\WW_Tests_Main.ps1:771
+   at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_Tests_Main.ps1:771
+  [+] Should have enroll.cisco.com as ISE redirect test URL
+ 7ms (6ms|2ms)
+
+Describing DNS Chicken/Egg - Captive Portal No DNS Notification
+ Context Test-CaptivePortalCompatibility - DNS failure detection
+   [+] Should detect DNS_BLOCKED when host resolution fails
+ 85ms (81ms|4ms)
+   [+] Should set HasIssues=true on DNS_BLOCKED
+ 24ms (22ms|2ms)
+   [+] Should set AllowRetry=false for DNS_BLOCKED (retrying won't fix DNS)
+ 14ms (12ms|2ms)
+   [+] Should NOT set AllowRetry=false for clean portal
+ 13ms (11ms|2ms)
+ Context DNS chicken/egg flag file
+   [+] Should write DNS_BLOCKED to flag file on detection
+ 30ms (27ms|3ms)
+   [+] Flag file JSON should contain issue_type DNS_BLOCKED
+ 13ms (11ms|2ms)
+   [+] Flag file JSON should contain redirect_url
+ 15ms (13ms|2ms)
+   [+] dns_chicken_egg_issue.flag should be in stale flag cleanup list
+ 12ms (10ms|2ms)
+ Context Flare events on DNS chicken/egg detection
+   [+] captive_portal_dns_misconfiguration flare tag should be a valid string
+ 27ms (23ms|4ms)
+   [+] captive_portal_browser flare should fire after DNS issue detected
+ 21ms (20ms|2ms)
+ Context User notification content
+   [+] User message should explain the DNS chicken/egg problem clearly
+ 20ms (14ms|6ms)
+   [+] User message should NOT suggest retrying (AllowRetry=false)
+ 14ms (12ms|2ms)
+
+Describing Get-RedirectType - Redirect URL Classification
+ Context ISE Employee (PSN) detection
+   [+] Should classify isepsn URL as ISE_EMPLOYEE
+ 20ms (15ms|5ms)
+   [+] Should classify URL with isepsn in hostname as ISE_EMPLOYEE
+ 14ms (12ms|2ms)
+ Context ISE Guest detection
+   [+] Should classify isegst URL as ISE_GUEST
+ 20ms (16ms|4ms)
+ Context Non-ISE captive portal
+   [+] Should classify hotel portal as NON_ISE
+ 16ms (12ms|4ms)
+   [+] Should classify Starbucks portal as NON_ISE
+ 13ms (11ms|2ms)
+ Context Unknown/null redirect
+   [+] Should return UNKNOWN for null URL
+ 11ms (7ms|4ms)
+   [+] Should return UNKNOWN for empty URL
+ 9ms (7ms|2ms)
+
+Describing Test-DefaultGateway - Gateway Reachability
+  [+] Should return true when gateway is reachable
+ 34ms (30ms|4ms)
+  [+] Should return false when no gateway configured
+ 17ms (16ms|2ms)
+  [+] Should return false when gateway unreachable
+ 31ms (29ms|2ms)
+
+Describing Test-NwCheckAfterCompliance - Post-Posture nwcheck Poll (NOTE: OS sleeps 1min during this test array)
+  [+] Should return true when nwcheck comes online after compliance
+ 37ms (34ms|3ms)
+  [+] Should return false when nwcheck still redirected after compliance (ACTUAL OS sleep 30sec)
+ 30.04s (30.04s|2ms)
+  [+] Should return false when nwcheck unreachable after compliance (ACTUAL OS sleep 30sec)
+ 30.04s (30.04s|2ms)
+
+Describing Cooldown Functions
+ Context Rescan-InCooldown
+   [+] Should return false when no prior rescan
+ 10ms (4ms|7ms)
+   [+] Should return true when rescan was recent
+ 20ms (19ms|2ms)
+   [+] Should return false when rescan was long ago
+ 16ms (15ms|2ms)
+ Context In-Cooldown
+   [+] Should return false when no prior flare stamp
+ 6ms (3ms|3ms)
+   [+] Should return true when flare was fired recently
+ 6ms (4ms|2ms)
+   [+] Should return false when flare cooldown has expired
+ 6ms (4ms|2ms)
+
+Describing Get-NetworkInfo - Network State Detection
+ Context Connection type detection
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+   [+] Should detect WiFi connection type
+ 65ms (57ms|8ms)
+   [+] Should return N/A IP when no active adapter
+ 18ms (16ms|2ms)
+ Context SSID detection
+   [+] Should detect SSID on WiFi connection
+ 10ms (7ms|4ms)
+   [+] Should NOT use IP address as SSID (VPN adapter bug)
+ 5ms (3ms|2ms)
+
+Describing Clear-StaleFlagFiles - RC1.9 Complete Flag List
+  [+] Should include vpn_blocked.flag in stale cleanup
+ 8ms (2ms|5ms)
+  [+] Should have BlackholeFlagFile defined
+ 8ms (6ms|2ms)
+  [+] dns_chicken_egg_issue.flag hardcoded path should be correct
+ 4ms (2ms|2ms)
+
+Describing Send-FlareEvent - Blackhole Hook Integration
+  [+] Should call Invoke-BlackholeAction after firing any flare
+ 67ms (64ms|4ms)
+  [+] Should pass the flare tag to Invoke-BlackholeAction
+ 73ms (71ms|2ms)
+  [+] Should NOT call Invoke-BlackholeAction when flare is deduped
+ 17ms (15ms|2ms)
+
+Describing WW_main.ps1 - Blackhole ENABLED path coverage
+ Context on_prem flare triggers -add when enabled
+   [+] Should call Set-VpnHostsEntry.ps1 -add
+ 44ms (38ms|6ms)
+   [+] Should create blackhole flag file
+ 40ms (38ms|2ms)
+ Context off_prem flare triggers -rm when enabled
+   [+] Should call Set-VpnHostsEntry.ps1 -rm
+ 62ms (57ms|6ms)
+   [+] Should remove blackhole flag file if present
+ 54ms (52ms|2ms)
+ Context VPN tunnel flares trigger -rm when enabled
+   [+] user_tun should trigger -rm
+ 55ms (52ms|3ms)
+   [+] mgmt_tun should trigger -rm
+ 51ms (49ms|2ms)
+ Context ISE flares on-prem trigger -add when enabled
+   [+] ise_posture_compliant should trigger -add
+ 38ms (35ms|3ms)
+   [+] ise_employee_posture_redirect should trigger -add
+ 39ms (38ms|2ms)
+
+Describing WW_main.ps1 - Blackhole DISABLED path coverage
+ Context All flares should no-op when disabled
+   [+] on_prem should not call Start-Process when disabled
+ 21ms (16ms|5ms)
+   [+] off_prem_no_vpn should not call Start-Process when disabled
+ 23ms (21ms|2ms)
+   [+] user_tun should not call Start-Process when disabled
+ 17ms (16ms|2ms)
+   [+] Should not create or remove flag files when disabled
+ 25ms (23ms|2ms)
+ Context Flare events still fire when blackhole disabled
+   [+] Send-FlareEvent should still work independent of blackhole
+ 70ms (67ms|3ms)
+
+Describing WW_main.ps1 - Configuration DEFAULT value verification
+  [+] BlackholeEnabled should default to FALSE in production code
+ 7ms (3ms|4ms)
+  [+] BlackholeScriptPath should point to Set-VpnHostsEntry.ps1
+ 6ms (4ms|2ms)
+  [+] BlackholeFlagFile should be vpn_blocked.flag
+ 5ms (4ms|2ms)
+  [+] UseNewPreflight should be TRUE (RC1 mode)
+ 4ms (3ms|1ms)
+  [+] NewPreflightURL should be gateway.optum.com
+ 15ms (4ms|11ms)
+Tests completed in 66.77s
+Tests Passed: 157,
+Failed: 1,
+Skipped: 0
+
+NotRun: 0
+
+--------------------------------------------------
+  Suite: Cap Portal Runner
+--------------------------------------------------
+Pester v5.3.3
+
+Starting discovery in 2 files.
+Discovery found 219 tests in 433ms.
+Running tests.
+
+Running tests from 'C:\ProgramData\WhiteWalker\WW_Tests_CapPortalRunner.ps1'
+PS C:\ProgramData\WhiteWalker> TerminatingError(Invoke-BringToForeground): "Cannot process argument transformation on parameter 'Process'. Cannot create object of type "System.Diagnostics.Process". "Id" is a ReadOnly property."
+PS C:\ProgramData\WhiteWalker> TerminatingError(PesterMock_script_Wait-Job_c89729be-d3c1-4ba7-a2e2-83fe61167deb): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=67890}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+Describing Write-CapLog - Logging Framework
+ Context Timestamp format
+   [+] Should use yyyy-MM-dd HH:mm:ss.fff zzz format
+ 10ms (5ms|5ms)
+ Context Log levels
+   [+] Should default to INFO level
+ 25ms (22ms|3ms)
+   [+] Should support WARN level
+ 18ms (16ms|2ms)
+   [+] Should support ERROR level
+ 22ms (21ms|2ms)
+   [+] Should support DEBUG level
+ 21ms (19ms|2ms)
+ Context Log line format
+   [+] Should include [CAP] tag
+ 23ms (20ms|3ms)
+   [+] Should include timestamp, tag, level, and message
+ 18ms (16ms|2ms)
+
+Describing Write-CompletionFlag - Flag File Creation
+ Context JSON structure
+   [+] Should write JSON with all required fields
+ 24ms (18ms|5ms)
+   [+] Should include timestamp in ISO 8601 format
+ 14ms (12ms|2ms)
+   [+] Should include current Windows user
+ 16ms (15ms|2ms)
+   [+] Should default CaptiveBrowserPID to 0 if not provided
+ 13ms (11ms|2ms)
+   [+] Should include captive browser PID for cleanup
+ 14ms (12ms|2ms)
+ Context Status values
+   [+] Should support all valid status values
+ 24ms (20ms|3ms)
+
+Describing Test-SiteReachability - HTTP Connectivity Check
+ Context ER3 Critical Fix - 3 second timeout
+   [+] Should use 3 second timeout (not 8s)
+ 19ms (13ms|6ms)
+   [+] Should complete within 5s polling interval to prevent hang
+ 9ms (8ms|2ms)
+   [+] Should handle unreachable sites without blocking poll loop
+ 10ms (8ms|2ms)
+ Context HTTP 200 success
+   [+] Should return true for HTTP 200
+ 25ms (22ms|3ms)
+ Context HTTP failures
+   [+] Should return false for HTTP 404
+ 26ms (21ms|4ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Connection failed"
+>> TerminatingError(): "Connection failed"
+>> TerminatingError(): "Connection failed"
+>> TerminatingError(): "Connection failed"
+>> TerminatingError(): "Connection failed"
+>> TerminatingError(): "Connection failed"
+   [+] Should return false on connection failure
+ 21ms (20ms|2ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Timeout"
+>> TerminatingError(): "Timeout"
+>> TerminatingError(): "Timeout"
+>> TerminatingError(): "Timeout"
+>> TerminatingError(): "Timeout"
+>> TerminatingError(): "Timeout"
+   [+] Should return false on timeout
+ 21ms (19ms|2ms)
+ Context ER5 DNS chicken/egg tracking
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "could not be resolved"
+>> TerminatingError(): "could not be resolved"
+>> TerminatingError(): "could not be resolved"
+>> TerminatingError(): "could not be resolved"
+>> TerminatingError(): "could not be resolved"
+>> TerminatingError(): "could not be resolved"
+   [+] Should increment dnsFailureCount on DNS resolution error
+ 47ms (38ms|10ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Connection refused"
+>> TerminatingError(): "Connection refused"
+>> TerminatingError(): "Connection refused"
+>> TerminatingError(): "Connection refused"
+>> TerminatingError(): "Connection refused"
+>> TerminatingError(): "Connection refused"
+   [+] Should NOT increment dnsFailureCount on non-DNS errors
+ 27ms (25ms|2ms)
+ Context Timeout mismatch prevention (ER3 Bug Fix)
+   [+] OLD BUG: 8s timeout would cause cumulative delay
+ 14ms (10ms|4ms)
+   [+] ER3 FIX: 3s timeout prevents cumulative hang
+ 12ms (10ms|2ms)
+
+Describing Test-DNSChickenEggProblem - DNS Failure Detection
+ Context Threshold detection
+   [+] Should return false when below threshold
+ 18ms (12ms|6ms)
+   [+] Should return true when at threshold
+ 11ms (9ms|2ms)
+   [+] Should return true when above threshold
+ 10ms (9ms|2ms)
+   [+] Should default threshold to 10
+ 11ms (9ms|2ms)
+
+Describing CPR+ Configuration Defaults
+  [+] Should use correct log path
+ 8ms (3ms|5ms)
+  [+] Should use correct flag file path
+ 5ms (4ms|2ms)
+  [+] Should use enroll.cisco.com as captive portal URL
+ 5ms (3ms|2ms)
+  [+] Should use HTTP for captive portal URL (not HTTPS)
+ 5ms (3ms|2ms)
+  [+] Should use optum.com as validation site
+ 5ms (3ms|2ms)
+  [+] Should use HTTPS for validation site
+ 4ms (2ms|2ms)
+  [+] Should wait 150 seconds for initial authentication
+ 7ms (5ms|2ms)
+  [+] Should wait 30 seconds for final stabilization
+ 5ms (3ms|2ms)
+  [+] Should have smart wait configuration
+ 6ms (4ms|1ms)
+  [+] Should include all Cisco browser processes in kill list
+ 12ms (10ms|2ms)
+  [+] Should use correct state directory
+ 5ms (3ms|2ms)
+
+Describing Initialize-CaptivePortalLogger - Setup
+ Context Directory creation
+   [+] Should create state directory if missing
+ 49ms (44ms|5ms)
+   [+] Should not throw if directory creation succeeds
+ 38ms (36ms|2ms)
+ Context Log file creation
+   [+] Should create log file if missing
+ 40ms (36ms|4ms)
+
+Describing Cisco Browser Killer - Background Job (Skipped; will test manually during regression testing//SJH)
+ Context Start-CiscoBrowserKiller
+   [!] Should start background job
+ 5ms (0ms|5ms)
+   [!] Should pass Cisco process list to job
+ 1ms (0ms|1ms)
+   [!] Should not throw on error
+ 1ms (0ms|1ms)
+   [!] Should return null on error
+ 1ms (0ms|1ms)
+ Context Stop-CiscoBrowserKiller
+   [!] Should wait for job to complete
+ 3ms (0ms|3ms)
+   [!] Should stop and remove job
+ 1ms (0ms|1ms)
+   [!] Should not throw if job is null
+ 3ms (0ms|3ms)
+ Context Background Job Logic
+   [+] Should target Cisco interference processes
+ 8ms (5ms|3ms)
+   [+] Should kill processes for 20 seconds
+ 5ms (3ms|2ms)
+   [+] Should check every 500ms for new processes
+ 3ms (2ms|1ms)
+
+Describing Browser Management - Edge Launch and Fallback
+ Context Open-CaptivePortalBrowser Logic
+   [+] Should try Edge first (multiple paths)
+ 9ms (5ms|4ms)
+   [+] Should launch with -PassThru to capture PID
+ 17ms (15ms|2ms)
+   [+] Should use Normal window style for captive browser
+ 8ms (6ms|2ms)
+   [+] Should fallback to default browser if Edge fails
+ 18ms (16ms|1ms)
+ Context Open-ValidationBrowser Logic
+   [+] Should launch maximized for seamless UX
+ 6ms (4ms|3ms)
+   [+] Should use --start-maximized Edge flag
+ 4ms (3ms|2ms)
+   [+] Should target validation site
+ 6ms (4ms|2ms)
+ Context Edge ArgumentList Fix (ER3)
+   [+] Should use array syntax for ArgumentList
+ 7ms (3ms|3ms)
+   [+] Should pass Edge flags as separate array elements
+ 9ms (7ms|2ms)
+   [+] Should handle URL with special characters in array
+ 7ms (5ms|2ms)
+
+Describing Smart Wait & Connectivity - Authentication Polling
+ Context Authentication Polling Loop Timing
+   [+] Should poll connectivity every 5 seconds
+ 7ms (3ms|4ms)
+   [+] Should wait up to 150 seconds for authentication
+ 5ms (3ms|2ms)
+   [+] Should perform 30 connectivity checks max in 150s window
+ 5ms (3ms|2ms)
+   [+] Should exit early on successful auth
+ 8ms (6ms|2ms)
+   [+] Should wait full timeout if auth never completes
+ 5ms (3ms|2ms)
+
+Describing Timeout Notification - User Experience (ER3)
+ Context Show-TimeoutNotification Trigger Conditions
+   [+] Should display notification when authentication times out
+ 8ms (3ms|4ms)
+   [+] Should NOT display notification when authentication succeeds
+ 5ms (3ms|2ms)
+   [+] Should notify on PARTIAL status with no auth completion
+ 4ms (3ms|1ms)
+   [+] Should notify on FAILED status with no auth completion
+ 5ms (3ms|2ms)
+   [+] Should NOT notify on SUCCESS status
+ 5ms (4ms|2ms)
+ Context Notification UI Properties
+   [+] Should be TopMost to ensure visibility
+ 8ms (3ms|5ms)
+   [+] Should be CenterScreen for user attention
+ 5ms (3ms|2ms)
+   [+] Should be non-resizable (FixedDialog)
+ 6ms (4ms|2ms)
+   [+] Should disable maximize and minimize
+ 11ms (9ms|2ms)
+   [+] Should have reasonable dimensions for two-button layout
+ 7ms (5ms|2ms)
+   [+] Should have RETRY and EXIT buttons
+ 11ms (9ms|2ms)
+ Context Notification Content Validation
+   [+] Should mention captive portal timeout
+ 7ms (4ms|4ms)
+   [+] Should provide actionable guidance
+ 5ms (3ms|2ms)
+
+Describing Network Reconnect Function - RETRY Action (ER3)
+ Context Invoke-NetworkReconnect Logic
+   [+] Should kill browser processes before reconnecting
+ 8ms (3ms|5ms)
+   [+] Should use netsh to disconnect from WiFi
+ 5ms (4ms|2ms)
+   [+] Should wait 3 seconds after disconnect
+ 5ms (4ms|2ms)
+   [+] Should use netsh to reconnect to same SSID
+ 7ms (6ms|2ms)
+ Context RETRY Action Flow
+   [+] Should set status RETRY_REQUESTED on successful reconnect
+ 7ms (4ms|4ms)
+   [+] Should set status RETRY_FAILED on failed reconnect
+ 5ms (3ms|2ms)
+ Context EXIT Action Flow
+   [+] Should set status USER_EXIT when user chooses EXIT
+ 7ms (4ms|3ms)
+   [+] Should NOT perform any network actions on EXIT
+ 7ms (5ms|2ms)
+
+Describing VPN Stabilization - Wait for Stable State
+ Context VPN State Detection
+   [+] Should wait for VPN stable state if remediation file exists
+ 11ms (6ms|5ms)
+   [+] Should poll VPN state every 5 seconds
+ 5ms (3ms|2ms)
+   [+] Should proceed to validation browser after VPN stable
+ 5ms (3ms|1ms)
+
+Describing Comprehensive Timeout Scenarios - End-to-End
+ Context Scenario 1: User Never Authenticates (Full Timeout)
+   [+] Should wait full 150 seconds
+ 11ms (7ms|5ms)
+   [+] Should show notification after full timeout
+ 5ms (3ms|2ms)
+   [+] Should return PARTIAL or FAILED status
+ 4ms (2ms|2ms)
+ Context Scenario 2: User Authenticates Quickly (Early Exit)
+   [+] Should exit wait loop early when site becomes reachable
+ 13ms (9ms|4ms)
+   [+] Should NOT show notification on early success
+ 5ms (4ms|2ms)
+ Context Scenario 3: Captive Portal Site Unreachable (Network Issue)
+   [+] Should timeout gracefully without hang
+ 5ms (2ms|3ms)
+   [+] Should show notification after timeout attempts
+ 6ms (4ms|2ms)
+
+Describing Main Workflow - Success and Failure Paths
+ Context Success Path
+   [+] Should complete with SUCCESS status when all works
+ 20ms (15ms|5ms)
+   [+] Should complete without notification on success
+ 7ms (6ms|2ms)
+ Context Failure Paths
+   [+] Should report FAILED if captive browser launch fails
+ 9ms (5ms|4ms)
+   [+] Should report PARTIAL if validation fails but auth worked
+ 5ms (3ms|2ms)
+   [+] Should show notification and return FAILED on complete failure
+ 6ms (5ms|1ms)
+
+Describing Task Scheduler Integration - Event 777 Trigger
+  [+] Should run with -WindowStyle Hidden from Task Scheduler
+ 8ms (4ms|4ms)
+  [+] Should support -Debug switch for troubleshooting
+ 5ms (3ms|2ms)
+
+Describing Regression Tests - Existing Functionality Preserved
+  [+] Should still kill Cisco interference processes
+ 6ms (3ms|3ms)
+  [+] Should still track captive browser PID
+ 6ms (4ms|2ms)
+  [+] Should still write completion flag file
+ 7ms (5ms|2ms)
+  [+] Should still use 150s initial wait
+ 5ms (3ms|2ms)
+  [+] Should still use 30s final wait
+ 5ms (4ms|2ms)
+
+Running tests from 'C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1'
+Describing WW_cap_portal_runner.ps1 - Core Configuration
+  [+] Should use HTTP for captive portal URL (not HTTPS)
+ 6ms (4ms|3ms)
+  [+] Should use HTTPS for validation site
+ 3ms (2ms|2ms)
+  [+] Should have smart wait configuration
+ 6ms (5ms|2ms)
+  [+] Should have final stabilization wait
+ 5ms (4ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 - Flag File Management
+ Context Write-CompletionFlag Logic
+   [+] Should write JSON flag with all required fields
+ 14ms (8ms|6ms)
+   [+] Should use ISO 8601 timestamp format
+ 4ms (2ms|2ms)
+   [+] Should include captive browser PID for cleanup
+ 6ms (4ms|2ms)
+   [+] Should support status values
+ 7ms (5ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 - Browser Management
+ Context Open-CaptivePortalBrowser Logic
+   [+] Should try Edge first (multiple paths)
+ 10ms (5ms|5ms)
+   [+] Should launch with -PassThru to capture PID
+ 23ms (21ms|2ms)
+   [+] Should use Normal window style for captive browser
+ 8ms (6ms|2ms)
+   [+] Should fallback to default browser if Edge fails
+ 25ms (24ms|2ms)
+ Context Open-ValidationBrowser Logic
+   [+] Should launch maximized for seamless UX
+ 6ms (3ms|3ms)
+   [+] Should use --start-maximized Edge flag
+ 4ms (2ms|2ms)
+   [+] Should target validation site
+ 5ms (4ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 - Cisco Browser Killer
+ Context Start-CiscoBrowserKiller Background Job
+   [+] Should target Cisco interference processes
+ 13ms (8ms|5ms)
+   [+] Should run as background job
+ 19ms (18ms|1ms)
+   [+] Should kill processes for 10 seconds
+ 5ms (4ms|2ms)
+   [+] Should check every 500ms for new processes
+ 4ms (2ms|2ms)
+ Context Stop-CiscoBrowserKiller Cleanup
+PS C:\ProgramData\WhiteWalker> TerminatingError(PesterMock_script_Wait-Job_9e9ae8dc-ad4f-46ca-af22-aa1ee0ce3aa0): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+>> TerminatingError(PesterMock_script_Wait-Job_9e9ae8dc-ad4f-46ca-af22-aa1ee0ce3aa0): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+   [-] Should wait for job with timeout
+ 12ms (8ms|4ms)
+    PSInvalidCastException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    ArgumentTransformationMetadataException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    ParameterBindingArgumentTransformationException: Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:238
+PS C:\ProgramData\WhiteWalker> TerminatingError(PesterMock_script_Wait-Job_46228d02-84e8-4ffb-a45c-fdcd75fe913f): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+>> TerminatingError(PesterMock_script_Wait-Job_46228d02-84e8-4ffb-a45c-fdcd75fe913f): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+   [-] Should receive job results
+ 15ms (13ms|2ms)
+    PSInvalidCastException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    ArgumentTransformationMetadataException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    ParameterBindingArgumentTransformationException: Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:250
+PS C:\ProgramData\WhiteWalker> TerminatingError(PesterMock_script_Stop-Job_6ff9c6af-515f-4c7e-879e-3f65f4cc9b0b): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+>> TerminatingError(PesterMock_script_Stop-Job_6ff9c6af-515f-4c7e-879e-3f65f4cc9b0b): "Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]"."
+   [-] Should clean up job after completion
+ 20ms (18ms|2ms)
+    PSInvalidCastException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    ArgumentTransformationMetadataException: Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    ParameterBindingArgumentTransformationException: Cannot process argument transformation on parameter 'Job'. Cannot convert the "@{Id=888}" value of type "System.Management.Automation.PSCustomObject" to type "System.Management.Automation.Job[]".
+    at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:260
+
+Describing WW_cap_portal_runner.ps1 - Smart Wait & Connectivity
+ Context Test-SiteReachability Logic
+   [+] Should use Invoke-WebRequest with timeout
+ 30ms (25ms|6ms)
+   [+] Should return true on HTTP 200
+ 17ms (15ms|2ms)
+   [+] Should return false on non-200 status
+ 20ms (18ms|2ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+   [+] Should handle exceptions gracefully
+ 18ms (17ms|2ms)
+ Context Smart Wait Loop
+   [+] Should poll every 5 seconds
+ 8ms (5ms|3ms)
+   [+] Should exit early on successful auth
+ 133ms (131ms|2ms)
+   [+] Should wait full timeout if auth never completes
+ 5ms (3ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 - Wait-WithProgress
+  [+] Should log progress every 10 seconds
+ 7ms (4ms|3ms)
+  [+] Should sleep in 5 second increments
+ 7ms (5ms|2ms)
+  [+] Should calculate elapsed and remaining time
+ 8ms (7ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 - Main Workflow
+ Context Success Path
+   [+] Should complete with SUCCESS status when all works
+ 32ms (27ms|5ms)
+   [+] Should report PARTIAL if validation fails but auth worked
+ 14ms (12ms|2ms)
+ Context Failure Paths
+   [+] Should report FAILED if captive browser launch fails
+ 12ms (9ms|3ms)
+   [+] Should report FAILED if auth incomplete and validation fails
+ 8ms (4ms|3ms)
+
+Describing WW_cap_portal_runner.ps1 - Task Scheduler Integration
+  [+] Should run with -WindowStyle Hidden from Task Scheduler
+ 7ms (4ms|4ms)
+  [+] Should support -Debug switch for troubleshooting
+ 4ms (2ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 v1.7.0_ER3 - Critical Timeout Fix
+ Context Test-SiteReachability Timeout Configuration
+   [+] Should have timeout LESS than polling interval to prevent hang
+ 7ms (2ms|5ms)
+   [+] Should complete Test-SiteReachability within polling window
+ 4ms (2ms|2ms)
+   [+] Should handle unreachable sites without blocking poll loop
+ 4ms (2ms|2ms)
+ Context Authentication Polling Loop Timing
+   [+] Should poll connectivity every 5 seconds
+ 6ms (3ms|3ms)
+   [+] Should wait up to 150 seconds for authentication
+ 5ms (3ms|2ms)
+   [+] Should perform 30 connectivity checks max in 150s window
+ 8ms (4ms|4ms)
+   [+] Should sleep 1 second between poll interval checks
+ 5ms (4ms|2ms)
+ Context Hang Scenario Prevention
+   [+] OLD BUG: 8s timeout would cause cumulative delay
+ 8ms (4ms|4ms)
+   [+] ER3 FIX: 3s timeout prevents cumulative hang
+ 7ms (5ms|2ms)
+   [+] Should complete full 150s wait within reasonable time
+ 3ms (2ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 v1.7.0_ER3 - Edge ArgumentList Fix
+ Context Open-ValidationBrowser Argument Syntax
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected the value to have type [array] or any of its subtypes, but got '--start-maximized' with type [string]."
+>> TerminatingError(): "Expected the value to have type [array] or any of its subtypes, but got '--start-maximized' with type [string]."
+>> TerminatingError(): "Expected the value to have type [array] or any of its subtypes, but got '--start-maximized' with type [string]."
+   [-] Should use array syntax for ArgumentList
+ 10ms (5ms|5ms)
+    Expected the value to have type [array] or any of its subtypes, but got '--start-maximized' with type [string].
+    at $correctSyntax | Should -BeOfType [System.Array], C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:608
+    at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:608
+   [+] Should pass Edge flags as separate array elements
+ 7ms (6ms|2ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected 'redirect' to be found in collection https://portal.company.com/auth?redirect=https://app.com, but it was not found."
+>> TerminatingError(): "Expected 'redirect' to be found in collection https://portal.company.com/auth?redirect=https://app.com, but it was not found."
+>> TerminatingError(): "Expected 'redirect' to be found in collection https://portal.company.com/auth?redirect=https://app.com, but it was not found."
+   [-] Should handle URL with special characters in array
+ 12ms (10ms|2ms)
+    Expected 'redirect' to be found in collection https://portal.company.com/auth?redirect=https://app.com, but it was not found.
+    at $args[1] | Should -Contain "redirect", C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:624
+    at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:624
+ Context Browser Launch Compatibility
+   [+] Should try Edge from three possible locations
+ 6ms (3ms|3ms)
+   [+] Should fallback to default browser if Edge not found
+ 18ms (16ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 v1.7.0_ER3 - Timeout Notification
+ Context Show-TimeoutNotification Function
+   [+] Should display notification when authentication times out
+ 9ms (4ms|4ms)
+   [+] Should NOT display notification when authentication succeeds
+ 5ms (3ms|2ms)
+   [+] Should return RETRY or EXIT based on user choice
+ 5ms (3ms|2ms)
+   [+] Should NOT auto-close (removed timer functionality)
+ 5ms (4ms|2ms)
+ Context Notification Trigger Conditions
+   [+] Should notify on PARTIAL status with no auth completion
+ 7ms (3ms|4ms)
+   [+] Should notify on FAILED status with no auth completion
+ 6ms (4ms|2ms)
+   [+] Should NOT notify on SUCCESS status
+ 5ms (4ms|2ms)
+   [+] Should NOT notify if auth completed even with unreachable site
+ 6ms (4ms|2ms)
+ Context Notification Content Validation
+   [+] Should mention captive portal timeout
+ 7ms (4ms|3ms)
+   [+] Should provide actionable guidance
+ 5ms (4ms|2ms)
+   [+] Should explain RETRY button action
+ 5ms (3ms|2ms)
+   [+] Should explain EXIT button action
+ 7ms (5ms|2ms)
+ Context Notification UI Properties
+   [+] Should be TopMost to ensure visibility
+ 9ms (6ms|3ms)
+   [+] Should be CenterScreen for user attention
+ 5ms (3ms|2ms)
+   [+] Should be non-resizable (FixedDialog)
+ 5ms (3ms|2ms)
+   [+] Should disable maximize and minimize
+ 8ms (6ms|2ms)
+   [+] Should have reasonable dimensions for two-button layout
+ 6ms (4ms|2ms)
+   [+] Should have RETRY and EXIT buttons
+ 9ms (8ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 v1.7.0_ER3 - Network Reconnect Function
+ Context Invoke-NetworkReconnect Function
+   [+] Should kill browser processes before reconnecting
+ 9ms (5ms|4ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected a value, but got $null or empty."
+>> TerminatingError(): "Expected a value, but got $null or empty."
+>> TerminatingError(): "Expected a value, but got $null or empty."
+   [-] Should detect current SSID using netsh
+ 6ms (5ms|2ms)
+    Expected a value, but got $null or empty.
+    at $ssidMatch | Should -Not -BeNullOrEmpty, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:852
+    at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:852
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected a value, but got $null or empty."
+>> TerminatingError(): "Expected a value, but got $null or empty."
+>> TerminatingError(): "Expected a value, but got $null or empty."
+   [-] Should detect WiFi interface name using netsh
+ 6ms (4ms|2ms)
+    Expected a value, but got $null or empty.
+    at $interfaceMatch | Should -Not -BeNullOrEmpty, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:865
+    at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_cap_portal_runner.Tests.ps1:865
+   [+] Should use netsh to disconnect from WiFi
+ 6ms (4ms|2ms)
+   [+] Should wait 3 seconds after disconnect
+ 6ms (4ms|2ms)
+   [+] Should use netsh to reconnect to same SSID
+ 8ms (7ms|2ms)
+   [+] Should return true on successful reconnect
+ 5ms (3ms|2ms)
+   [+] Should return false on failed reconnect
+ 5ms (3ms|2ms)
+ Context RETRY Action Flow
+   [+] Should set status RETRY_REQUESTED on successful reconnect
+ 7ms (4ms|3ms)
+   [+] Should set status RETRY_FAILED on failed reconnect
+ 6ms (4ms|2ms)
+   [+] Should log SSID before reconnecting
+ 9ms (7ms|1ms)
+   [+] Should exit after successful reconnect to allow DHCP trigger
+ 7ms (5ms|2ms)
+ Context EXIT Action Flow
+   [+] Should set status USER_EXIT when user chooses EXIT
+ 7ms (4ms|4ms)
+   [+] Should NOT perform any network actions on EXIT
+ 5ms (3ms|2ms)
+   [+] Should exit gracefully allowing manual user action
+ 5ms (3ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 v1.7.0_ER3 - Comprehensive Timeout Scenarios
+ Context Scenario 1: User Never Authenticates (Full Timeout)
+   [+] Should wait full 150 seconds
+ 11ms (6ms|5ms)
+   [+] Should show notification after full timeout
+ 5ms (4ms|2ms)
+   [+] Should return PARTIAL or FAILED status
+ 4ms (2ms|2ms)
+ Context Scenario 2: User Authenticates Quickly (Early Exit)
+   [+] Should exit wait loop early when site becomes reachable
+ 11ms (8ms|3ms)
+   [+] Should NOT show notification on early success
+ 5ms (3ms|2ms)
+ Context Scenario 3: Captive Portal Site Unreachable (Network Issue)
+   [+] Should timeout gracefully without hang
+ 5ms (2ms|3ms)
+   [+] Should show notification after timeout attempts
+ 5ms (3ms|2ms)
+ Context Scenario 4: Validation Browser Fails to Launch
+   [+] Should use fallback path without validation browser
+ 7ms (3ms|4ms)
+   [+] Should still perform connectivity test on fallback path
+ 5ms (4ms|2ms)
+   [+] Should show notification on fallback path if no auth
+ 5ms (3ms|2ms)
+ Context Scenario 5: VPN Stabilization Delay
+   [+] Should wait for VPN stable state if remediation file exists
+ 11ms (8ms|3ms)
+   [+] Should poll VPN state every 5 seconds
+ 5ms (3ms|2ms)
+   [+] Should proceed to validation browser after VPN stable
+ 5ms (3ms|2ms)
+
+Describing WW_cap_portal_runner.ps1 v1.7.0_ER3 - Integration Checks
+ Context End-to-End Success Flow
+   [+] Should complete without notification on success
+ 11ms (6ms|5ms)
+ Context End-to-End Failure Flow
+   [+] Should show notification and return FAILED on complete failure
+ 9ms (5ms|4ms)
+ Context Logging and Telemetry
+   [+] Should log timeout event
+ 8ms (5ms|3ms)
+   [+] Should log notification display
+ 7ms (5ms|2ms)
+   [+] Should include completion flag details
+ 7ms (4ms|3ms)
+
+Describing WW_cap_portal_runner.ps1 v1.7.0_ER3 - Regression Tests
+ Context Existing Functionality Preserved
+   [+] Should still kill Cisco interference processes
+ 8ms (4ms|5ms)
+   [+] Should still track captive browser PID
+ 5ms (3ms|2ms)
+   [+] Should still write completion flag file
+ 6ms (4ms|2ms)
+   [+] Should still use 150s initial wait
+ 6ms (4ms|2ms)
+   [+] Should still use 30s final wait
+ 5ms (4ms|1ms)
+Tests completed in 5.23s
+Tests Passed: 205,
+Failed: 7,
+Skipped: 7
+
+NotRun: 0
+
+--------------------------------------------------
+  Suite: HayStack
+--------------------------------------------------
+Pester v5.3.3
+
+Starting discovery in 2 files.
+Discovery found 39 tests in 181ms.
+Running tests.
+
+Running tests from 'C:\ProgramData\WhiteWalker\WW_Tests_Haystack.ps1'
+Describing ConvertTo-XmlEscaped
+  [+] escapes ampersand
+ 6ms (3ms|3ms)
+  [+] escapes less-than
+ 5ms (3ms|2ms)
+  [+] escapes greater-than
+ 5ms (4ms|2ms)
+  [+] escapes double quote
+ 6ms (4ms|2ms)
+  [+] escapes single quote
+ 5ms (4ms|2ms)
+  [+] escapes all XML special characters in one pass
+ 6ms (4ms|2ms)
+  [+] passes clean strings unchanged
+ 6ms (4ms|2ms)
+
+Describing Read-NeedleFile
+ Context NEEDLE type
+   [+] parses valid NEEDLE lines including bare EventID XPath
+ 60ms (55ms|5ms)
+   [+] skips comments blanks invalid formats and malformed NEEDLE entries with warnings
+ 78ms (76ms|2ms)
+   [+] returns empty array when file is missing
+ 17ms (16ms|1ms)
+   [+] logs parsed count for multiple valid NEEDLEs
+ 19ms (17ms|2ms)
+ Context SESSION type
+   [+] parses valid SESSION and accepts all valid StateChange values
+ 38ms (35ms|3ms)
+   [+] skips invalid SESSION lines with warnings and supports mixed NEEDLE plus SESSION
+ 70ms (68ms|2ms)
+
+Describing Merge-Needles
+  [+] merges with local winning collisions and includes local-only/share-only needles
+ 34ms (30ms|4ms)
+  [+] keeps first duplicate in local and share lists and logs collision count
+ 37ms (35ms|2ms)
+  [+] handles empty lists combinations
+ 54ms (36ms|18ms)
+
+Describing Build-EventTriggerXml
+  [+] uses custom XPath as-is and embeds escaped QueryList in subscription
+ 13ms (10ms|3ms)
+  [+] falls back to bare EventID XPath when filter is empty
+ 8ms (6ms|2ms)
+
+Describing Build-SessionTriggerXml
+  [+] builds session state change trigger XML without subscription/event trigger blocks
+ 15ms (10ms|5ms)
+  [+] supports another valid state change value
+ 4ms (2ms|2ms)
+
+Describing Build-HaystackTaskXml
+  [+] returns null and logs warning for empty needle list
+ 22ms (17ms|5ms)
+  [+] builds full task XML with event and session triggers and expected settings
+ 25ms (23ms|2ms)
+  [+] routes NEEDLE-only lists to EventTrigger XML
+ 11ms (9ms|1ms)
+  [+] routes SESSION-only lists to SessionStateChangeTrigger XML
+ 12ms (10ms|2ms)
+
+Describing Test-RerollNeeded
+  [+] returns true when stamp file does not exist
+ 19ms (16ms|4ms)
+  [+] returns false when within cooldown and local cfg unchanged
+ 35ms (33ms|2ms)
+  [+] returns true when cooldown has elapsed
+ 32ms (31ms|2ms)
+  [+] returns true when local cfg mtime changed since stamp
+ 33ms (31ms|2ms)
+  [+] returns true when local cfg existed at last reroll but is now missing
+ 34ms (32ms|2ms)
+  [+] respects cooldown when local cfg absent both before and now
+ 35ms (33ms|2ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(ConvertFrom-Json): "Invalid JSON primitive: not-json."
+  [+] returns true when stamp is corrupt or unreadable
+ 28ms (25ms|3ms)
+
+Describing Invoke-HaystackReroll
+ Context -reroll cooldown behavior
+   [+] skips registration during active cooldown with no local cfg change
+ 8.44s (8.44s|4ms)
+   [+] registers task after cooldown elapsed
+ 5.8s (5.8s|2ms)
+ Context -reroll -Force behavior
+   [+] bypasses cooldown check, logs force message, and updates stamp
+ 5.81s (5.81s|4ms)
+   [+] works with force when no stamp exists
+ 5.57s (5.57s|2ms)
+
+Running tests from 'C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1'
+Get-Content : Cannot find path 'C:\CPR_3.14_RC1.14\haystack.ps1' because it does not exist.
+At C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:6 char:32
++ ...    $script:haystackText = Get-Content -LiteralPath $haystackPath -Raw
++                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\CPR_3.14_RC1.14\haystack.ps1:String) [Get-Content], 
+ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+Get-Content : Cannot find path 'C:\CPR_3.14_RC1.14\haystack.ps1' because it does not exist.
+At C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:6 char:32
++ ...    $script:haystackText = Get-Content -LiteralPath $haystackPath -Raw
++                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\CPR_3.14_RC1.14\haystack.ps1:String) [Get-Content], ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+
+Get-Content : Cannot find path 'C:\CPR_3.14_RC1.13\WW_main.ps1' because it does not exist.
+At C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:7 char:32
++ ...      $script:wwMainText   = Get-Content -LiteralPath $wwMainPath -Raw
++                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\CPR_3.14_RC1.13\WW_main.ps1:String) [Get-Content], 
+ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+Get-Content : Cannot find path 'C:\CPR_3.14_RC1.13\WW_main.ps1' because it does not exist.
+At C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:7 char:32
++ ...      $script:wwMainText   = Get-Content -LiteralPath $wwMainPath -Raw
++                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (C:\CPR_3.14_RC1.13\WW_main.ps1:String) [Get-Content], ItemNotFoundException
+    + FullyQualifiedErrorId : PathNotFound,Microsoft.PowerShell.Commands.GetContentCommand
+
+Describing HayStack standalone wiring
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected regular expression '\[CmdletBinding\(\)\]\s*param\(\s*\[switch\]\$reroll,\s*\[switch\]\$remove,\s*\[int\]\$RerollCooldownMinutes = 0\s*\)' to match $null, but it did not match."
+>> TerminatingError(): "Expected regular expression '\[CmdletBinding\(\)\]\s*param\(\s*\[switch\]\$reroll,\s*\[switch\]\$remove,\s*\[int\]\$RerollCooldownMinutes = 0\s*\)' to match $null, but it did not match."
+>> TerminatingError(): "Expected regular expression '\[CmdletBinding\(\)\]\s*param\(\s*\[switch\]\$reroll,\s*\[switch\]\$remove,\s*\[int\]\$RerollCooldownMinutes = 0\s*\)' to match $null, but it did not match."
+  [-] makes haystack.ps1 standalone with the expected flags
+ 17ms (8ms|9ms)
+   Expected regular expression '\[CmdletBinding\(\)\]\s*param\(\s*\[switch\]\$reroll,\s*\[switch\]\$remove,\s*\[int\]\$RerollCooldownMinutes = 0\s*\)' to match $null, but it did not match.
+   at $haystackText | Should -Match '\[CmdletBinding\(\)\]\s*param\(\s*\[switch\]\$reroll,\s*\[switch\]\$remove,\s*\[int\]\$RerollCooldownMinutes = 0\s*\)', C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:11
+   at <ScriptBlock>, C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:11
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected regular expression '\$HaystackRerollCooldownMinutes = if \(\$RerollCooldownMinutes -gt 0\) \{ \$RerollCooldownMinutes \} else \{ 60 \}' to match $null, but it did not match."
+>> TerminatingError(): "Expected regular expression '\$HaystackRerollCooldownMinutes = if \(\$RerollCooldownMinutes -gt 0\) \{ \$RerollCooldownMinutes \} else \{ 60 \}' to match $null, but it did not match."
+>> TerminatingError(): "Expected regular expression '\$HaystackRerollCooldownMinutes = if \(\$RerollCooldownMinutes -gt 0\) \{ \$RerollCooldownMinutes \} else \{ 60 \}' to match $null, but it did not match."
+  [-] uses the new internal cooldown default and removes the old dot-source guard
+ 7ms (5ms|2ms)
+   Expected regular expression '\$HaystackRerollCooldownMinutes = if \(\$RerollCooldownMinutes -gt 0\) \{ \$RerollCooldownMinutes \} else \{ 60 \}' to match $null, but it did not match.
+   at $haystackText | Should -Match '\$HaystackRerollCooldownMinutes = if \(\$RerollCooldownMinutes -gt 0\) \{ \$RerollCooldownMinutes \} else \{ 60 \}', C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:15
+   at <ScriptBlock>, C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:15
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected regular expression 'Specify exactly one flag: -reroll OR -remove' to match $null, but it did not match."
+>> TerminatingError(): "Expected regular expression 'Specify exactly one flag: -reroll OR -remove' to match $null, but it did not match."
+>> TerminatingError(): "Expected regular expression 'Specify exactly one flag: -reroll OR -remove' to match $null, but it did not match."
+  [-] has a flag-driven entry point for reroll and remove
+ 7ms (5ms|2ms)
+   Expected regular expression 'Specify exactly one flag: -reroll OR -remove' to match $null, but it did not match.
+   at $haystackText | Should -Match 'Specify exactly one flag: -reroll OR -remove', C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:21
+   at <ScriptBlock>, C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:21
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected regular expression '\$HaystackEnabled\s*=\s*\$false' to match $null, but it did not match."
+>> TerminatingError(): "Expected regular expression '\$HaystackEnabled\s*=\s*\$false' to match $null, but it did not match."
+>> TerminatingError(): "Expected regular expression '\$HaystackEnabled\s*=\s*\$false' to match $null, but it did not match."
+  [-] keeps WW_main haystack integration limited to config and Start-Process orchestration
+ 6ms (5ms|2ms)
+   Expected regular expression '\$HaystackEnabled\s*=\s*\$false' to match $null, but it did not match.
+   at $wwMainText | Should -Match '\$HaystackEnabled\s*=\s*\$false', C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:28
+   at <ScriptBlock>, C:\ProgramData\WhiteWalker\HaystackStandalone.Tests.ps1:28
+Tests completed in 27.31s
+Tests Passed: 35,
+Failed: 4,
+Skipped: 0
+
+NotRun: 0
+
+--------------------------------------------------
+  Suite: Test-DC
+--------------------------------------------------
+Pester v5.3.3
+
+Starting discovery in 1 files.
+Discovery found 5 tests in 149ms.
+Running tests.
+
+Running tests from 'C:\ProgramData\WhiteWalker\WW_Tests_TestDC.ps1'
+Describing Test-DC diagnostic suffix classification
+  [+] returns true when DC is reachable and only corporate suffixes are present
+ 93ms (90ms|3ms)
+  [+] returns false when any non-corporate suffix is present alongside corporate suffixes
+ 34ms (33ms|2ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected $false, but got $true."
+>> TerminatingError(): "Expected $false, but got $true."
+>> TerminatingError(): "Expected $false, but got $true."
+  [-] returns false when DC is reachable but no DNS suffixes can be collected
+ 64ms (61ms|2ms)
+   Expected $false, but got $true.
+   at $result | Should -Be $false, C:\ProgramData\WhiteWalker\WW_Tests_TestDC.ps1:110
+   at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_Tests_TestDC.ps1:110
+  [+] returns false when DC ping fails
+ 27ms (25ms|2ms)
+PS C:\ProgramData\WhiteWalker> TerminatingError(): "Expected $false, but got $true."
+>> TerminatingError(): "Expected $false, but got $true."
+>> TerminatingError(): "Expected $false, but got $true."
+  [-] returns false when Resolve-DnsName fails after corp-only suffixes (stale suffix guard)
+ 28ms (26ms|2ms)
+   Expected $false, but got $true.
+   at $result | Should -Be $false, C:\ProgramData\WhiteWalker\WW_Tests_TestDC.ps1:141
+   at <ScriptBlock>, C:\ProgramData\WhiteWalker\WW_Tests_TestDC.ps1:141
+Tests completed in 620ms
+Tests Passed: 3,
+Failed: 2,
+Skipped: 0
+
+NotRun: 0
+
+====================================================
+                   MASTER SUMMARY
+====================================================
+
+  WW Main                      T: 158  P: 157  F:   1  S:   0  [FAILED]
+  Cap Portal Runner            T: 219  P: 205  F:   7  S:   7  [FAILED]
+  HayStack                     T:  39  P:  35  F:   4  S:   0  [FAILED]
+  Test-DC                      T:   5  P:   3  F:   2  S:   0  [FAILED]
+
+  -------------------------------------------------
+  TOTAL: 421 tests  |  Passed: 400  |  Failed: 14  |  Skipped: 7
+
+  *** TESTS FAILED ***
+
+**********************
+Windows PowerShell transcript end
+End time: 20260610232022
+**********************

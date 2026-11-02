@@ -180,7 +180,7 @@ foreach ($method in $results.Keys) {
     Write-TestLog "$method : $status" "INFO"
 }
 
-$successCount = ($results.Values | Where-Object { $_ }).Count
+$successCount = @($results.Values | Where-Object { $_ }).Count
 Write-TestLog "Total successful methods: $successCount out of $($results.Count)" "INFO"
 Write-TestLog "==========================================================" "INFO"
 

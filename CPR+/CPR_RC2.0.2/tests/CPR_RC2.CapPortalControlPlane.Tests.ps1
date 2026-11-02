@@ -484,7 +484,9 @@ Describe 'Truthful, fail-soft telemetry' {
     }
 
     It 'reports access_denied rather than throwing when the queue cannot be written' {
-        $result = Add-TeeQueueEntry -Path '/proc/cpr_not_writable/haystack_syslog_queue.jsonl' -Entry '{"action":"test"}'
+        $blocker = Join-Path $TestDrive 'queue_parent_is_a_file'
+        Set-Content -LiteralPath $blocker -Value 'x'
+        $result = Add-TeeQueueEntry -Path (Join-Path $blocker 'haystack_syslog_queue.jsonl') -Entry '{"action":"test"}'
 
         $result.Queued | Should -BeFalse
         $result.Reason | Should -BeIn @('access_denied', 'error')

@@ -56,7 +56,7 @@ Actions: `cap_portal_redirect`, `cap_portal_remediation_passed`,
 | `ip` | Optional | Endpoint IP address. |
 | `gw` | Optional | Default gateway. |
 | `dns` | Optional | DNS server(s). |
-| `vpn_state` | Optional | CPR state, such as `on_prem`, `user_tun`, `mgmt_tun`, `off_prem_no_vpn`, `captive_portal`, or `off_prem_untrusted_ssid`. |
+| `vpn_state` | Optional | CPR state, such as `on_prem`, `user_tun`, `mgmt_tun`, `off_prem_no_vpn`, `captive_portal`, `vpn_connecting`, `no_net_transient`, or `cpr_error`. The run's `exit_reason` is `<reason>:<state>` using the same words. |
 | `portal_type` | Optional | Portal classification, such as `walled_garden` or `standard_redirect`. |
 | `status` | Optional | Pass/fail/skip-style sub-event status. |
 | `reason` | Optional | Human-readable or machine-readable outcome reason. |

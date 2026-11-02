@@ -121,6 +121,10 @@ Describe 'CPR RC2.1 early VPN gate' {
         BeforeAll {
             $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.Entry.ps1'), [ref]$null, [ref]$null)
             $d = $ast.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in 'Invoke-MaintenanceStage', 'Write-MaintStep' }, $true)
+            # exit reasons are <reason>:<state>; the maintenance offline check parses them
+            $script:CprExitStates = @('on_prem','user_tun','mgmt_tun','off_prem_no_vpn','vpn_connecting','captive_portal','no_net_transient','cpr_error')
+            $stAst = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root 'main\Main.State.ps1'), [ref]$null, [ref]$null)
+            foreach ($sd in $stAst.FindAll({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -in 'Get-CprExitState', 'Get-CprExitReasonPart' }, $true)) { . ([scriptblock]::Create($sd.Extent.Text)) }
             foreach ($f in $d) { . ([scriptblock]::Create($f.Extent.Text)) }
             function Sync-BlackholeShutdownTask { }
             function Sync-XmlVaultTask { }
@@ -137,21 +141,21 @@ Describe 'CPR RC2.1 early VPN gate' {
             Mock Sync-XmlVaultTask { }
             Mock Invoke-SelfUpdate { }
             Mock Test-XmlVaultSyncAllowed { $true }
-            Invoke-MaintenanceStage -ExitReason 'no_net_transient'
+            Invoke-MaintenanceStage -ExitReason 'apipa_no_gateway:no_net_transient'
             Should -Invoke Sync-BlackholeShutdownTask -Times 1 -Exactly
             Should -Invoke Invoke-SelfUpdate -Times 0 -Exactly
         }
         It 'skips self-update when the share is unreachable' {
             Mock Invoke-SelfUpdate { }
             Mock Test-XmlVaultSyncAllowed { $false }
-            Invoke-MaintenanceStage -ExitReason 'off_prem_no_vpn'
+            Invoke-MaintenanceStage -ExitReason 'untrusted:off_prem_no_vpn'
             Should -Invoke Invoke-SelfUpdate -Times 0 -Exactly
         }
         It 'runs self-update when online and the share is reachable, once per run' {
             Mock Invoke-SelfUpdate { }
             Mock Test-XmlVaultSyncAllowed { $true }
-            Invoke-MaintenanceStage -ExitReason 'on_prem'
-            Invoke-MaintenanceStage -ExitReason 'on_prem'
+            Invoke-MaintenanceStage -ExitReason 'no_action_dc_reachable:on_prem'
+            Invoke-MaintenanceStage -ExitReason 'no_action_dc_reachable:on_prem'
             Should -Invoke Invoke-SelfUpdate -Times 1 -Exactly
         }
     }

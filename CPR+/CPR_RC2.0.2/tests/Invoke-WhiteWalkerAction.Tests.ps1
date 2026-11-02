@@ -604,7 +604,7 @@ Describe 'Invoke-WhiteWalkerAction - Add-WWNeedleLine (newline preservation + pr
 
         $parsed = @(Read-NeedleFile -Path $script:AppendTestFile -SourceTag 'test')
         $parsed.Count | Should -Be 2
-        ($parsed | Where-Object { $_.Label -eq 'New_One' }).Count | Should -Be 1
+        @($parsed | Where-Object { $_.Label -eq 'New_One' }).Count | Should -Be 1
     }
 }
 

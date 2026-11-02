@@ -582,10 +582,11 @@ Describe 'Required G - USER spool / SYSTEM ingestion' {
     }
 
     It 'only diverts to the spool on Windows in a non-SYSTEM context' {
-        # Sandbox is Linux: the direct append path (and every existing
-        # queue-format test) must behave exactly as before.
-        Test-TeeSpoolRequired | Should -BeFalse
-        Test-TeeRunningAsSystem | Should -BeFalse
+        # Linux/CI: no ACL split, so the direct append path applies. Windows: spool exactly when
+        # the process is not SYSTEM (a user running Pester is not SYSTEM, so it IS required there).
+        $isWin = [System.Environment]::OSVersion.Platform -eq 'Win32NT'
+        if (-not $isWin) { Test-TeeSpoolRequired | Should -BeFalse }
+        else { Test-TeeSpoolRequired | Should -Be (-not (Test-TeeRunningAsSystem)) }
     }
 
     It 'routes non-SYSTEM writes through the spool inside Add-TeeQueueEntry' {

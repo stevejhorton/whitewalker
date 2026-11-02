@@ -1,0 +1,9 @@
+<QueryList>
+  <Query Id="0" Path="Application">
+    <Select Path="Application">
+      *[System[Provider[@Name='Application'] and EventID=1000]]
+      and
+      *[EventData[Data[contains(.,'WhiteWalker: Captive portal authentication required')]]]
+    </Select>
+  </Query>
+</QueryList>

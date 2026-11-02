@@ -113,7 +113,7 @@ Describe 'Defect 2 - inconclusive preflight is not "no captive portal"' {
         $script:entrySource | Should -Match "\`$CapPortalRunnerMode -eq 'base' -and \`$localNet\.IsPlausible"
         $script:entrySource | Should -Match "Send-FlareEvent 'captive_portal_browser_base'"
         $script:entrySource | Should -Match 'SUSPECTED captive portal'
-        $script:entrySource | Should -Match '\$script:exitReason = "captive_portal_suspected"'
+        $script:entrySource | Should -Match 'Set-CprRunExit -Reason ''portal_suspected'' -State ''captive_portal'''
     }
 
     It 'writes the suspected remediation state file and normalized detection telemetry' {
@@ -136,7 +136,7 @@ Describe 'Defect 2 - inconclusive preflight is not "no captive portal"' {
     }
 
     It 'still falls through to no_net_transient with no plausible local network or outside base mode' {
-        $script:entrySource | Should -Match '\$script:exitReason = "no_net_transient"'
+        $script:entrySource | Should -Match 'Set-CprRunExit -Reason ''nwcheck_unreachable_enroll_no_redirect'' -State ''no_net_transient'''
         $script:entrySource | Should -Match 'Send-FlareEvent "no_net_transient"'
         $script:entrySource | Should -Match "Invoke-BlackholeAction -Tag 'no_net_transient'"
     }

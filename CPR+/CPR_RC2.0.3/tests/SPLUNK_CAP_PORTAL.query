@@ -1,0 +1,4 @@
+index=cba_cpr_logging
+| search action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed")
+| table EvtTime,action,machine,user,url,port,portal_type,status,reason,ssid,vpn_state
+| sort 0 - EvtTime

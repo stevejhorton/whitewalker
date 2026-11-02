@@ -248,7 +248,7 @@ Describe 'Required B - Base re-checks the network and exits fast' {
 # =============================================================================
 Describe 'Required C - preflight fires immediately after network-ready' {
     It 'Main probes before the non-routing-critical startup subsystems' {
-        $probeIndex    = $script:entrySource.IndexOf('$nwCheck = Get-NwCheckResult')
+        $probeIndex    = $script:entrySource.IndexOf('$nwCheck = Invoke-GatedNwCheck')
         $subsystemIdx  = $script:entrySource.IndexOf('Invoke-WhiteWalkerStartupSubsystems', $probeIndex)
         $probeIndex   | Should -BeGreaterThan 0
         $subsystemIdx | Should -BeGreaterThan $probeIndex
@@ -268,7 +268,7 @@ Describe 'Required C - preflight fires immediately after network-ready' {
     }
 
     It 'keeps the required run header, stale-flag and interrupt safety before probing' {
-        $probeIndex = $script:entrySource.IndexOf('$nwCheck = Get-NwCheckResult')
+        $probeIndex = $script:entrySource.IndexOf('$nwCheck = Invoke-GatedNwCheck')
         $script:entrySource.IndexOf('Write-RunHeader')     | Should -BeLessThan $probeIndex
         $script:entrySource.IndexOf('Clear-StaleFlagFiles') | Should -BeLessThan $probeIndex
     }
@@ -582,10 +582,11 @@ Describe 'Required G - USER spool / SYSTEM ingestion' {
     }
 
     It 'only diverts to the spool on Windows in a non-SYSTEM context' {
-        # Sandbox is Linux: the direct append path (and every existing
-        # queue-format test) must behave exactly as before.
-        Test-TeeSpoolRequired | Should -BeFalse
-        Test-TeeRunningAsSystem | Should -BeFalse
+        # Linux/CI: no ACL split, so the direct append path applies. Windows: spool exactly when
+        # the process is not SYSTEM (a user running Pester is not SYSTEM, so it IS required there).
+        $isWin = [System.Environment]::OSVersion.Platform -eq 'Win32NT'
+        if (-not $isWin) { Test-TeeSpoolRequired | Should -BeFalse }
+        else { Test-TeeSpoolRequired | Should -Be (-not (Test-TeeRunningAsSystem)) }
     }
 
     It 'routes non-SYSTEM writes through the spool inside Add-TeeQueueEntry' {
@@ -634,7 +635,7 @@ Describe 'Required G - USER spool / SYSTEM ingestion' {
         $ingest   | Should -Match 'ConvertFrom-Json'
         # Ingestion must run at the top of the drain, before the empty check.
         $haystack.IndexOf('Import-SyslogSpool', $haystack.IndexOf('function Drain-SyslogQueue')) |
-            Should -BeLessThan $haystack.IndexOf('if (-not (Test-Path $SyslogQueueFile)) { return }')
+            Should -BeLessThan $haystack.IndexOf('if (-not (Test-Path -LiteralPath $SyslogQueueFile)) { return }')
     }
 
     It 'uses a separate user handback artifact instead of weakening the SYSTEM control state' {

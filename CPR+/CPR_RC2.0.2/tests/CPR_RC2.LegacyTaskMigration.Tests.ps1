@@ -35,6 +35,7 @@ Describe 'Legacy task migration' {
         Set-Content (Join-Path $script:tasks 'WW_main') 'x'
         Set-Content (Join-Path $script:tasks 'HayStack\HayStack_Monitor') 'x'
         Mock Unregister-ScheduledTask {
+            param($TaskName, $TaskPath, $Confirm, $ErrorAction)
             $rel = (($TaskPath.Trim('\')), $TaskName | Where-Object { $_ }) -join '\'
             Remove-Item (Join-Path $script:tasks $rel) -Force
         }
@@ -44,7 +45,7 @@ Describe 'Legacy task migration' {
     It 'removes legacy tasks, logs, and writes the done-flag' {
         $r = Invoke-LegacyTaskMigration -TasksRoot $script:tasks
         $r.Ran | Should -BeTrue
-        $r.Removed.Count | Should -Be 2
+        $r.Removed.Count | Should -Be 2 -Because ("Removed=[$($r.Removed -join ',')] Failed=[$($r.Failed -join ',')] log: " + (Get-Content $script:MigLogPath -Raw -ErrorAction SilentlyContinue))
         Test-Path (Join-Path $script:tasks 'WW_main') | Should -BeFalse
         Test-Path $script:MigFlagPath | Should -BeTrue
         (Get-Content $script:MigLogPath -Raw) | Should -Match 'removed legacy task \\WW_main'

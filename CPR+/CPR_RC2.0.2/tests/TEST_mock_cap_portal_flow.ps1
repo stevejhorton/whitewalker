@@ -299,6 +299,10 @@ if (-not (Test-Path -LiteralPath $resolvedTeeProfile)) {
 
 . $teeFile
 
+# Isolation: write straight to the temp queue. Without this, a non-SYSTEM run spools mock events into
+# C:\ProgramData\WhiteWalker\logs\spool, where the SYSTEM drain would ship them to Splunk.
+function Test-TeeSpoolRequired { $false }
+
 $script:TeeQueueFile  = $QueueFilePath
 $script:TeeEventsFile = $resolvedTeeProfile
 $global:HaystackEnabled = $true

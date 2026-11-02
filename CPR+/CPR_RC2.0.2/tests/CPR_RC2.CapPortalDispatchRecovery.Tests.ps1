@@ -367,7 +367,7 @@ Describe 'Required C - redirect-detected base run reaches Event 778' {
         $result | Should -BeTrue
         # error_exception is set ONLY by the orchestration catch block, which is
         # precisely what the two fatal errors used to trigger.
-        $script:entrySource | Should -Match '\$script:exitReason = "error_exception"'
+        $script:entrySource | Should -Match 'Set-CprRunExit -Reason ''error_exception'' -State ''cpr_error'''
     }
 
     AfterAll {

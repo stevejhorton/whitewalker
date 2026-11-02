@@ -218,20 +218,21 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
             { Get-CiscoWebHelperFinalUrlPort 'not a URL' } | Should -Not -Throw
         }
 
-        It "reads events from the supplied start time and de-duplicates PIDs" {
+        It "reads events from the supplied start time and de-duplicates by event record" {
             $since = [datetime]'2026-10-14T00:00:00Z'
-            $event = [pscustomobject]@{ Message = $script:fixture; TimeCreated = $since.AddSeconds(1) }
+            $event = [pscustomobject]@{ Message = $script:fixture; TimeCreated = $since.AddSeconds(1); RecordId = 101 }
             $global:mockEvents = @($event, $event, [pscustomobject]@{
                 Message = $script:fixture -replace 'PID=176', 'PID=177'
                 TimeCreated = $since.AddSeconds(2)
+                RecordId = 102
             })
             Mock Get-WinEvent { $global:mockEvents }
             $seen = @{}
             $first = Get-CiscoWebHelperNavigationEvent -Since $since -SeenProcessIds $seen
-            $first.Found | Should -BeTrue; $first.DedupeKey | Should -Be 'pid:176'
+            $first.Found | Should -BeTrue; $first.DedupeKey | Should -Be 'record:102'   # newest record first
             $seen[$first.DedupeKey] = $true
             $second = Get-CiscoWebHelperNavigationEvent -Since $since -SeenProcessIds $seen
-            $second.Found | Should -BeTrue; $second.DedupeKey | Should -Be 'pid:177'
+            $second.Found | Should -BeTrue; $second.DedupeKey | Should -Be 'record:101'
             Should -Invoke Get-WinEvent -ParameterFilter { $FilterHashtable.StartTime -eq $since }
         }
 
@@ -250,7 +251,7 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
             $script:rawSource | Should -Match '(?m)^function Invoke-BaseCapVpnDisconnect'
             $script:rawSource | Should -Match '(?m)^function Get-BaseNativePortalProcesses'
             $script:rawSource | Should -Match '\$seenWebHelperPids\s*=\s*@\{\}'
-            $script:rawSource | Should -Match 'Get-CiscoWebHelperNavigationEvent\s+-Since \$webHelperSince\s+-SeenProcessIds'
+            $script:rawSource | Should -Match 'Get-CiscoWebHelperNavigationEvent\s+-Since \$webHelperSince[\s`]+-MaxEvents \$BaseWebHelper301MaxRecords\s+-SeenProcessIds \$seenWebHelperPids[\s`]+-SeenRecordIds \$seenWebHelperRecordIds'
             $script:rawSource | Should -Match 'Write-BaseCapWebHelperTelemetry'
         }
 
@@ -275,17 +276,21 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
             }
 
             It 'emits separate structured preflight and WebHelper tags with flat xfinity fields' {
-                $script:rawSource | Should -Match "Write-TeeLog 'cap_portal_preflight_observation'"
-                $script:rawSource | Should -Match "Write-TeeLog 'cap_portal_webhelper_navigation'"
+                # Base ships through Write-BaseCapTee (truthful, fail-soft wrapper around Write-TeeLog -PassThru).
+                $script:rawSource | Should -Match "Write-BaseCapTee -Tag 'cap_portal_preflight_observation'"
+                $script:rawSource | Should -Match "Write-BaseCapTee -Tag 'cap_portal_webhelper_navigation'"
                 foreach ($field in @('navigated_url','final_url','ap_name','ap_mac','api_domain','event_time')) {
                     $script:rawSource | Should -Match $field
                 }
             }
 
-            It 'uses WebHelper navigated URL before preflight redirect and remediation state URL' {
-                Get-BaseCapTelemetryUrl -WebHelperNavigatedUrl 'https://cp-webapp.wifi.connected.xfinity.com/welcome' -PreflightRedirectUrl 'https://preflight.portal/' -Url 'http://state.portal/' |
-                    Should -Be 'https://cp-webapp.wifi.connected.xfinity.com/welcome'
-                Get-BaseCapTelemetryUrl -PreflightRedirectUrl 'https://preflight.portal/' -Url 'http://state.portal/' | Should -Be 'https://preflight.portal/'
+            It 'selects the telemetry URL in the documented precedence: preflight redirect, Main handoff, WebHelper navigated URL (corroborating only), remediation state URL' {
+                $wh = 'https://cp-webapp.wifi.connected.xfinity.com/welcome'
+                Get-BaseCapTelemetryUrl -WebHelperNavigatedUrl $wh -PreflightRedirectUrl 'https://preflight.portal/' -MainHandoffRedirectUrl 'https://handoff.portal/' -Url 'http://state.portal/' |
+                    Should -Be 'https://preflight.portal/'
+                Get-BaseCapTelemetryUrl -WebHelperNavigatedUrl $wh -MainHandoffRedirectUrl 'https://handoff.portal/' -Url 'http://state.portal/' |
+                    Should -Be 'https://handoff.portal/'
+                Get-BaseCapTelemetryUrl -WebHelperNavigatedUrl $wh -Url 'http://state.portal/' | Should -Be $wh
                 Get-BaseCapTelemetryUrl -Url 'http://state.portal/' | Should -Be 'http://state.portal/'
             }
 
@@ -297,14 +302,18 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
 
             It 'emits one final no-observation outcome outside the polling loop' {
                 $timeoutIndex = $script:rawSource.IndexOf('if (-not $observed)')
-                $missingIndex = $script:rawSource.IndexOf("status='not_observed'", $timeoutIndex)
+                $timeoutIndex | Should -BeGreaterThan 0
+                $missingIndex = $script:rawSource.IndexOf('Get-BaseCapMissingNavigationOutcome', $timeoutIndex)
                 $missingIndex | Should -BeGreaterThan $timeoutIndex
+                # The outcome token itself comes from the classifier, not a literal in the loop.
+                $script:rawSource | Should -Match "Outcome = 'not_observed'"
+                $script:rawSource | Should -Match "Outcome = 'not_applicable'"
             }
 
             It 'registers the observation tags with their exact flat fields in the level 5 profile' {
                 . (Join-Path $PSScriptRoot 'WW_set_tee_level.ps1')
                 $profile = Get-CprTeeLevelProfile -Level 5 -MasterPath (Join-Path $PSScriptRoot 'WW_tee_master.psd1')
-                $profile.Events.cap_portal_preflight_observation.fields | Should -Be @('probe_url','status','http_status','redirect_url','redirect_type','protocol','fqdn','port','duration_ms','attempt','reason','ssid','ip','gw','dns','vpn_state')
+                $profile.Events.cap_portal_preflight_observation.fields | Should -Be @('probe_url','status','http_status','redirect_url','redirect_type','classification','protocol','fqdn','port','duration_ms','attempt','reason','ssid','ip','gw','dns','vpn_state')
                 $profile.Events.cap_portal_webhelper_navigation.fields | Should -Contain 'navigated_url'
                 $profile.Events.cap_portal_webhelper_navigation.fields | Should -Contain 'api_domain'
                 $profile.Events.cap_portal_webhelper_navigation.fields | Should -Contain 'event_time'
