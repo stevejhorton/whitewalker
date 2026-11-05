@@ -339,6 +339,20 @@ $TeeLevelInfoStampFile    = "C:\ProgramData\WhiteWalker\tee_level_info.stamp"
 $TeeFlagFailedMaxAgeDays  = 7      # stale *.failed flags (cpr_tee_*, cpr_update_*) are swept after this long
 $TeeRevertStateFile       = "C:\ProgramData\WhiteWalker\tee_level_revert.json"
 
+# Tee assignment from the NETLOGON share (tee_assign.cfg: [tee1]..[tee5] sections, one host name or wildcard per line).
+# A listed host gets the level through the same revert stamp the flag uses. While the host stays listed AND the
+# share was read successfully within $TeeAssignFreshHours, the stamp's revert time is pushed out again (about daily),
+# so "listed" = on; removing the name lets the stamp run out and the level revert by itself. Offline hosts never extend.
+$TeeAssignEnabled            = $true
+$TeeAssignRemoteFile         = "\\ms.ds.uhc.com\netlogon\UHG\Scripts\AOVPN\CPR\tee_assign.cfg"
+$TeeAssignFile               = "C:\ProgramData\WhiteWalker\tee_assign.cfg"
+$TeeAssignSyncFlag           = "C:\ProgramData\WhiteWalker\tee_assign_sync.flag"   # content = last time the share was read OK
+$TeeAssignTryFlag            = "C:\ProgramData\WhiteWalker\tee_assign_try.flag"    # its timestamp = last attempt (backs off failures)
+$TeeAssignSyncCooldownHours  = 4      # min hours between share reads
+$TeeAssignRetryMinutes       = 60     # min minutes between attempts while the share is unreachable
+$TeeAssignFreshHours         = 12     # act (apply/extend) only if the share was read OK within this long
+$TeeAssignExtendMinGapHours  = 24     # extend the revert time at most about this often (keeps the log and disk quiet)
+
 # XmlVault subsystem (offline VPN XML backup and island self-heal)
 # Syncs VPN profile XMLs from NETLOGON to local vault; restores from vault on island detection.
 # Task lifecycle managed by Sync-XmlVaultTask - mirrors BlackholeShutdown pattern.

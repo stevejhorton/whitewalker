@@ -83,6 +83,77 @@ function Move-TeeFlagToFailed {
     }
 }
 
+function Get-TeeAssignLevelFromLines {
+    <# Pure parser. [tee1]..[tee5] sections; one host name (or -like wildcard) per line; '#' comments; the
+       highest matching section wins. Returns an int, or $null when the host is not listed. #>
+    param([string[]]$Lines, [string]$ComputerName)
+    $best = $null; $section = $null
+    foreach ($raw in @($Lines)) {
+        $l = ("$raw" -replace '\s+#.*$', '').Trim()
+        if (-not $l -or $l.StartsWith('#') -or $l -match '^version\s*:') { continue }
+        if ($l -match '^\[tee([1-5])\]$') { $section = [int]$Matches[1]; continue }
+        if ($l.StartsWith('[')) { $section = $null; continue }
+        if ($null -eq $section) { continue }
+        if ($ComputerName -like $l) { if ($null -eq $best -or $section -gt $best) { $best = $section } }
+    }
+    return $best
+}
+
+function Sync-TeeAssignFile {
+    <# Reads tee_assign.cfg from the share when due. Returns $true when the share was read OK within
+       $TeeAssignFreshHours (this run or a recent one). Bounded: one 300 ms TCP probe, failures back off. #>
+    $now = Get-Date
+    $lastOk = $null
+    if (Test-Path -LiteralPath $TeeAssignSyncFlag) {
+        try { $lastOk = [datetime]::Parse((Get-Content -LiteralPath $TeeAssignSyncFlag -Raw -ErrorAction Stop).Trim()) } catch { $lastOk = $null }
+    }
+    if ($lastOk -and ($now - $lastOk).TotalHours -lt $TeeAssignSyncCooldownHours) { return $true }
+    if (Test-Path -LiteralPath $TeeAssignTryFlag) {
+        $tried = (Get-Item -LiteralPath $TeeAssignTryFlag -ErrorAction SilentlyContinue).LastWriteTime
+        if ($tried -and ($now - $tried).TotalMinutes -lt $TeeAssignRetryMinutes) {
+            return [bool]($lastOk -and ($now - $lastOk).TotalHours -lt $TeeAssignFreshHours)
+        }
+    }
+    $ok = $false
+    try {
+        (Get-Date -Format 'o') | Set-Content -LiteralPath $TeeAssignTryFlag -Encoding UTF8 -Force -ErrorAction SilentlyContinue
+        $shareHost = ([uri]("file:" + ($TeeAssignRemoteFile -replace '\\', '/'))).Host
+        if ((Test-ShareReachableFast -HostName $shareHost -TimeoutMs 300) -and (Test-Path -LiteralPath $TeeAssignRemoteFile)) {
+            $remote = Get-Content -LiteralPath $TeeAssignRemoteFile -Raw -ErrorAction Stop
+            $local  = if (Test-Path -LiteralPath $TeeAssignFile) { Get-Content -LiteralPath $TeeAssignFile -Raw -ErrorAction SilentlyContinue } else { $null }
+            if ($remote -ne $local) {
+                Set-Content -LiteralPath $TeeAssignFile -Value $remote -Encoding UTF8 -Force -NoNewline -ErrorAction Stop
+                Write-Log "TeeAssign: tee_assign.cfg updated from share" "INFO"
+            }
+            (Get-Date -Format 'o') | Set-Content -LiteralPath $TeeAssignSyncFlag -Encoding UTF8 -Force -ErrorAction Stop
+            $ok = $true
+        } else {
+            Write-Log "TeeAssign: share not reachable - using the local copy, no extend/apply" "DEBUG"
+        }
+    } catch { Write-Log "TeeAssign: sync error (ignored): $_" "WARN" }
+    if ($ok) { return $true }
+    return [bool]($lastOk -and ($now - $lastOk).TotalHours -lt $TeeAssignFreshHours)
+}
+
+function Get-TeeAssignment {
+    <# Returns @{ Level = <1-5 or $null>; Fresh = <share read OK recently> }. Never throws. #>
+    $res = [pscustomobject]@{ Level = $null; Fresh = $false }
+    try {
+        if (-not $TeeAssignEnabled) { return $res }
+        $res.Fresh = [bool](Sync-TeeAssignFile)
+        if ($res.Fresh -and (Test-Path -LiteralPath $TeeAssignFile)) {
+            $res.Level = Get-TeeAssignLevelFromLines -Lines (Get-Content -LiteralPath $TeeAssignFile -ErrorAction Stop) -ComputerName $env:COMPUTERNAME
+        }
+    } catch { Write-Log "TeeAssign: error (ignored): $_" "WARN" }
+    return $res
+}
+
+function Write-TeeRevertState {
+    param($Obj)
+    try { ($Obj | ConvertTo-Json) | Set-Content -LiteralPath $TeeRevertStateFile -Encoding UTF8 -Force -ErrorAction Stop; return $true }
+    catch { Write-Log "TeeFlag: could not write revert state: $_" "WARN"; return $false }
+}
+
 function Invoke-TeeLevelFlagCheck {
     <# Cheap when idle: one filtered directory listing and one Test-Path. Never throws. #>
     if (-not $TeeFlagEnabled) { return }
@@ -97,6 +168,27 @@ function Invoke-TeeLevelFlagCheck {
 
         $now   = Get-Date
         $state = Read-TeeRevertState
+
+        # ---- 0. share-assigned level: push the revert time out while the host stays listed ----------
+        $assign = Get-TeeAssignment
+        if ($assign.Fresh -and $null -ne $assign.Level -and $state -and $state.source -eq 'manifest' -and $state.expires_at -and
+            [int]$state.set_level -eq [int]$assign.Level -and $TeeFlagRevertHours -gt 0) {
+            $exp0 = [datetime]::MinValue
+            if ([datetime]::TryParse([string]$state.expires_at, [ref]$exp0) -and ($exp0 - $now).TotalHours -lt ($TeeFlagRevertHours - $TeeAssignExtendMinGapHours)) {
+                $act0 = Get-CprActiveTeeLevelInfo -ActivePath $TeeEventsFile
+                if ($null -ne $act0.Level -and [int]$act0.Level -eq [int]$state.set_level) {
+                    $newExp = $now.AddHours($TeeFlagRevertHours)
+                    if ($WhatIf) { Write-Log "WHATIF: would extend tee level $($state.set_level) revert to $($newExp.ToString('o'))" "INFO" }
+                    else {
+                        $state.expires_at = $newExp.ToString('o')
+                        if (Write-TeeRevertState -Obj $state) {
+                            Write-Log "TeeAssign: host still listed in tee$($assign.Level) - revert time extended to $($newExp.ToString('s')) (was $($exp0.ToString('s')))" "INFO"
+                            Send-TeeLevelSetEvent -Level $state.set_level -PreviousLevel $state.previous_level -Source 'manifest' -Result 'extended' -Reason "revert_hours=$TeeFlagRevertHours"
+                        }
+                    }
+                }
+            }
+        }
 
         # ---- 1. automatic revert of a flag-set level -------------------------------------------
         if ($state -and $state.expires_at) {
@@ -183,6 +275,41 @@ function Invoke-TeeLevelFlagCheck {
                         Move-TeeFlagToFailed -Path $pick.File.FullName
                         Send-TeeLevelSetEvent -Level $pick.Level -PreviousLevel $previous -Source 'flag' -Result 'failed' -Reason "$($r.Error)"
                     }
+                }
+            }
+        }
+
+        # ---- 2a. share-assigned level: apply it (manual flags and manual stamps take precedence) ---
+        if ($assign.Fresh -and $null -ne $assign.Level -and -not $WhatIf) {
+            $state = Read-TeeRevertState
+            $info  = Get-CprActiveTeeLevelInfo -ActivePath $TeeEventsFile
+            $cur   = if ($null -ne $info.Level) { [int]$info.Level } else { [int]$TeeDefaultLevel }
+            $go = $false; $previousA = $cur
+            if (-not $state) {
+                if ($cur -ge [int]$assign.Level) { Write-Log "TeeAssign: listed in tee$($assign.Level) but already at level $cur - nothing to do" "DEBUG" }
+                else { $go = $true }
+            } elseif ($state.source -eq 'manifest' -and [int]$state.set_level -ne [int]$assign.Level -and $cur -eq [int]$state.set_level) {
+                $go = $true; $previousA = [int]$state.previous_level      # the list moved this host to another level
+            } elseif ($state.source -ne 'manifest') {
+                Write-Log "TeeAssign: listed in tee$($assign.Level) but a manual tee state is active - left alone" "DEBUG"
+            }
+            if ($go) {
+                $r = Set-CprTeeLevel -Level ([int]$assign.Level) -MasterPath $TeeMasterFile -ActivePath $TeeEventsFile -GeneratedBy 'cpr_tee_assign' -Reason 'manifest'
+                if ($r.Success) {
+                    $stateOut = [ordered]@{
+                        previous_level = $previousA
+                        set_level      = [int]$assign.Level
+                        applied_at     = $now.ToString('o')
+                        expires_at     = $(if ($TeeFlagRevertHours -gt 0) { $now.AddHours($TeeFlagRevertHours).ToString('o') } else { $null })
+                        keep           = $false
+                        source         = 'manifest'
+                    }
+                    [void](Write-TeeRevertState -Obj $stateOut)
+                    Write-Log "TeeAssign: tee level set to $($assign.Level) from tee_assign.cfg (previous=$previousA, revert after ${TeeFlagRevertHours}h unless still listed)" "INFO"
+                    Send-TeeLevelSetEvent -Level $assign.Level -PreviousLevel $previousA -Source 'manifest' -Result 'applied' -Reason "revert_hours=$TeeFlagRevertHours"
+                } else {
+                    Write-Log "TeeAssign: could not set tee level $($assign.Level): $($r.Error)" "WARN"
+                    Send-TeeLevelSetEvent -Level $assign.Level -PreviousLevel $previousA -Source 'manifest' -Result 'failed' -Reason "$($r.Error)"
                 }
             }
         }
