@@ -22,7 +22,7 @@ Describe 'Legacy task migration' {
     BeforeAll {
         # Non-Windows runs: Pester's Mock needs the ScheduledTasks cmdlets to exist.
         foreach ($c in 'Get-ScheduledTask', 'Unregister-ScheduledTask') {
-            if (-not (Get-Command $c -ErrorAction SilentlyContinue)) { Set-Item "function:global:$c" { param($TaskName, $TaskPath, $InputObject, $Confirm, $ErrorAction) } }
+            if (-not (Get-Command $c -ErrorAction SilentlyContinue)) { Set-Item "function:global:$c" { param([string[]]$TaskName, [string]$TaskPath, $InputObject, [switch]$Confirm) } }   # same shapes as the real cmdlet (TaskName is string[])
         }
         . (Join-Path (Split-Path -Parent $PSScriptRoot) 'WW_migrate_legacy_tasks.ps1')
     }
@@ -37,7 +37,8 @@ Describe 'Legacy task migration' {
         Set-Content (Join-Path $script:tasks 'HayStack\HayStack_Monitor') 'x'
         Mock Unregister-ScheduledTask {
             param($TaskName, $TaskPath, $Confirm, $ErrorAction)
-            $rel = (($TaskPath.Trim('\')), $TaskName | Where-Object { $_ }) -join '\'
+            # The real cmdlet's -TaskName is string[]; take the one name so the path joins the same on every host.
+            $rel = (($TaskPath.Trim('\')), ([string](@($TaskName)[0])) | Where-Object { $_ }) -join '\'
             Remove-Item (Join-Path $script:tasks $rel) -Force
         }
         Mock Remove-EmptyTaskFolder { }
