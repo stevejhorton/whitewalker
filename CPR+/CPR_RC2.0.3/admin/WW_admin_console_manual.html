@@ -144,6 +144,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
   <div class="row" data-go="mB" role="listitem"><span class="k">B.</span><span>Needle Bundles (canned sets, auto-expire)</span></div>
   <div class="row" data-go="m7" role="listitem"><span class="k">7.</span><span>Tee Log Level Picker</span></div>
   <div class="row" data-go="mT" role="listitem"><span class="k">T.</span><span>Refresh Active Tee Profile (keeps your selected level)</span></div>
+  <div class="row" data-go="mE" role="listitem"><span class="k">E.</span><span>Show Effective Tee Level (read-only)</span></div>
   <div class="row" data-go="m8" role="listitem"><span class="k">8.</span><span>Diagnostics &amp; Test Tools Launcher</span></div>
   <div class="row" data-go="m9" role="listitem"><span class="k">9.</span><span>Quick Actions</span></div>
   <div class="row" data-go="mW" role="listitem"><span class="k">W.</span><span>Watch / browse WhiteWalker logs (Q or Esc returns here)</span></div>
@@ -259,6 +260,12 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <details class="item" id="mT"><summary><span class="key">T</span>Refresh Active Tee Profile <span class="sp"></span><span class="badge b-chg">CHANGES THINGS</span></summary><div class="body">
 <dl class="kv"><dt>Use when</dt><dd>The picker warned the profile is stale, or events that should be logging at your level are missing.</dd>
 <dt>What it does</dt><dd>Compares the active profile with the master for your <i>currently selected</i> level, lists missing or unsupported tags, and (after you confirm) regenerates it. <b>It never changes the level.</b> If it cannot tell which level is selected, it leaves everything alone and tells you to use the picker.</dd></dl>
+</div></details>
+
+<details class="item" id="mE"><summary><span class="key">E</span>Show Effective Tee Level <span class="sp"></span><span class="badge b-ro">READ-ONLY</span></summary><div class="body">
+<dl class="kv"><dt>Use when</dt><dd>You want to know what tee level this box is really running, and why, without opening files.</dd>
+<dt>What it shows</dt><dd>The level now, the reason and who set it (console, flag, installer, or the share list), the revert stamp (what it returns to and when, or that it is kept), any <code>cpr_tee_*</code> flags still waiting, and the share list: when the share was last read and whether this computer is listed and at which level.</dd>
+<dt>Reading it</dt><dd>The picker (7) numbers its list from 1, so option 1 is level 0. This screen shows the actual level number.</dd></dl>
 </div></details>
 
 <details class="item" id="m8"><summary><span class="key">8</span>Diagnostics &amp; Test Tools Launcher <span class="sp"></span><span class="badge b-chg">VARIES BY TOOL</span></summary><div class="body">

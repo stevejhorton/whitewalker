@@ -1308,6 +1308,67 @@ Active tee profile: $($status.Active)" -ForegroundColor Cyan
     }
 }
 
+function Invoke-WWShowEffectiveTee {
+    <# Read-only: the tee level this box is really running and why, in one place. #>
+    $flagDir = if ($script:WWTeeFlagDir) { $script:WWTeeFlagDir } else { 'C:\Windows\Temp' }
+    Write-Host "`nEffective tee (telemetry) level" -ForegroundColor Cyan
+
+    # 1. the active profile
+    $d = $null
+    try { if (Test-Path -LiteralPath $script:ActiveTeeProfile) { $d = Import-PowerShellDataFile -LiteralPath $script:ActiveTeeProfile -ErrorAction Stop } } catch { $d = $null }
+    if ($d) {
+        Write-Host ("  Level now      : {0}" -f $d.Level) -ForegroundColor Green
+        Write-Host ("  Why            : {0}" -f $(if ($d.Reason) { $d.Reason } else { 'unknown (older profile)' }))
+        Write-Host ("  Set by         : {0}   at {1}" -f $(if ($d.GeneratedBy) { $d.GeneratedBy } else { 'unknown' }), $d.Generated)
+        Write-Host ("  Profile        : version {0}, {1} tags{2}" -f $d.ProfileVersion, @($d.Events.Keys).Count, $(if ($d.Custom -eq $true) { ', CUSTOM' } else { '' }))
+        try { $st = Test-WWTeeProfileStale; if ($st.Stale) { Write-Host ("  WARNING        : profile is STALE ({0}) - use T to refresh it" -f $st.Reason) -ForegroundColor Yellow } } catch { }
+    } else {
+        Write-Host "  Active profile missing or unreadable: $script:ActiveTeeProfile" -ForegroundColor Red
+    }
+
+    # 2. the revert stamp
+    $stampFile = Join-Path $script:WWRoot 'tee_level_revert.json'
+    Write-Host "`n  Revert stamp" -ForegroundColor Cyan
+    $stamp = $null
+    try { if (Test-Path -LiteralPath $stampFile) { $stamp = Get-Content -LiteralPath $stampFile -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop } } catch { $stamp = $null }
+    if (-not $stamp) { Write-Host "    none - the level stays until someone changes it" }
+    else {
+        $src = if ($stamp.source) { [string]$stamp.source } elseif ($stamp.keep -eq $true) { 'flag (keep)' } else { 'flag / console' }
+        Write-Host ("    Level {0} set by {1}; returns to level {2}" -f $stamp.set_level, $src, $stamp.previous_level)
+        $exp = [datetime]::MinValue
+        if ($stamp.expires_at -and [datetime]::TryParse([string]$stamp.expires_at, [ref]$exp)) {
+            $left = $exp - (Get-Date)
+            Write-Host ("    Reverts at {0}  ({1})" -f $exp.ToString('yyyy-MM-dd HH:mm'), $(if ($left.TotalSeconds -le 0) { 'due on the next run' } else { '{0:N1} days left' -f $left.TotalDays }))
+        } else { Write-Host "    No revert time (kept until changed)" }
+    }
+
+    # 3. flags waiting
+    $flags = @(Get-ChildItem -LiteralPath $flagDir -Filter 'cpr_tee_*' -File -ErrorAction SilentlyContinue)
+    Write-Host "`n  Flags waiting in $flagDir" -ForegroundColor Cyan
+    if ($flags.Count -eq 0) { Write-Host "    none" } else { foreach ($f in $flags) { Write-Host ("    {0}   ({1})" -f $f.Name, $f.LastWriteTime.ToString('yyyy-MM-dd HH:mm')) } }
+
+    # 4. share list
+    $cfg  = Join-Path $script:WWRoot 'tee_assign.cfg'
+    $sync = Join-Path $script:WWRoot 'tee_assign_sync.flag'
+    Write-Host "`n  Share list (tee_assign.cfg)" -ForegroundColor Cyan
+    if (-not (Test-Path -LiteralPath $cfg)) { Write-Host "    no local copy yet - the share has not been read (or has no file)" }
+    else {
+        $last = $null
+        try { $last = [datetime]::Parse((Get-Content -LiteralPath $sync -Raw -ErrorAction Stop).Trim()) } catch { }
+        Write-Host ("    Last good read of the share: {0}" -f $(if ($last) { '{0}  ({1:N1} h ago)' -f $last.ToString('yyyy-MM-dd HH:mm'), ((Get-Date) - $last).TotalHours } else { 'unknown' }))
+        $lvl = $null; $parsed = $false
+        try {
+            $src = Join-Path (Split-Path -Parent $PSScriptRoot) 'main\Main.TeeFlag.ps1'
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile($src, [ref]$null, [ref]$null)
+            $fn = $ast.FindAll({ param($x) $x -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $x.Name -eq 'Get-TeeAssignLevelFromLines' }, $true) | Select-Object -First 1
+            if ($fn) { . ([scriptblock]::Create($fn.Extent.Text)); $lvl = Get-TeeAssignLevelFromLines -Lines (Get-Content -LiteralPath $cfg) -ComputerName $env:COMPUTERNAME; $parsed = $true }
+        } catch { }
+        if (-not $parsed) { Write-Host "    (could not read the list rules from main\Main.TeeFlag.ps1)" -ForegroundColor Yellow }
+        elseif ($null -ne $lvl) { Write-Host ("    {0} is LISTED in [tee{1}]" -f $env:COMPUTERNAME, $lvl) -ForegroundColor Green }
+        else { Write-Host ("    {0} is not listed" -f $env:COMPUTERNAME) }
+    }
+}
+
 function Invoke-WWTeeLevelPicker {
     $levels = @(Get-WWTeeLevelFiles)
     if ($levels.Count -eq 0) {
@@ -1716,6 +1777,7 @@ function Show-WWMainMenu {
     Write-Host "  B. Needle Bundles (canned sets, auto-expire)"
     Write-Host "  7. Tee Log Level Picker"
     Write-Host "  T. Refresh Active Tee Profile (keeps your selected level)"
+    Write-Host "  E. Show Effective Tee Level (read-only: level, why, revert time, share list)"
     Write-Host "  8. Diagnostics & Test Tools Launcher"
     Write-Host "  9. Quick Actions"
     Write-Host "  W. Watch / browse WhiteWalker logs (Q or Esc returns here)"
@@ -1738,6 +1800,7 @@ function Start-WWActionMenu {
             # RC2.1 (Required H): one-step repair for a sticky/stale active
             # profile. Refreshes from the SELECTED level - never changes it.
             { $_ -in @('T', 't') } { Invoke-WWAction -Name 'TeeProfileRefresh' -Action { Invoke-WWTeeProfileRefresh } }
+            { $_ -in @('E', 'e') } { Invoke-WWAction -Name 'ShowEffectiveTee' -Action { Invoke-WWShowEffectiveTee } }
             '8' { Invoke-WWAction -Name 'DiagnosticsLauncher' -Action { Invoke-WWDiagnosticsLauncher } }
             '9' { Invoke-WWAction -Name 'QuickActionsMenu'   -Action { Invoke-WWQuickActionsMenu } }
             # RC2.2 (Required F): in-process log watcher. Q/Esc breaks the tail
