@@ -160,6 +160,8 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <li><b>Reroll offer.</b> After the wizard or a bundle changes <code>needles_local.cfg</code>, the console offers to reroll HayStack right away (Y is the default).</li>
 <li><b>Log timing (quick action 6, test only).</b> Adds <code>[+ms | elapsed]</code> to every main-log line so slow steps stand out. Also available as <code>WW_main.ps1 -WWTiming</code>.</li>
 <li><b>Faster network snapshot (soak).</b> A fast in-process probe now runs beside the old cmdlet path and logs <code>net_probe_parity=ok</code> (or <code>DIFF</code> with the fields that differ). The old result is still the one used until <code>$NetProbeMode</code> in <code>Main.Configuration.ps1</code> is switched from <code>parity</code> to <code>fast</code>.</li>
+<li><b>Tee level from the share.</b> List computer names under <code>[tee1]</code> to <code>[tee5]</code> in <code>tee_assign.cfg</code> on the NETLOGON share and those boxes pick the level up by themselves. While a name stays listed the 14-day revert time keeps being pushed out; delete the name and the level reverts on its own. See <a href="#tee">Tee log levels</a>.</li>
+<li><b>Slow log writes are named.</b> If writing a log line takes more than half a second or needs a retry, a <code>log_write_slow</code> line is added right after it.</li>
 <li><b>Run, then watch.</b> Items 1 and 2, 3 (self-update) and quick actions 1 and 3 now show the relevant log while they work, then return you to the menu.</li>
 <li><b>One source for shared settings.</b> The installer reads the version, task folder and default tee level from <code>main\Main.Configuration.ps1</code> instead of keeping its own copies. A package missing that file now fails the install loudly.</li>
 </ul>
@@ -331,6 +333,24 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <tr><td>4</td><td>RESERVED</td><td>Currently identical to level 3.</td></tr>
 <tr><td>5</td><td>EVERYTHING</td><td>Debug and incident investigation. Highest volume.</td></tr></table></div>
 <div class="note"><b>Rules of thumb.</b>Use 1 for normal life. Use 3 for most VPN or captive portal troubleshooting. Use 5 only while you are actively reproducing something, then drop back. When several flags exist, the highest level wins.</div>
+<h3>Assign a level from the share <small>tee_assign.cfg</small></h3>
+<p>Instead of touching a flag on each box, list the computer names in <code>tee_assign.cfg</code> on the NETLOGON share (<code>\\ms.ds.uhc.com\netlogon\UHG\Scripts\AOVPN\CPR\</code>, next to <code>trusted_ssids.cfg</code>). The template is <code>tee_assign.cfg</code> in the package root; copy it to the share by hand. It is not installed on endpoints, and a box keeps its own cached copy at <code>C:\ProgramData\WhiteWalker\tee_assign.cfg</code>.</p>
+<div class="cmd"><button type="button" data-copy>Copy</button>[tee3]
+LAB-*          # whole lab
+PCA-001
+
+[tee5]
+PCB-777        # remove this line when done</div>
+<ul>
+<li><b>Format.</b> A section header must be exactly <code>[tee1]</code> to <code>[tee5]</code>. One computer name per line, no domain, case does not matter. <code>*</code> and <code>?</code> work inside a name. A <code>#</code> starts a comment. A line that is only wildcards is ignored. If a name is in two sections the higher level wins.</li>
+<li><b>Applying.</b> A listed box is set to that level on its next run and gets the same 14-day revert stamp a flag would. A box already at or above the listed level is left alone, and a level set by hand with a flag always wins.</li>
+<li><b>Staying on.</b> While the name is listed <i>and</i> the share was read successfully in the last 12 hours, the revert time is pushed out another 14 days (about once a day, logged as <code>TeeAssign: ... revert time extended</code>). A box that has been off the network does not extend.</li>
+<li><b>Ending it.</b> Delete the name from the file. Nothing is removed from the box; it simply stops extending and reverts by itself within 14 days.</li>
+<li><b>Sync.</b> Boxes read the share at most every 4 hours, and only when it answers a quick 300 ms check. If the share is down the cached copy is kept and retries are at most hourly. If the file does not exist on the share, nothing happens.</li>
+</ul>
+<p>Check the file before you publish it:</p>
+<div class="cmd"><button type="button" data-copy>Copy</button>.\diagnostics\Test-TeeAssignFile.ps1 -Path .\tee_assign.cfg -ComputerName LAB-07</div>
+<p>It lists anything CPR would ignore or misread (bad section names, names above a section, a line that would match every box, duplicates) and, with <code>-ComputerName</code>, the level that name would get. The turn-off switch is <code>$TeeAssignEnabled</code> in <code>main\Main.Configuration.ps1</code>.</p>
 </section>
 
 <section id="markers" class="finder">
@@ -349,7 +369,11 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <tr><td><code>detection_source=native_redirect</code></td><td>The redirect was seen by WhiteWalker's own probe, not by the Cisco WebHelper.</td><td>Informational.</td></tr>
 <tr><td><code>Preflight skipped: VPN state 'Connecting' blocks all traffic</code></td><td>The VPN client was mid-connect, so the network check was skipped.</td><td>Re-run once the client settles.</td></tr>
 <tr><td><code>captive_portal_suspected</code></td><td>The network check failed on a plausible network (for example dead DNS). A captive portal is suspected but no redirect was seen.</td><td>The base runner will observe and the Cisco browser may open.</td></tr>
-<tr><td><code>LOG WRITE FAILED</code></td><td>A log line could not be written after retries. It is saved to <code>logs\log_write_failures.txt</code>.</td><td>Look at that file; something was locking the log.</td></tr></tbody></table></div>
+<tr><td><code>LOG WRITE FAILED</code></td><td>A log line could not be written after retries. It is saved to <code>logs\log_write_failures.txt</code>.</td><td>Look at that file; something was locking the log.</td></tr>
+<tr><td><code>log_write_slow ms=N tries=N</code></td><td>Writing the log line just above took longer than 500 ms or needed a retry. The delay was in the file write, not in WhiteWalker's own work.</td><td>Something is holding or scanning the log file (antivirus, a live tail, an editor). Close tails; ask for the log folder to be excluded from scanning if it keeps happening.</td></tr>
+<tr><td><code>TeeAssign: tee level set to N</code></td><td>This box is listed in <code>tee_assign.cfg</code> and was moved to level N.</td><td>None. It reverts by itself 14 days after it was last confirmed on the list.</td></tr>
+<tr><td><code>TeeAssign: ... revert time extended</code></td><td>The box is still listed and the share was read recently, so the revert time was pushed out another 14 days.</td><td>None. Delete the name from the share file to end it.</td></tr>
+<tr><td><code>TeeAssign: share not reachable</code></td><td>The share did not answer. The cached list is kept, and nothing is applied or extended until it was read successfully within 12 hours.</td><td>Normal off the corporate network.</td></tr></tbody></table></div>
 </section>
 
 <section id="paths">
@@ -363,6 +387,8 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <tr><td>Lost-log-line spill file</td><td><code>C:\ProgramData\WhiteWalker\logs\log_write_failures.txt</code></td></tr>
 <tr><td>Telemetry queue</td><td><code>logs\haystack_syslog_queue.jsonl</code> and <code>logs\spool\</code></td></tr>
 <tr><td>Local needles</td><td><code>C:\ProgramData\WhiteWalker\needles_local.cfg</code></td></tr>
+<tr><td>Tee assignment (cached copy of the share list)</td><td><code>C:\ProgramData\WhiteWalker\tee_assign.cfg</code> (last good read: <code>tee_assign_sync.flag</code>)</td></tr>
+<tr><td>Tee revert stamp</td><td><code>C:\ProgramData\WhiteWalker\tee_level_revert.json</code> (<code>source</code> is <code>manifest</code> when the share set the level)</td></tr>
 <tr><td>Bundle catalog</td><td><code>C:\ProgramData\WhiteWalker\bundles\needle_bundles.cfg</code> (the share copy is preferred when reachable)</td></tr>
 <tr><td>Reroll state (incl. next needle expiry)</td><td><code>haystack_reroll.stamp</code> in the install root</td></tr>
 <tr><td>Tee master / active profile</td><td><code>WW_tee_master.psd1</code> / <code>WW_tee_events.psd1</code> in the install root</td></tr>
