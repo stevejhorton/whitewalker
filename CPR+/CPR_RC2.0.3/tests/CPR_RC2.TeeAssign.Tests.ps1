@@ -26,6 +26,14 @@ Describe 'Get-TeeAssignLevelFromLines' {
     It 'highest matching section wins' {
         Get-TeeAssignLevelFromLines -Lines @('[tee2]','LAB-*','[tee4]','LAB-42') -ComputerName 'LAB-42' | Should -Be 4
     }
+    It 'never honors a wildcard-only line (it would match every host)' {
+        Get-TeeAssignLevelFromLines -Lines @('[tee5]','*','??') -ComputerName 'ANY-PC' | Should -BeNullOrEmpty
+    }
+    It 'the shipped template assigns nobody' {
+        $t = Get-Content (Join-Path $script:Root 'tee_assign.cfg')
+        foreach ($h in 'EXAMPLE-PC-001','EXAMPLE-PC-002','LAB-1','ANYTHING') { Get-TeeAssignLevelFromLines -Lines $t -ComputerName $h | Should -BeNullOrEmpty }
+        $t | Where-Object { $_ -match '^\[tee[1-5]\]$' } | Should -HaveCount 2
+    }
     It 'handles an empty file' { Get-TeeAssignLevelFromLines -Lines @() -ComputerName 'X' | Should -BeNullOrEmpty }
 }
 

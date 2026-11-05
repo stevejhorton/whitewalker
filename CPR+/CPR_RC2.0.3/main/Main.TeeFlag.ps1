@@ -94,6 +94,7 @@ function Get-TeeAssignLevelFromLines {
         if ($l -match '^\[tee([1-5])\]$') { $section = [int]$Matches[1]; continue }
         if ($l.StartsWith('[')) { $section = $null; continue }
         if ($null -eq $section) { continue }
+        if ($l -notmatch '[A-Za-z0-9]') { continue }   # '*' or '??' alone would match every host - never honored
         if ($ComputerName -like $l) { if ($null -eq $best -or $section -gt $best) { $best = $section } }
     }
     return $best
