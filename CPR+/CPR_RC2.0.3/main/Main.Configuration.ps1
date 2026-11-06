@@ -203,7 +203,7 @@ $NetworkReadyEnabled            = $true  # bool, master switch for the readiness
 # ---- BASE runner (fail-safe literals mirrored in WW_cap_portal_runner_base.ps1)
 $CapPortalBasePreflightTimeoutMs   = 3000   # ms per Base empirical preflight probe (consumer: BASE)
 $CapPortalBasePreflightMaxProbes   = 6      # count, preflight probes across the window (consumer: BASE)
-$CapPortalBaseWebHelperLookbackSec = 180    # seconds of bounded EventID 301 pre-start lookback (consumer: BASE)
+$CapPortalBaseWebHelperLookbackSec = 330    # seconds of bounded EventID 301 pre-start lookback; covers Secure Client's 5-minute captive portal remediation window plus margin (consumer: BASE)
 
 # ---- Cisco Secure Client EventID 301-first evidence -------------------------
 # MAIN reads the Windows Event Log directly only after Cisco's active WebHelper
@@ -213,11 +213,11 @@ $CapPortalWebHelper301FirstEnabled              = $true                 # bool, 
 $CapPortalWebHelper301LogName                   = 'Cisco Secure Client' # Windows Event Log channel (consumer: MAIN)
 $CapPortalWebHelper301ProviderName              = 'csc_webhelper'       # actual provider in the Cisco Secure Client channel (consumer: MAIN, BASE)
 $CapPortalWebHelper301EventId                   = 301                   # Windows event ID (consumer: MAIN)
-$CapPortalWebHelper301LookbackSec               = 180                   # seconds; modestly above 120 to cover pre-launch WebView2 bursts without an unbounded scan (consumer: MAIN)
+$CapPortalWebHelper301LookbackSec               = 330                   # seconds; covers Secure Client's 5-minute captive portal remediation window plus margin - a user can sign in near the end of it and CPR only fires on DHCP / unlock (consumer: MAIN)
 $CapPortalWebHelper301MaxRecords                = 256                   # records per query; bounds noisy same-timestamp csc_webhelper bursts (consumer: MAIN, BASE)
 $CapPortalWebHelper301WaitSec                   = 3                     # seconds, hard cap for direct Event Log polling (consumer: MAIN)
 $CapPortalWebHelper301PollIntervalMs            = 250                   # milliseconds between direct Event Log polls (consumer: MAIN)
-$CapPortalWebHelper301MaxAgeSec                 = 180                   # seconds, maximum accepted event age (consumer: MAIN, BASE)
+$CapPortalWebHelper301MaxAgeSec                 = 330                   # seconds, maximum accepted event age; same 5-minute window plus margin, beyond it Secure Client has ended the attempt (consumer: MAIN, BASE)
 $CapPortalWebHelper301NoUrlImmediatePreflight   = $true                 # bool, no navigated_url falls through immediately (consumer: MAIN)
 $CapPortalWebHelper301SuppressPreflight         = $true                 # bool, usable active navigation suppresses gateway probe (consumer: MAIN, BASE)
 $CapPortalWebHelper301HaystackFallbackEnabled   = $false                # bool, diagnostic haystack.log fallback after Event Log read failure only (consumer: MAIN)

@@ -174,7 +174,7 @@ function Find-CprCiscoWebHelper301Evidence {
         [string]$LogName = 'Cisco Secure Client',
         [string]$ProviderName = 'csc_webhelper',
         [int]$EventId = 301,
-        [int]$MaximumAgeSeconds = 180,
+        [int]$MaximumAgeSeconds = 330,
         [int]$MaxEvents = 256,
         [string]$CurrentSsid = '',
         [hashtable]$SeenIdentities = @{}
@@ -312,9 +312,9 @@ function Get-CprHaystack301FallbackEvidence {
 function Wait-CprCiscoWebHelper301Evidence {
     param(
         [datetime]$CorrelationStart = (Get-Date),
-        [int]$LookbackSeconds = 180, [int]$MaxRecords = 256,
+        [int]$LookbackSeconds = 330, [int]$MaxRecords = 256,
         [int]$WaitSeconds = 3, [int]$PollIntervalMs = 250,
-        [int]$MaximumAgeSeconds = 180, [string]$LogName = 'Cisco Secure Client',
+        [int]$MaximumAgeSeconds = 330, [string]$LogName = 'Cisco Secure Client',
         [string]$ProviderName = 'csc_webhelper', [int]$EventId = 301,
         [string]$CurrentSsid = '',
         [bool]$NoUrlImmediatePreflight = $true, [bool]$HaystackFallbackEnabled = $false,

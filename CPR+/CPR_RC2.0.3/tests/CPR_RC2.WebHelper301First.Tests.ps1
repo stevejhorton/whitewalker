@@ -216,6 +216,21 @@ Describe 'Cisco Secure Client EventID 301-first direct evidence' {
         $result.TerminalReason | Should -Be 'accepted'
     }
 
+    It 'accepts a navigation up to 5 minutes old with the default window (Secure Client remediation window) and rejects one older than that' {
+        $now = [datetime]'2026-11-06T12:00:00Z'
+        $url = "primary control navigated successfully to URL 'https://portal.example.test/login?ssid=Guest'; Final URL: 'https://portal.example.test/login?ssid=Guest'"
+        Mock Get-WinEvent { @([pscustomobject]@{ ProviderName='csc_webhelper'; Id=301; RecordId=4001; TimeCreated=$now.AddSeconds(-290); Message=$url }) }
+        $ok = Find-CprCiscoWebHelper301Evidence -Since $now.AddSeconds(-330) -Now $now -CorrelationStart $now.AddSeconds(-330) `
+            -ProviderName 'csc_webhelper' -CurrentSsid 'Guest' -SeenIdentities @{}
+        $ok.UsableNavigation | Should -BeTrue
+        $ok.Fqdn | Should -Be 'portal.example.test'
+        Mock Get-WinEvent { @([pscustomobject]@{ ProviderName='csc_webhelper'; Id=301; RecordId=4002; TimeCreated=$now.AddSeconds(-345); Message=$url }) }
+        $late = Find-CprCiscoWebHelper301Evidence -Since $now.AddSeconds(-400) -Now $now -CorrelationStart $now.AddSeconds(-400) `
+            -ProviderName 'csc_webhelper' -CurrentSsid 'Guest' -SeenIdentities @{}
+        $late.UsableNavigation | Should -BeFalse
+        $late.RejectedStaleCount | Should -Be 1
+    }
+
     It 'uses provider freshness when the event carries no network identity but rejects an explicit SSID mismatch' {
         $now = Get-Date
         Mock Get-WinEvent {
@@ -348,7 +363,7 @@ Describe '301-first control-plane ordering and configuration' {
 
     It 'configures the real provider, larger bounded lookback, and sufficiently high record cap' {
             $script:configSource | Should -Match "\`$CapPortalWebHelper301ProviderName\s*=\s*'csc_webhelper'"
-            $script:configSource | Should -Match '\$CapPortalWebHelper301LookbackSec\s*=\s*180'
+            $script:configSource | Should -Match '\$CapPortalWebHelper301LookbackSec\s*=\s*330'
             $script:configSource | Should -Match '\$CapPortalWebHelper301MaxRecords\s*=\s*256'
             $script:configSource | Should -Match 'webhelper_301_max_records\s*=\s*\$CapPortalWebHelper301MaxRecords'
             $script:capSource | Should -Match '\[int\]\$MaxEvents\s*=\s*256'

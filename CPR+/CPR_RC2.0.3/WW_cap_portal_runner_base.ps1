@@ -79,7 +79,7 @@ $BaseNetworkReadyPollIntervalMs = 500
 $BaseNetworkReadyGatewayTimeoutMs = 750
 $BaseNetworkReadyDnsTimeoutMs   = 1500
 $BaseWebHelper301SuppressPreflight = $true # bool, accepted active Main 301 evidence suppresses blocked gateway probes
-$BaseWebHelper301MaxAgeSec      = 180   # seconds, re-check embedded Main evidence freshness
+$BaseWebHelper301MaxAgeSec      = 330   # seconds, re-check embedded Main evidence freshness
 $BaseWebHelper301MaxRecords     = 256   # bounded records per noisy EventID 301 query
 # ---------------------------------------------------------------------------
 # TIMER PARITY (Required E). Base is standalone and never inherits Main scope,
@@ -131,7 +131,7 @@ $CiscoWebHelperEventId = 301
 # Cisco's WebView2 can pop the portal and emit EventID 301 BEFORE FlareGun
 # Event 778 launches this runner, so the event query starts this many seconds
 # before Base started. Tunable; bounded to keep the query cheap.
-$CiscoWebHelperLookbackSeconds = 180
+$CiscoWebHelperLookbackSeconds = 330
 
 # Tee logging engine - dot-sourced so this USER-context script can ship the same
 # cap_portal_remediation_passed / cap_portal_remediation_failed telemetry that
