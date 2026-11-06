@@ -216,6 +216,32 @@ Describe 'Cisco Secure Client EventID 301-first direct evidence' {
         $result.TerminalReason | Should -Be 'accepted'
     }
 
+    It 'treats Get-WinEvent NoMatchingEventsFound as no_events (not read_error); real read failures stay read_error' {
+        $now = Get-Date
+        Mock Get-WinEvent { throw ([System.Management.Automation.ErrorRecord]::new([System.Exception]::new('No events were found that match the specified selection criteria.'), 'NoMatchingEventsFound,Microsoft.PowerShell.Commands.GetWinEventCommand', [System.Management.Automation.ErrorCategory]::ObjectNotFound, $null)) }
+        $r = Find-CprCiscoWebHelper301Evidence -Since $now.AddSeconds(-330) -Now $now -CorrelationStart $now.AddSeconds(-330) -ProviderName 'csc_webhelper' -SeenIdentities @{}
+        $r.ReadFailed | Should -BeFalse
+        $r.QueriedCount | Should -Be 0
+        Mock Get-WinEvent { throw 'Access is denied' }
+        $bad = Find-CprCiscoWebHelper301Evidence -Since $now.AddSeconds(-330) -Now $now -CorrelationStart $now.AddSeconds(-330) -ProviderName 'csc_webhelper' -SeenIdentities @{}
+        $bad.ReadFailed | Should -BeTrue
+        $bad.Reason | Should -Be 'read_error'
+    }
+
+    It 'keeps polling through empty queries and picks up a 301 that appears during the wait' {
+        $script:polls = 0
+        Mock Get-WinEvent {
+            $script:polls++
+            if ($script:polls -lt 3) { throw ([System.Management.Automation.ErrorRecord]::new([System.Exception]::new('No events were found that match the specified selection criteria.'), 'NoMatchingEventsFound,Microsoft.PowerShell.Commands.GetWinEventCommand', [System.Management.Automation.ErrorCategory]::ObjectNotFound, $null)) }
+            @([pscustomobject]@{ ProviderName='csc_webhelper'; Id=301; RecordId=7001; TimeCreated=(Get-Date).AddSeconds(-2)
+               Message="primary control navigated successfully to URL 'https://portal.example.test/login'; Final URL: 'https://portal.example.test/login'" })
+        }
+        $r = Wait-CprCiscoWebHelper301Evidence -CorrelationStart (Get-Date) -LookbackSeconds 330 -MaximumAgeSeconds 330 -WaitSeconds 3 -PollIntervalMs 50
+        $script:polls | Should -BeGreaterOrEqual 3
+        $r.UsableNavigation | Should -BeTrue
+        $r.Fqdn | Should -Be 'portal.example.test'
+    }
+
     It 'accepts a navigation up to 5 minutes old with the default window (Secure Client remediation window) and rejects one older than that' {
         $now = [datetime]'2026-11-06T12:00:00Z'
         $url = "primary control navigated successfully to URL 'https://portal.example.test/login?ssid=Guest'; Final URL: 'https://portal.example.test/login?ssid=Guest'"

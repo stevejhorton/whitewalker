@@ -183,8 +183,16 @@ function Find-CprCiscoWebHelper301Evidence {
     try {
         $filter = @{ LogName=$LogName; Id=$EventId; StartTime=$Since }
         if (-not [string]::IsNullOrWhiteSpace($ProviderName)) { $filter.ProviderName = $ProviderName }
-        $events = @(Get-WinEvent -FilterHashtable $filter -MaxEvents $MaxEvents -ErrorAction Stop |
-            Sort-Object @{Expression='TimeCreated';Descending=$true}, @{Expression='RecordId';Descending=$true})
+        # Get-WinEvent THROWS (NoMatchingEventsFound) when nothing matches. That is an empty result, not a read
+        # failure: treating it as read_error ended the wait poll after its first empty query.
+        $rawEvents = @()
+        try {
+            $rawEvents = @(Get-WinEvent -FilterHashtable $filter -MaxEvents $MaxEvents -ErrorAction Stop |
+                Sort-Object @{Expression='TimeCreated';Descending=$true}, @{Expression='RecordId';Descending=$true})
+        } catch {
+            if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') { $rawEvents = @() } else { throw }
+        }
+        $events = $rawEvents
         $result.QueriedCount = $events.Count
         $result.RecordLimitReached = ($events.Count -ge $MaxEvents)
         $selected = $null

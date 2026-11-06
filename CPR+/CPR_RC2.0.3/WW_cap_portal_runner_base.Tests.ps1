@@ -245,6 +245,14 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
             $empty.Found | Should -BeFalse; $empty.Error | Should -Not -Be ''
         }
 
+        It "reports Get-WinEvent's NoMatchingEventsFound as a plain empty result, and keeps real failures verbatim" {
+            Mock Get-WinEvent { throw ([System.Management.Automation.ErrorRecord]::new([System.Exception]::new('No events were found that match the specified selection criteria.'), 'NoMatchingEventsFound,Microsoft.PowerShell.Commands.GetWinEventCommand', [System.Management.Automation.ErrorCategory]::ObjectNotFound, $null)) }
+            $none = Get-CiscoWebHelperNavigationEvent -Since (Get-Date)
+            $none.Found | Should -BeFalse; $none.Error | Should -Match '^No matching Cisco WebHelper navigation events found since'
+            Mock Get-WinEvent { throw 'Access is denied' }
+            (Get-CiscoWebHelperNavigationEvent -Since (Get-Date)).Error | Should -Be 'Access is denied'
+        }
+
         It "has the required top-level scope and log-only wiring" {
             $script:rawSource | Should -Match '(?m)^function Test-BaseCapPreflight'
             $script:rawSource | Should -Match '(?m)^function Test-VPNBlockingNetwork'

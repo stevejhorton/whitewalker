@@ -507,7 +507,8 @@ function Get-CiscoWebHelperNavigationEvent {
         }
         $empty.Error = "All matching Cisco WebHelper navigation events were already seen or unparsable"
     } catch {
-        $empty.Error = [string]$_.Exception.Message
+        # Get-WinEvent throws NoMatchingEventsFound when nothing matches: report it like the empty-result case.
+        $empty.Error = if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') { "No matching Cisco WebHelper navigation events found since $Since" } else { [string]$_.Exception.Message }
     }
     return $empty
 }
