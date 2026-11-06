@@ -1,0 +1,917 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20261106130422
+Username: MS\shorto39
+RunAs User: MS\shorto39
+Configuration Name: 
+Machine: LHTU05CD1503KF5 (Microsoft Windows NT 10.0.22631.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\temp\cpr_current\Run-AllTests.ps1 -LogFile c:\temp\new.txt
+Process ID: 148820
+PSVersion: 5.1.22621.7649
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22621.7649
+BuildVersion: 10.0.22621.7649
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Pester 5.3.3  host LHTU05CD1503KF5  files 36
+
+Starting discovery in 36 files.
+Discovery found 993 tests in 10.84s.
+Running tests.
+[+] C:\temp\cpr_current\HaystackStandalone.Tests.ps1
+ 3.43s (714ms|1.97s)
+
+Effective tee (telemetry) level
+  Level now      : 5
+  Why            : manifest
+  Set by         : cpr_tee_assign   at 2026-11-05T04:00:21Z
+  Profile        : version x1, 2 tags
+
+  Revert stamp
+    none - the level stays until someone changes it
+
+  Flags waiting in C:\Users\shorto39\AppData\Local\Temp\effTee_862dad875959419fab43c47e0a43afbc
+    none
+
+  Share list (tee_assign.cfg)
+    no local copy yet - the share has not been read (or has no file)
+
+Effective tee (telemetry) level
+  Level now      : 5
+  Why            : manifest
+  Set by         : cpr_tee_assign   at 2026-11-05T04:00:21Z
+  Profile        : version x1, 2 tags
+
+  Revert stamp
+    Level 5 set by manifest; returns to level 1
+    Reverts at 2026-11-19 13:04  (13.0 days left)
+
+  Flags waiting in C:\Users\shorto39\AppData\Local\Temp\effTee_778ce3fb0a5945609f336cbbb5240938
+    none
+
+  Share list (tee_assign.cfg)
+    no local copy yet - the share has not been read (or has no file)
+
+Effective tee (telemetry) level
+  Level now      : 5
+  Why            : manifest
+  Set by         : cpr_tee_assign   at 2026-11-05T04:00:21Z
+  Profile        : version x1, 2 tags
+
+  Revert stamp
+    none - the level stays until someone changes it
+
+  Flags waiting in C:\Users\shorto39\AppData\Local\Temp\effTee_b546ec948a5442078e2054231a44ec5d
+    cpr_tee_3.flag   (2026-11-06 13:04)
+
+  Share list (tee_assign.cfg)
+    no local copy yet - the share has not been read (or has no file)
+
+Effective tee (telemetry) level
+  Active profile missing or unreadable: C:\Users\shorto39\AppData\Local\Temp\effTee_f398f84af671483daa082199b7b97ccd\WW_tee_events.psd1
+
+  Revert stamp
+    none - the level stays until someone changes it
+
+  Flags waiting in C:\Users\shorto39\AppData\Local\Temp\effTee_f398f84af671483daa082199b7b97ccd
+    none
+
+  Share list (tee_assign.cfg)
+    no local copy yet - the share has not been read (or has no file)
+
+Effective tee (telemetry) level
+  Active profile missing or unreadable: C:\Users\shorto39\AppData\Local\Temp\effTee_f398f84af671483daa082199b7b97ccd\WW_tee_events.psd1
+
+  Revert stamp
+    none - the level stays until someone changes it
+
+  Flags waiting in C:\Users\shorto39\AppData\Local\Temp\effTee_f398f84af671483daa082199b7b97ccd
+    none
+
+  Share list (tee_assign.cfg)
+    no local copy yet - the share has not been read (or has no file)
+[+] C:\temp\cpr_current\tests\CPR_RC2.AdminEffectiveTee.Tests.ps1
+ 1.08s (645ms|157ms)
+PS>TerminatingError(Join-Path): "Cannot bind argument to parameter 'Path' because it is an empty string."
+PS>TerminatingError(Join-Path): "Cannot bind argument to parameter 'Path' because it is an empty string."
+PS>TerminatingError(Remove-Item): "An object at the specified path C:\Users\shorto39\AppData\Local\Temp\5d15e1e7-8bba-4a58-a54d-e624e4bf4f7a\logs\white_walker.admin_actions.log. does not exist."
+[+] C:\temp\cpr_current\tests\CPR_RC2.AdminTailAfter.Tests.ps1
+ 5.08s (4.47s|356ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.BaseEvidence.Tests.ps1
+ 412ms (113ms|142ms)
+PS>TerminatingError(WW_set_tee_level.ps1): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: -Level must be 0..5"
+>> TerminatingError(WW_set_tee_level.ps1): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: -Level must be 0..5"
+PS>TerminatingError(Resolve-Path): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\d9fd4f0c-896f-4fde-aa46-ad3425cae66e\missing.psd1' because it does not exist."
+>> TerminatingError(Resolve-Path): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\d9fd4f0c-896f-4fde-aa46-ad3425cae66e\missing.psd1' because it does not exist."
+>> TerminatingError(Resolve-Path): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\d9fd4f0c-896f-4fde-aa46-ad3425cae66e\missing.psd1' because it does not exist."
+>> TerminatingError(Resolve-Path): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\d9fd4f0c-896f-4fde-aa46-ad3425cae66e\missing.psd1' because it does not exist."
+PS>TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+>> TerminatingError(): "no such log"
+PS>TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+PS>TerminatingError(): "not found"
+>> TerminatingError(): "not found"
+>> TerminatingError(): "not found"
+>> TerminatingError(): "not found"
+>> TerminatingError(): "not found"
+>> TerminatingError(): "not found"
+[+] C:\temp\cpr_current\tests\CPR_RC2.BuildIdentity.Tests.ps1
+ 18.86s (17.08s|1.02s)
+PS>TerminatingError(): "icmp exploded"
+>> TerminatingError(): "dns exploded"
+PS>TerminatingError(): "icmp exploded"
+>> TerminatingError(): "dns exploded"
+PS>TerminatingError(): "icmp exploded"
+>> TerminatingError(): "dns exploded"
+[+] C:\temp\cpr_current\tests\CPR_RC2.CapPortalConfigContract.Tests.ps1
+ 3.27s (2.68s|301ms)
+PS>TerminatingError(): "boom"
+PS>TerminatingError(New-Item): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Could not find a part of the path 'C:\Users\shorto39\AppData\Local\Temp\096324ed-133c-45fb-b9a5-2b42a6c1884a\queue_parent_is_a_file\haystack_syslog_queue.jsonl'."
+PS>TerminatingError(New-Item): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Could not find a part of the path 'C:\Users\shorto39\AppData\Local\Temp\096324ed-133c-45fb-b9a5-2b42a6c1884a\queue_parent_is_a_file\haystack_syslog_queue.jsonl'."
+PS>TerminatingError(New-Item): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Could not find a part of the path 'C:\Users\shorto39\AppData\Local\Temp\096324ed-133c-45fb-b9a5-2b42a6c1884a\queue_parent_is_a_file\haystack_syslog_queue.jsonl'."
+[+] C:\temp\cpr_current\tests\CPR_RC2.CapPortalControlPlane.Tests.ps1
+ 3.92s (3.19s|391ms)
+PS>TerminatingError(): "Method invocation failed because [System.Collections.Specialized.OrderedDictionary] does not contain a method named 'ContainsKey'."
+[+] C:\temp\cpr_current\tests\CPR_RC2.CapPortalDispatchRecovery.Tests.ps1
+ 26.7s (26.11s|275ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.CapPortalRecovery.Tests.ps1
+ 6.07s (5.01s|607ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.DefenderRuleNameMatch.Tests.ps1
+ 2.61s (1.98s|379ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.EarlyVpnGate.Tests.ps1
+ 1.99s (1.49s|271ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.ExitReason.Tests.ps1
+ 1.59s (1.05s|259ms)
+PS>TerminatingError(Get-Variable): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find a variable with the name 'NetProbeMode'."
+PS>TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+[+] C:\temp\cpr_current\tests\CPR_RC2.FastNetProbe.Tests.ps1
+ 2.33s (1.78s|267ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.HeaderNeedle.Tests.ps1
+ 3.39s (2.72s|338ms)
+PS>TerminatingError(): "Cannot find a literal $TeeDefaultLevel assignment in C:\Users\shorto39\AppData\Local\Temp\b5a68016-b15f-430d-974e-561c56ccb50a\cfg.ps1."
+>> TerminatingError(): "Cannot find a literal $TeeDefaultLevel assignment in C:\Users\shorto39\AppData\Local\Temp\b5a68016-b15f-430d-974e-561c56ccb50a\cfg.ps1."
+PS>TerminatingError(): "Cannot find a literal $ver assignment in C:\Users\shorto39\AppData\Local\Temp\b5a68016-b15f-430d-974e-561c56ccb50a\cfg.ps1."
+>> TerminatingError(): "Cannot find a literal $ver assignment in C:\Users\shorto39\AppData\Local\Temp\b5a68016-b15f-430d-974e-561c56ccb50a\cfg.ps1."
+PS>TerminatingError(): "Cannot read $ver from C:\Users\shorto39\AppData\Local\Temp\b5a68016-b15f-430d-974e-561c56ccb50a\nope.ps1 - file not found; the install package is incomplete."
+>> TerminatingError(): "Cannot read $ver from C:\Users\shorto39\AppData\Local\Temp\b5a68016-b15f-430d-974e-561c56ccb50a\nope.ps1 - file not found; the install package is incomplete."
+PS>TerminatingError(): "Cannot read $TeeDefaultLevel from C:\Users\shorto39\AppData\Local\Temp\b5a68016-b15f-430d-974e-561c56ccb50a\nope.ps1 - file not found; the install package is incomplete."
+>> TerminatingError(): "Cannot read $TeeDefaultLevel from C:\Users\shorto39\AppData\Local\Temp\b5a68016-b15f-430d-974e-561c56ccb50a\nope.ps1 - file not found; the install package is incomplete."
+[+] C:\temp\cpr_current\tests\CPR_RC2.InstallerConfigSource.Tests.ps1
+ 999ms (564ms|220ms)
+PS>TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+PS>TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+>> TerminatingError(): "nope"
+[+] C:\temp\cpr_current\tests\CPR_RC2.LegacyTaskMigration.Tests.ps1
+ 1.36s (941ms|193ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.LogLayout.Tests.ps1
+ 1.89s (1.58s|155ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.LogTiming.Tests.ps1
+ 544ms (240ms|141ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.Main.Tests.ps1
+ 492ms (170ms|155ms)
+PS>TerminatingError(Remove-Item): "An object at the specified path C:\Users\shorto39\AppData\Local\Temp\d3811549-7fd3-4748-a411-3b0c59a85109\logs_picker\white_walker.admin_actions.log. does not exist."
+PS>TerminatingError(Remove-Item): "An object at the specified path C:\Users\shorto39\AppData\Local\Temp\d3811549-7fd3-4748-a411-3b0c59a85109\logs_picker\white_walker.admin_actions.log. does not exist."
+PS>TerminatingError(Remove-Item): "An object at the specified path C:\Users\shorto39\AppData\Local\Temp\d3811549-7fd3-4748-a411-3b0c59a85109\logs_picker\white_walker.admin_actions.log. does not exist."
+[+] C:\temp\cpr_current\tests\CPR_RC2.NeedleBundles.Tests.ps1
+ 4.22s (3.47s|460ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.NeedleDedup.Tests.ps1
+ 1.52s (1.02s|268ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.NeedleTtl.Tests.ps1
+ 2.32s (1.75s|309ms)
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+[+] C:\temp\cpr_current\tests\CPR_RC2.ServiceFastPath.Tests.ps1
+ 2.61s (1.98s|331ms)
+[+] C:\temp\cpr_current\tests\CPR_RC2.TeeAssign.Tests.ps1
+ 2.25s (1.74s|285ms)
+PS>TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+>> TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+PS>TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+>> TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+PS>TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+>> TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+PS>TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+PS>TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+>> TerminatingError(Invoke-VpnCliBounded): "Exception calling "Start" with "1" argument(s): "The system cannot find the file specified""
+[+] C:\temp\cpr_current\tests\CPR_RC2.VpnCliStatsCache.Tests.ps1
+ 618ms (304ms|157ms)
+PS>TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+PS>TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+PS>TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+PS>TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+PS>TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+[+] C:\temp\cpr_current\tests\CPR_RC2.WebHelper301First.Tests.ps1
+ 2.96s (2.49s|261ms)
+PS>TerminatingError(): "tee engine unavailable"
+[+] C:\temp\cpr_current\tests\CPR_RC2.XfinityCaptivePortal.Tests.ps1
+ 2.67s (2.1s|308ms)
+[+] C:\temp\cpr_current\tests\HaystackStandalone.Tests.ps1
+ 315ms (42ms|144ms)
+2026-11-06 13:06:12.734 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmpACD3.tmp
+2026-11-06 13:06:12.775 [WARN] [HayStack] [wizard_preview] Line 1 : EventID 'abc' is not numeric - skipping
+2026-11-06 13:06:12.781 [INFO] [HayStack] [wizard_preview] Parsed 0 needle(s) from: tmpAD02.tmp
+2026-11-06 13:06:12.824 [WARN] [HayStack] [wizard_preview] Line 1 : Label 'Bad Label' contains invalid characters (no spaces, no \/:*?"<>|) - skipping
+2026-11-06 13:06:12.827 [INFO] [HayStack] [wizard_preview] Parsed 0 needle(s) from: tmpAD32.tmp
+2026-11-06 13:06:12.876 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmpAD62.tmp
+2026-11-06 13:06:12.918 [WARN] [HayStack] [wizard_preview] Line 1 : SESSION StateChange 'NotARealState' is not valid (must be one of: SessionLock, SessionUnlock, RemoteConnect, RemoteDisconnect, ConsoleConnect, ConsoleDisconnect) - skipping
+2026-11-06 13:06:12.923 [INFO] [HayStack] [wizard_preview] Parsed 0 needle(s) from: tmpAD92.tmp
+2026-11-06 13:06:12.974 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmpADC2.tmp
+2026-11-06 13:06:13.009 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmpADF2.tmp
+2026-11-06 13:06:13.041 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmpAE12.tmp
+2026-11-06 13:06:13.084 [WARN] [HayStack] [wizard_preview] Line 1 : HEADER FieldName 'not_a_real_field' is not a known run-header field (known: ww_version, os, model, serial, last_boot, csc_version, csc_source, vpn_profile or * for all) - skipping
+2026-11-06 13:06:13.087 [INFO] [HayStack] [wizard_preview] Parsed 0 needle(s) from: tmpAE32.tmp
+EventID must be numeric.
+Valid StateChange values: SessionLock, SessionUnlock, RemoteConnect, RemoteDisconnect, ConsoleConnect, ConsoleDisconnect
+Valid StateChange values: SessionLock, SessionUnlock, RemoteConnect, RemoteDisconnect, ConsoleConnect, ConsoleDisconnect
+StateChange is not valid.
+Matching is literal (never regex), case-insensitive and separator-tolerant:
+spaces, - _ / . and repeated whitespace are normalized away before the substring
+test. Use a distinctive, stable descriptive substring of the rule name.
+ExtendedLogging must be 0, 1, 2, all, or empty.
+
+This touches the restore flag so the next WW_main run (lock/unlock
+or log off/on) restores the VPN profile XML from the local vault.
+Flag: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\xml_restore.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or log off/on) to complete the restore.
+  2. Verify success by checking: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\white_walker.xml_vault.log
+PS>TerminatingError(Join-Path): "Cannot bind argument to parameter 'Path' because it is an empty string."
+
+This touches the restore flag so the next WW_main run (lock/unlock
+or log off/on) restores the VPN profile XML from the local vault.
+Flag: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\xml_restore.flag
+Cancelled.
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+
+This touches the flag: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\cpr_update_dev.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or wait for the next trigger) to complete the update.
+  2. Review results in: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\white_walker_install.log
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+
+This touches the flag: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\cpr_update_prod.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or wait for the next trigger) to complete the update.
+  2. Review results in: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\white_walker_install.log
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+
+This touches the flag: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\cpr_update_dev_tee_5_keep.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or wait for the next trigger) to complete the update.
+  2. Review results in: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\white_walker_install.log
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+
+This touches the flag: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\cpr_update_prod_tee_3.flag
+
+Done. Flag created.
+Next steps for the tech:
+  1. Lock and unlock your screen (or wait for the next trigger) to complete the update.
+  2. Review results in: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\white_walker_install.log
+
+Choose an update channel:
+  1. DEV
+  2. PROD
+Invalid tee level '9' - use 1-5 or Enter.
+2026-11-06 13:06:16.233 [INFO] [HayStack] [test] Parsed 2 needle(s) from: append_test.cfg
+
+Which needle type do you want to add to needles_local.cfg?
+  1. NEEDLE   - Event Log trigger
+  2. SESSION  - session state change trigger
+  3. DEFENDER - inline MDM firewall rule check
+  4. HEADER   - run-header field telemetry
+Invalid selection.
+
+Which needle type do you want to add to needles_local.cfg?
+  1. NEEDLE   - Event Log trigger
+  2. SESSION  - session state change trigger
+  3. DEFENDER - inline MDM firewall rule check
+  4. HEADER   - run-header field telemetry
+EventID must be numeric.
+Cancelled - no line written.
+
+Which needle type do you want to add to needles_local.cfg?
+  1. NEEDLE   - Event Log trigger
+  2. SESSION  - session state change trigger
+  3. DEFENDER - inline MDM firewall rule check
+  4. HEADER   - run-header field telemetry
+2026-11-06 13:06:16.519 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmpBBA1.tmp
+
+Candidate line: NEEDLE|Application|1000||Wizard_Needle|expires=2026-11-20T18:06:16Z
+This will be appended to: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\wizard_needles_local.cfg
+Cancelled.
+
+Which needle type do you want to add to needles_local.cfg?
+  1. NEEDLE   - Event Log trigger
+  2. SESSION  - session state change trigger
+  3. DEFENDER - inline MDM firewall rule check
+  4. HEADER   - run-header field telemetry
+2026-11-06 13:06:16.631 [INFO] [HayStack] [wizard_preview] Parsed 1 needle(s) from: tmpBC0F.tmp
+
+Candidate line: NEEDLE|Application|2000||Wizard_Needle|expires=2026-11-20T18:06:16Z
+This will be appended to: C:\Users\shorto39\AppData\Local\Temp\c048bdbd-5b81-4f97-a4de-4631c7a64776\wizard_needles_local.cfg
+
+Needle written (expires in 14 day(s)).
+  - needles_local.cfg entries always win on label collision with the share copy.
+Skipped. HayStack picks it up at its next reroll, or run: haystack.ps1 -reroll -Force
+PS>TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+>> TerminatingError(): "simulated disk failure"
+[+] C:\temp\cpr_current\tests\Invoke-WhiteWalkerAction.Tests.ps1
+ 4.97s (3.98s|583ms)
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Pass
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-MOCK-FLOW
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_restore_687215614\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_restore_687215614\queue.jsonl
+  Syslog Target: 127.0.0.1:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] Saved original content of C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_restore_687215614\state.json for post-test restoration.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:1518/ (login URL: http://127.0.0.1:1518/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+[OK] Real redirect detected: URL redirected to http://127.0.0.1:1518/portal/login?from=cpr_mock
+[OK] Portal type classified: NON_ISE
+[OK] Redirect telemetry parsed: url='http://127.0.0.1:1518/portal/login?from=cpr_mock' port='1518' protocol='http' fqdn='127.0.0.1'
+[STEP 3/7] Browser substitution (Stub mode) and completion signaling...
+[OK] Stub browser mode: no browser process launched, bypassing WebView2 WDAC restrictions completely.
+[OK] Completion flag written to C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_restore_687215614\test.flag (status=SUCCESS_NATIVE)
+Security Warning: Script Execution Risk
+Invoke-WebRequest parses the content of the web page. Script code in the web page might be run when the page is parsed.
+      RECOMMENDED ACTION:
+      Use the -UseBasicParsing switch to avoid script code execution.
+
+      Do you want to continue?
+&Yes  Yes to &All  &No  No to A&ll  &Suspend
+A
+[OK] Clearance poll confirmed: portal cleared (200 OK, no redirect).
+[STEP 4/7] Forcing off-network state & asserting offline queueing...
+[OK] Test-SyslogReachable correctly returned false (offline gating confirmed).
+[STEP] Writing 'cap_portal_redirect' tee event...
+[OK] 'cap_portal_redirect' successfully queued (Queued=True, Reason=queued)
+[STEP] Writing 'cap_portal_remediation_passed' tee event...
+[OK] 'cap_portal_remediation_passed' successfully queued (Queued=True, Reason=queued)
+[STEP 5/7] Inspecting queued events and validating required fields...
+[OK] Queue grew by 2 line(s) during this test (total: 2)
+--- Raw Queue Event: cap_portal_redirect ---
+    {"extraInfo":"","payload":"action=\"cap_portal_redirect\" machine=\"CPR_TESTER\" user=\"MS\\shorto39\" EvtTime=\"2026-11-06T13:06:22.2256689-05:00\" portal_type=\"NON_ISE\" url=\"http://127.0.0.1:1518/portal/login?from=cpr_mock\" gw=\"10.254.254.1\" ip=\"10.254.254.10\" port=\"1518\" ssid=\"CPR-MOCK-FLOW\" status=\"detected\" vpn_state=\"Disconnected\" reason=\"redirect_detected\" dns=\"10.254.254.1,10.254.254.2\"","ts":"2026-11-06T13:06:22.2812122-05:00"}
+    Fields present: 14/14
+[OK] All 14 required fields present.
+[OK] EvtTime stamped locally and valid: 2026-11-06T13:06:22.2256689-05:00
+[OK] Test-HaystackMsgSchema validated event as conformant.
+--- Raw Queue Event: cap_portal_remediation_passed ---
+    {"extraInfo":"","payload":"action=\"cap_portal_remediation_passed\" machine=\"CPR_TESTER\" user=\"MS\\shorto39\" EvtTime=\"2026-11-06T13:06:22.2977579-05:00\" portal_type=\"NON_ISE\" url=\"http://127.0.0.1:1518/portal/login?from=cpr_mock\" gw=\"10.254.254.1\" ip=\"10.254.254.10\" port=\"1518\" ssid=\"CPR-MOCK-FLOW\" status=\"cleared\" vpn_state=\"Disconnected\" reason=\"portal_cleared\" dns=\"10.254.254.1,10.254.254.2\"","ts":"2026-11-06T13:06:22.3088187-05:00"}
+    Fields present: 14/14
+[OK] All 14 required fields present.
+[OK] EvtTime stamped locally and valid: 2026-11-06T13:06:22.2977579-05:00
+[OK] Test-HaystackMsgSchema validated event as conformant.
+[STEP 6/7] Restoring reachability state & triggering queue drain...
+[OK] Test-SyslogReachable returned true (reconnected state confirmed).
+[STEP] Triggering Drain-SyslogQueue (Server=127.0.0.1, Port=514)...
+[OK] Queue drain result: 2026-11-06 13:06:22.717 [INFO] [HayStack_Action] SyslogQueue: drained - sent=2 expired=0 failed=0 remaining=0
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Restored original content of C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_restore_687215614\state.json
+[OK] Loopback HTTP listener terminated and disposed.
+[OK] Cleaned up temporary test flag file: C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_restore_687215614\test.flag
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[PASS] Mock captive portal flow succeeded.
+       - Real HTTP redirect detected and classified via live loopback listener.
+       - WDAC-immune browser substitution executed (Stub mode).
+       - Offline reachability gating verified: events queued to haystack_syslog_queue.jsonl.
+       - All 14 required normalized fields verified with valid local EvtTime.
+       - Reconnection state verified and Drain-SyslogQueue path exercised.
+       - state.json restored to its original state.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-MOCK-FLOW" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-MOCK-FLOW"
+
+[OK] Time-boxed run query (2026-11-06T13:06:17 to 2026-11-06T13:06:22):
+index=cba_cpr_logging ssid="CPR-MOCK-FLOW" earliest="2026-11-06T13:06:17" latest="2026-11-06T13:06:22" | sort 0 - _time
+================================================================================
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Pass
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-MOCK-FLOW
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_clean_397769093\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_clean_397769093\queue.jsonl
+  Syslog Target: 127.0.0.1:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_clean_397769093\state.json does not exist; will be cleanly removed in post-test cleanup.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:1521/ (login URL: http://127.0.0.1:1521/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+[OK] Real redirect detected: URL redirected to http://127.0.0.1:1521/portal/login?from=cpr_mock
+[OK] Portal type classified: NON_ISE
+[OK] Redirect telemetry parsed: url='http://127.0.0.1:1521/portal/login?from=cpr_mock' port='1521' protocol='http' fqdn='127.0.0.1'
+[STEP 3/7] Browser substitution (Stub mode) and completion signaling...
+[OK] Stub browser mode: no browser process launched, bypassing WebView2 WDAC restrictions completely.
+[OK] Completion flag written to C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_clean_397769093\test.flag (status=SUCCESS_NATIVE)
+[OK] Clearance poll confirmed: portal cleared (200 OK, no redirect).
+[STEP 4/7] Forcing off-network state & asserting offline queueing...
+[OK] Test-SyslogReachable correctly returned false (offline gating confirmed).
+[STEP] Writing 'cap_portal_redirect' tee event...
+[OK] 'cap_portal_redirect' successfully queued (Queued=True, Reason=queued)
+[STEP] Writing 'cap_portal_remediation_passed' tee event...
+[OK] 'cap_portal_remediation_passed' successfully queued (Queued=True, Reason=queued)
+[STEP 5/7] Inspecting queued events and validating required fields...
+[OK] Queue grew by 2 line(s) during this test (total: 2)
+--- Raw Queue Event: cap_portal_redirect ---
+    {"extraInfo":"","payload":"action=\"cap_portal_redirect\" machine=\"CPR_TESTER\" user=\"MS\\shorto39\" EvtTime=\"2026-11-06T13:06:23.7133696-05:00\" portal_type=\"NON_ISE\" url=\"http://127.0.0.1:1521/portal/login?from=cpr_mock\" gw=\"10.254.254.1\" ip=\"10.254.254.10\" port=\"1521\" ssid=\"CPR-MOCK-FLOW\" status=\"detected\" vpn_state=\"Disconnected\" reason=\"redirect_detected\" dns=\"10.254.254.1,10.254.254.2\"","ts":"2026-11-06T13:06:23.7384414-05:00"}
+    Fields present: 14/14
+[OK] All 14 required fields present.
+[OK] EvtTime stamped locally and valid: 2026-11-06T13:06:23.7133696-05:00
+[OK] Test-HaystackMsgSchema validated event as conformant.
+--- Raw Queue Event: cap_portal_remediation_passed ---
+    {"extraInfo":"","payload":"action=\"cap_portal_remediation_passed\" machine=\"CPR_TESTER\" user=\"MS\\shorto39\" EvtTime=\"2026-11-06T13:06:23.7502610-05:00\" portal_type=\"NON_ISE\" url=\"http://127.0.0.1:1521/portal/login?from=cpr_mock\" gw=\"10.254.254.1\" ip=\"10.254.254.10\" port=\"1521\" ssid=\"CPR-MOCK-FLOW\" status=\"cleared\" vpn_state=\"Disconnected\" reason=\"portal_cleared\" dns=\"10.254.254.1,10.254.254.2\"","ts":"2026-11-06T13:06:23.7593385-05:00"}
+    Fields present: 14/14
+[OK] All 14 required fields present.
+[OK] EvtTime stamped locally and valid: 2026-11-06T13:06:23.7502610-05:00
+[OK] Test-HaystackMsgSchema validated event as conformant.
+[STEP 6/7] Restoring reachability state & triggering queue drain...
+[OK] Test-SyslogReachable returned true (reconnected state confirmed).
+[STEP] Triggering Drain-SyslogQueue (Server=127.0.0.1, Port=514)...
+[OK] Queue drain result: 2026-11-06 13:06:24.018 [INFO] [HayStack_Action] SyslogQueue: drained - sent=2 expired=0 failed=0 remaining=0
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Removed temporary test state file: C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_clean_397769093\state.json
+[OK] Loopback HTTP listener terminated and disposed.
+[OK] Cleaned up temporary test flag file: C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_clean_397769093\test.flag
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[PASS] Mock captive portal flow succeeded.
+       - Real HTTP redirect detected and classified via live loopback listener.
+       - WDAC-immune browser substitution executed (Stub mode).
+       - Offline reachability gating verified: events queued to haystack_syslog_queue.jsonl.
+       - All 14 required normalized fields verified with valid local EvtTime.
+       - Reconnection state verified and Drain-SyslogQueue path exercised.
+       - state.json restored to its original state.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-MOCK-FLOW" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-MOCK-FLOW"
+
+[OK] Time-boxed run query (2026-11-06T13:06:22 to 2026-11-06T13:06:24):
+index=cba_cpr_logging ssid="CPR-MOCK-FLOW" earliest="2026-11-06T13:06:22" latest="2026-11-06T13:06:24" | sort 0 - _time
+================================================================================
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Pass
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-MOCK-FLOW
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_error_1964547443\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_error_1964547443\queue.jsonl
+  Syslog Target: cpr-syslog.uhc.com:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] Saved original content of C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_error_1964547443\state.json for post-test restoration.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:999999/ (login URL: http://127.0.0.1:999999/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+PS>TerminatingError(Invoke-WebRequest): "Cannot bind parameter 'Uri'. Cannot convert value "http://127.0.0.1:999999/probe" to type "System.Uri". Error: "Invalid URI: Invalid port specified.""
+[FAIL] Test-Redirect did not detect redirect from http://127.0.0.1:999999/probe (IsRedirect is false)
+[ERROR] Mock flow execution error: Redirect detection failed against mock listener.
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Restored original content of C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\state_error_1964547443\state.json
+PS>TerminatingError(Invoke-WebRequest): "Cannot bind parameter 'Uri'. Cannot convert value "http://127.0.0.1:999999/shutdown" to type "System.Uri". Error: "Invalid URI: Invalid port specified.""
+[OK] Loopback HTTP listener terminated and disposed.
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[FAIL] Mock captive portal flow did not complete all pass criteria.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-MOCK-FLOW" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-MOCK-FLOW"
+
+[OK] Time-boxed run query (2026-11-06T13:06:24 to 2026-11-06T13:06:24):
+index=cba_cpr_logging ssid="CPR-MOCK-FLOW" earliest="2026-11-06T13:06:24" latest="2026-11-06T13:06:24" | sort 0 - _time
+================================================================================
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Pass
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-UNIT-TEST-PASS
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_pass_1358677030\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_pass_1358677030\queue.jsonl
+  Syslog Target: 127.0.0.1:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] Saved original content of C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_pass_1358677030\state.json for post-test restoration.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:1523/ (login URL: http://127.0.0.1:1523/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+[OK] Real redirect detected: URL redirected to http://127.0.0.1:1523/portal/login?from=cpr_mock
+[OK] Portal type classified: NON_ISE
+[OK] Redirect telemetry parsed: url='http://127.0.0.1:1523/portal/login?from=cpr_mock' port='1523' protocol='http' fqdn='127.0.0.1'
+[STEP 3/7] Browser substitution (Stub mode) and completion signaling...
+[OK] Stub browser mode: no browser process launched, bypassing WebView2 WDAC restrictions completely.
+[OK] Completion flag written to C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_pass_1358677030\test.flag (status=SUCCESS_NATIVE)
+[OK] Clearance poll confirmed: portal cleared (200 OK, no redirect).
+[STEP 4/7] Forcing off-network state & asserting offline queueing...
+[OK] Test-SyslogReachable correctly returned false (offline gating confirmed).
+[STEP] Writing 'cap_portal_redirect' tee event...
+[OK] 'cap_portal_redirect' successfully queued (Queued=True, Reason=queued)
+[STEP] Writing 'cap_portal_remediation_passed' tee event...
+[OK] 'cap_portal_remediation_passed' successfully queued (Queued=True, Reason=queued)
+[STEP 5/7] Inspecting queued events and validating required fields...
+[OK] Queue grew by 2 line(s) during this test (total: 2)
+--- Raw Queue Event: cap_portal_redirect ---
+    {"extraInfo":"","payload":"action=\"cap_portal_redirect\" machine=\"CPR_TESTER\" user=\"MS\\shorto39\" EvtTime=\"2026-11-06T13:06:25.9323605-05:00\" portal_type=\"NON_ISE\" url=\"http://127.0.0.1:1523/portal/login?from=cpr_mock\" gw=\"10.254.254.1\" ip=\"10.254.254.10\" port=\"1523\" ssid=\"CPR-UNIT-TEST-PASS\" status=\"detected\" vpn_state=\"Disconnected\" reason=\"redirect_detected\" dns=\"10.254.254.1,10.254.254.2\"","ts":"2026-11-06T13:06:25.9506598-05:00"}
+    Fields present: 14/14
+[OK] All 14 required fields present.
+[OK] EvtTime stamped locally and valid: 2026-11-06T13:06:25.9323605-05:00
+[OK] Test-HaystackMsgSchema validated event as conformant.
+--- Raw Queue Event: cap_portal_remediation_passed ---
+    {"extraInfo":"","payload":"action=\"cap_portal_remediation_passed\" machine=\"CPR_TESTER\" user=\"MS\\shorto39\" EvtTime=\"2026-11-06T13:06:25.9627002-05:00\" portal_type=\"NON_ISE\" url=\"http://127.0.0.1:1523/portal/login?from=cpr_mock\" gw=\"10.254.254.1\" ip=\"10.254.254.10\" port=\"1523\" ssid=\"CPR-UNIT-TEST-PASS\" status=\"cleared\" vpn_state=\"Disconnected\" reason=\"portal_cleared\" dns=\"10.254.254.1,10.254.254.2\"","ts":"2026-11-06T13:06:25.9717111-05:00"}
+    Fields present: 14/14
+[OK] All 14 required fields present.
+[OK] EvtTime stamped locally and valid: 2026-11-06T13:06:25.9627002-05:00
+[OK] Test-HaystackMsgSchema validated event as conformant.
+[STEP 6/7] Restoring reachability state & triggering queue drain...
+[OK] Test-SyslogReachable returned true (reconnected state confirmed).
+[STEP] Triggering Drain-SyslogQueue (Server=127.0.0.1, Port=514)...
+[OK] Queue drain result: 2026-11-06 13:06:26.233 [INFO] [HayStack_Action] SyslogQueue: drained - sent=2 expired=0 failed=0 remaining=0
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Restored original content of C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_pass_1358677030\state.json
+[OK] Loopback HTTP listener terminated and disposed.
+[OK] Cleaned up temporary test flag file: C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_pass_1358677030\test.flag
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[PASS] Mock captive portal flow succeeded.
+       - Real HTTP redirect detected and classified via live loopback listener.
+       - WDAC-immune browser substitution executed (Stub mode).
+       - Offline reachability gating verified: events queued to haystack_syslog_queue.jsonl.
+       - All 14 required normalized fields verified with valid local EvtTime.
+       - Reconnection state verified and Drain-SyslogQueue path exercised.
+       - state.json restored to its original state.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-UNIT-TEST-PASS" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-UNIT-TEST-PASS"
+
+[OK] Time-boxed run query (2026-11-06T13:06:25 to 2026-11-06T13:06:26):
+index=cba_cpr_logging ssid="CPR-UNIT-TEST-PASS" earliest="2026-11-06T13:06:25" latest="2026-11-06T13:06:26" | sort 0 - _time
+================================================================================
+================================================================================
+ WhiteWalker Captive Portal Flow Mock (Real Detection + Queue/Drain)
+================================================================================
+  Outcome Mode : Fail
+  Browser Mode : Stub (WDAC-immune substitution)
+  SSID Marker  : CPR-UNIT-TEST-FAIL
+  State JSON   : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_fail_1194422797\state.json
+  Syslog Queue : C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_fail_1194422797\queue.jsonl
+  Syslog Target: 127.0.0.1:514
+--------------------------------------------------------------------------------
+[STEP 0/7] Preflight checks & AST extraction...
+[OK] Real detection, queueing, and drain functions extracted via AST successfully.
+[OK] Saved original content of C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_fail_1194422797\state.json for post-test restoration.
+[STEP 1/7] Initializing loopback HTTP listener for real redirect responses...
+[OK] HttpListener active on http://127.0.0.1:1525/ (login URL: http://127.0.0.1:1525/portal/login?from=cpr_mock)
+[STEP 2/7] Executing real Test-Redirect against loopback listener...
+[OK] Real redirect detected: URL redirected to http://127.0.0.1:1525/portal/login?from=cpr_mock
+[OK] Portal type classified: NON_ISE
+[OK] Redirect telemetry parsed: url='http://127.0.0.1:1525/portal/login?from=cpr_mock' port='1525' protocol='http' fqdn='127.0.0.1'
+[STEP 3/7] Browser substitution (Stub mode) and completion signaling...
+[OK] Stub browser mode: no browser process launched, bypassing WebView2 WDAC restrictions completely.
+[OK] Completion flag written to C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_fail_1194422797\test.flag (status=TIMEOUT_NATIVE)
+[OK] Failure poll confirmed: portal remained captive (302 redirect persists).
+[STEP 4/7] Forcing off-network state & asserting offline queueing...
+[OK] Test-SyslogReachable correctly returned false (offline gating confirmed).
+[STEP] Writing 'cap_portal_redirect' tee event...
+[OK] 'cap_portal_redirect' successfully queued (Queued=True, Reason=queued)
+[STEP] Writing 'cap_portal_remediation_failed' tee event...
+[OK] 'cap_portal_remediation_failed' successfully queued (Queued=True, Reason=queued)
+[STEP 5/7] Inspecting queued events and validating required fields...
+[OK] Queue grew by 2 line(s) during this test (total: 2)
+--- Raw Queue Event: cap_portal_redirect ---
+    {"extraInfo":"","payload":"action=\"cap_portal_redirect\" machine=\"CPR_TESTER\" user=\"MS\\shorto39\" EvtTime=\"2026-11-06T13:06:27.1682072-05:00\" portal_type=\"NON_ISE\" url=\"http://127.0.0.1:1525/portal/login?from=cpr_mock\" gw=\"10.254.254.1\" ip=\"10.254.254.10\" port=\"1525\" ssid=\"CPR-UNIT-TEST-FAIL\" status=\"detected\" vpn_state=\"Disconnected\" reason=\"redirect_detected\" dns=\"10.254.254.1,10.254.254.2\"","ts":"2026-11-06T13:06:27.1869725-05:00"}
+    Fields present: 14/14
+[OK] All 14 required fields present.
+[OK] EvtTime stamped locally and valid: 2026-11-06T13:06:27.1682072-05:00
+[OK] Test-HaystackMsgSchema validated event as conformant.
+--- Raw Queue Event: cap_portal_remediation_failed ---
+    {"extraInfo":"","payload":"action=\"cap_portal_remediation_failed\" machine=\"CPR_TESTER\" user=\"MS\\shorto39\" EvtTime=\"2026-11-06T13:06:27.2003478-05:00\" portal_type=\"NON_ISE\" url=\"http://127.0.0.1:1525/portal/login?from=cpr_mock\" gw=\"10.254.254.1\" ip=\"10.254.254.10\" port=\"1525\" ssid=\"CPR-UNIT-TEST-FAIL\" status=\"failed\" vpn_state=\"Disconnected\" reason=\"runner_timeout_or_no_response\" dns=\"10.254.254.1,10.254.254.2\"","ts":"2026-11-06T13:06:27.2163525-05:00"}
+    Fields present: 14/14
+[OK] All 14 required fields present.
+[OK] EvtTime stamped locally and valid: 2026-11-06T13:06:27.2003478-05:00
+[OK] Test-HaystackMsgSchema validated event as conformant.
+[STEP 6/7] Restoring reachability state & triggering queue drain...
+[OK] Test-SyslogReachable returned true (reconnected state confirmed).
+[STEP] Triggering Drain-SyslogQueue (Server=127.0.0.1, Port=514)...
+[OK] Queue drain result: 2026-11-06 13:06:27.485 [INFO] [HayStack_Action] SyslogQueue: drained - sent=2 expired=0 failed=0 remaining=0
+[STEP 7/7] Unconditional cleanup & state restoration...
+[OK] Restored original content of C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_fail_1194422797\state.json
+[OK] Loopback HTTP listener terminated and disposed.
+[OK] Cleaned up temporary test flag file: C:\Users\shorto39\AppData\Local\Temp\8a7bcca3-d103-4062-ba22-2e76c6dffe36\flow_fail_1194422797\test.flag
+================================================================================
+ Mock Flow Verdict & Operator Telemetry Guidance
+================================================================================
+[PASS] Mock captive portal flow succeeded.
+       - Real HTTP redirect detected and classified via live loopback listener.
+       - WDAC-immune browser substitution executed (Stub mode).
+       - Offline reachability gating verified: events queued to haystack_syslog_queue.jsonl.
+       - All 14 required normalized fields verified with valid local EvtTime.
+       - Reconnection state verified and Drain-SyslogQueue path exercised.
+       - state.json restored to its original state.
+
+[STEP] Operator Validation Splunk Queries:
+[OK] Query to inspect normalized telemetry for this specific run:
+index=cba_cpr_logging action IN ("cap_portal_redirect","cap_portal_remediation_passed","cap_portal_remediation_failed") ssid="CPR-UNIT-TEST-FAIL" | table EvtTime,action,machine,user,ssid,url,port,ip,gw,dns,vpn_state,portal_type,status,reason | sort 0 - EvtTime
+
+[OK] Query to EXCLUDE this mock traffic from production / SLO calculations:
+index=cba_cpr_logging NOT ssid="CPR-UNIT-TEST-FAIL"
+
+[OK] Time-boxed run query (2026-11-06T13:06:26 to 2026-11-06T13:06:27):
+index=cba_cpr_logging ssid="CPR-UNIT-TEST-FAIL" earliest="2026-11-06T13:06:26" latest="2026-11-06T13:06:27" | sort 0 - _time
+================================================================================
+[+] C:\temp\cpr_current\tests\TEST_mock_cap_portal_flow.Tests.ps1
+ 10.84s (10.37s|250ms)
+PS>TerminatingError(): "is skipped, because logs/README.md is not shipped in packaged copies (source tree only)"
+>> TerminatingError(): "is skipped, because logs/README.md is not shipped in packaged copies (source tree only)"
+PS>TerminatingError(Watch-WhiteWalkerLog.ps1): "Cannot validate argument on parameter 'Stream'. The argument "NotAStream" does not belong to the set "Main,Installer,CapPortal,CapPortalBase,Haystack,SyslogQueue,FlareGunSystem,FlareGunUser,XmlVault,VpnHosts,Notify,Diagnostics,BrowserTest,AdminActions" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again."
+>> TerminatingError(Watch-WhiteWalkerLog.ps1): "Cannot validate argument on parameter 'Stream'. The argument "NotAStream" does not belong to the set "Main,Installer,CapPortal,CapPortalBase,Haystack,SyslogQueue,FlareGunSystem,FlareGunUser,XmlVault,VpnHosts,Notify,Diagnostics,BrowserTest,AdminActions" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again."
+PS>TerminatingError(Get-Item): "The running command stopped because the preference variable "ErrorActionPreference" or common parameter is set to Stop: Cannot find path 'C:\Users\shorto39\AppData\Local\Temp\d37ab366-34f8-4fd3-99fb-20d3fe0ee415\white_walker.main.log' because it does not exist."
+[Main] line one
+[Main] line two
+
+-- live tail: press Q or Esc to return to the menu --
+Stopped tailing Main.
+[+] C:\temp\cpr_current\tests\Watch-WhiteWalkerLog.Tests.ps1
+ 2.14s (1.62s|316ms)
+PS>TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+>> TerminatingError(): "Network error"
+[+] C:\temp\cpr_current\WW_cap_portal_runner.Tests.ps1
+ 4.73s (2.7s|1.07s)
+PS>TerminatingError(Add-Content): "Cannot bind argument to parameter 'Path' because it is null."
+PS>TerminatingError(Add-Content): "Cannot bind argument to parameter 'Path' because it is null."
+PS>TerminatingError(): "simulated tee failure"
+>> TerminatingError(): "simulated tee failure"
+>> TerminatingError(): "simulated tee failure"
+>> TerminatingError(): "simulated tee failure"
+>> TerminatingError(): "simulated tee failure"
+>> TerminatingError(): "simulated tee failure"
+PS>TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+>> TerminatingError(): "event log unavailable"
+PS>TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+>> TerminatingError(): "No events were found that match the specified selection criteria."
+PS>TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+>> TerminatingError(): "Access is denied"
+[+] C:\temp\cpr_current\WW_cap_portal_runner_base.Tests.ps1
+ 3.11s (2.4s|400ms)
+PS>TerminatingError(): "no explorer process"
+>> TerminatingError(): "no explorer process"
+>> TerminatingError(): "no explorer process"
+>> TerminatingError(): "no explorer process"
+>> TerminatingError(): "no explorer process"
+>> TerminatingError(): "no explorer process"
+PS>TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(): "The pipeline has been stopped."
+>> TerminatingError(PesterMock_script_Invoke-CimMethod_855227b5-974c-4aac-9cbc-b594c5b6b006): "Cannot process argument transformation on parameter 'InputObject'. Cannot convert the "@{UserName=}" value of type "Selected.System.Management.Automation.PSCustomObject" to type "Microsoft.Management.Infrastructure.CimInstance"."
+PS>TerminatingError(): "identity unavailable"
+>> TerminatingError(): "identity unavailable"
+>> TerminatingError(): "identity unavailable"
+>> TerminatingError(): "identity unavailable"
+>> TerminatingError(): "identity unavailable"
+>> TerminatingError(): "identity unavailable"
+PS>TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+PS>TerminatingError(): "wmi unavailable"
+>> TerminatingError(): "wmi unavailable"
+>> TerminatingError(): "wmi unavailable"
+>> TerminatingError(): "wmi unavailable"
+>> TerminatingError(): "wmi unavailable"
+>> TerminatingError(): "wmi unavailable"
+PS>TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+>> TerminatingError(): "cim unavailable"
+PS>TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+PS>TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+>> TerminatingError(): "boom"
+[+] C:\temp\cpr_current\WW_haystack_schema.Tests.ps1
+ 1.51s (1.03s|289ms)
+PS>TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+PS>TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+PS>TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+>> TerminatingError(): "access denied"
+[+] C:\temp\cpr_current\WW_tee.Tests.ps1
+ 2.1s (1.59s|302ms)
+PS>TerminatingError(ConvertFrom-Json): "Invalid JSON primitive: 2026-11-05T07."
+PS>TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+PS>TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+PS>TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+>> TerminatingError(): "simulated deletion failure"
+PS>TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+>> TerminatingError(): "simulated vault enumeration failure"
+PS>TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+PS>TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+>> TerminatingError(): "simulated tee engine failure"
+[+] C:\temp\cpr_current\WW_xml_vault.Tests.ps1
+ 10.77s (10.03s|481ms)
+Tests completed in 145.96s
+Tests Passed: 992,
+Failed: 0,
+Skipped: 1
+
+NotRun: 0
+
+TOTAL  passed=992  failed=0  skipped=1  not-run=0
+**********************
+Windows PowerShell transcript end
+End time: 20261106130651
+**********************
