@@ -148,6 +148,17 @@ Describe 'Get-CprCiscoWebHelper301SweepEvidence' {
         $r2.ReadFailed | Should -BeTrue
         $r2.Error | Should -Match 'RPC'
     }
+
+    It 'treats a box with no Cisco log at all (NoMatchingLogsFound) as nothing to report, not a read failure' {
+        Mock Get-WinEvent {
+            $ex = New-Object System.Exception 'There is not an event log on the localhost computer that matches "Cisco Secure Client".'
+            $er = New-Object System.Management.Automation.ErrorRecord $ex, 'NoMatchingLogsFound,Microsoft.PowerShell.Commands.GetWinEventCommand', ([System.Management.Automation.ErrorCategory]::ObjectNotFound), $null
+            throw $er
+        }
+        $r = Get-CprCiscoWebHelper301SweepEvidence -Since $script:now.AddSeconds(-60) -Now $script:now
+        $r.ReadFailed | Should -BeFalse
+        $r.Scanned | Should -Be 0
+    }
 }
 
 Describe 'webhelper 301 watermark file' {
@@ -286,15 +297,17 @@ Describe 'Invoke-CprWebHelper301Sweep' {
 }
 
 Describe 'sweep wiring' {
-    It 'runs in the finally block, after the exit flare and before the maintenance stage, and skips VPN-connected / online fast-path runs' {
+    It 'runs in the finally block, after the exit flare and before the maintenance stage, on EVERY exit including VPN-connected and online fast-path ones' {
         $i = $script:entrySource.IndexOf('Send-CprExitFlare $script:exitReason')
         $j = $script:entrySource.IndexOf('Invoke-CprWebHelper301Sweep -ExitReason')
         $k = $script:entrySource.IndexOf('# Maintenance stage: last')
         $i | Should -BeGreaterThan 0
         $j | Should -BeGreaterThan $i
         $k | Should -BeGreaterThan $j
-        $script:entrySource | Should -Match "-like 'vpn_connected:\*'"
-        $script:entrySource | Should -Match '\$onlineFastPathSelected'
+        $call = $script:entrySource.Substring($j, 120)
+        $call | Should -Not -Match '-Skip'
+        $script:entrySource.Substring($i, $j - $i) | Should -Not -Match "vpn_connected:\*"
+        $script:entrySource.Substring($i, $j - $i) | Should -Not -Match 'onlineFastPathSelected\)\s*-or'
     }
     It 'defines each sweep setting as a literal in the configuration' {
         foreach ($n in 'CapPortalWebHelper301SweepEnabled', 'CapPortalWebHelper301SweepWatermarkFile', 'CapPortalWebHelper301SweepFirstLookbackSec',

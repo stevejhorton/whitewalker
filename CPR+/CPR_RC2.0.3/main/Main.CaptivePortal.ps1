@@ -508,7 +508,8 @@ function Get-CprCiscoWebHelper301SweepEvidence {
             try {
                 $events = @(Get-WinEvent -FilterHashtable $filter -Oldest -MaxEvents $limit -ErrorAction Stop)
             } catch {
-                if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') { $events = @() } else { throw }
+                # NoMatchingEventsFound = nothing new; NoMatchingLogsFound = no Cisco log on this box. Both are "nothing to report".
+                if ($_.FullyQualifiedErrorId -like 'NoMatching*') { $events = @() } else { throw }
             }
             if ($null -eq $Watermark -or $events.Count -lt $limit) { break }
             $fresh = @($events | Where-Object {
@@ -573,7 +574,8 @@ function Invoke-CprWebHelper301Sweep {
     End-of-run sweep (called from the run's finally block, so every exit path gets it): writes one
     cap_portal_webhelper_navigation row per NEW navigation attempt since the last sweep, then moves the
     watermark. Rows go to the normal local queue; the drain sends them whenever the box is connected.
-    Skipped on runs that cannot involve a portal (VPN connected / online fast path). Never throws.
+    Runs on every exit path, VPN-connected and online-fast-path exits included (a portal Cisco handled
+    natively ends there). -Skip exists for callers and tests only. Never throws.
     #>
     param([string]$ExitReason = '', [bool]$Skip = $false)
     if (-not $CapPortalWebHelper301SweepEnabled) { return }

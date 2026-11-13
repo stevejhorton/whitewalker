@@ -179,8 +179,8 @@ RecordId/time and a truthful terminal reason.
 End-of-run sweep (RC2.0.3): the lookup above is skipped by every early exit (VPN early
 gate, SSID jump, network change) and when no WebHelper process is running, so a portal
 attempt could be in the Event Log and never reach Splunk.  `Invoke-CprWebHelper301Sweep`
-runs in the run's `finally` block (every exit path), before the maintenance stage, and
-skips `vpn_connected` / online-fast-path runs.  It reads every NEW navigation 301 since the
+runs in the run's `finally` block (every exit path, VPN-connected and online-fast-path exits
+included, because a portal Cisco handled natively ends there), before the maintenance stage.  It reads every NEW navigation 301 since the
 last sweep (oldest first, at most `$CapPortalWebHelper301SweepMaxScan` records), writes one
 `cap_portal_webhelper_navigation` row per distinct attempt (same traceId, or same host+path;
 newest event wins; at most `$CapPortalWebHelper301SweepMaxRows`, newest kept), then saves the
