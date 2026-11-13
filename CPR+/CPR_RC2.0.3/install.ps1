@@ -156,6 +156,11 @@ $CprTaskFolder   = Get-CprConfigLiteral -Name 'CprTaskFolder'    # Task Schedule
 $teeRaw = Get-CprConfigLiteral -Name 'TeeDefaultLevel' -Default '1'   # default only if value absent/non-numeric
 $TeeDefaultLevel = if ($teeRaw -match '^\d+$') { [int]$teeRaw } else { 1 }
 if ($teeRaw -notmatch '^\d+$') { Write-Warning "TeeDefaultLevel '$teeRaw' is not numeric - using 1." }
+# Tee state the installer clears on every install (same single source: the configuration).
+$TeeFlagDir          = Get-CprConfigLiteral -Name 'TeeFlagDir'          -Default 'C:\Windows\Temp'
+$TeeRevertStateFile  = Get-CprConfigLiteral -Name 'TeeRevertStateFile'  -Default 'C:\ProgramData\WhiteWalker\tee_level_revert.json'
+$TeeAssignSyncFlag   = Get-CprConfigLiteral -Name 'TeeAssignSyncFlag'   -Default 'C:\ProgramData\WhiteWalker\tee_assign_sync.flag'
+$TeeAssignTryFlag    = Get-CprConfigLiteral -Name 'TeeAssignTryFlag'    -Default 'C:\ProgramData\WhiteWalker\tee_assign_try.flag'
 
 # Deployment paths (variablized for future relocation)
 $MainScriptDeployDir = "C:\ProgramData\WhiteWalker"      # TODO: Move to protected dir when OS team identifies location
@@ -275,10 +280,12 @@ $ConfigFiles = @(
 
 # WW_tee_events.psd1 is the ACTIVE tee profile. It is GENERATED on every install/upgrade by
 # WW_set_tee_level.ps1 from WW_tee_master.psd1 (see Update-TeeProfile below):
-#   - active profile has a Level marker -> that level is rebuilt from the NEW master (so new
-#     tags always arrive and unsupported ones disappear; the previous file is kept as .bak)
-#   - active profile has Custom = $true -> left untouched (a deliberate hand-edited profile)
-#   - no marker / no file (RC1.24 and older, fresh install) -> $TeeDefaultLevel
+#   - EVERY install/upgrade writes $TeeDefaultLevel from the NEW master (new tags always arrive,
+#     unsupported ones disappear; the previous file is kept as .bak). Whatever level, flag or
+#     Custom profile the box had before is replaced; the share list (tee_assign.cfg) raises
+#     chosen boxes again on the next sync.
+#   - the revert stamp, cpr_tee_<N>[_keep].flag files and the tee_assign sync/try flags are
+#     cleared so the first run after install syncs the share list straight away.
 $TeeEventsDefaultFile = @{ Name = "WW_tee_events.psd1"; Dest = $MainScriptDeployDir }
 # $TeeDefaultLevel comes from main\Main.Configuration.ps1 (see Get-CprConfigLiteral near the top).
 
@@ -789,17 +796,54 @@ function Initialize-TelemetrySpool {
     }
 }
 
+function Clear-TeeInstallState {
+    <#
+    .SYNOPSIS
+    Clears the tee state that belonged to the PREVIOUS level, so the default the installer writes
+    is not undone later: the revert stamp (its expiry would restore an old previous_level),
+    cpr_tee_<1-5>[_keep].flag files, and the tee_assign sync/try flags (so the first run after the
+    install reads the share list at once instead of waiting out the 4 h interval or a back-off).
+    Never throws; returns the names it removed. Other flags (.failed, cpr_update_*) are left alone.
+    #>
+    param(
+        [string]$FlagDir     = $TeeFlagDir,
+        [string]$RevertFile  = $TeeRevertStateFile,
+        [string]$SyncFlag    = $TeeAssignSyncFlag,
+        [string]$TryFlag     = $TeeAssignTryFlag
+    )
+    $removed = @()
+    $targets = @()
+    try {
+        if ($FlagDir -and (Test-Path -LiteralPath $FlagDir)) {
+            $targets += @(Get-ChildItem -LiteralPath $FlagDir -Filter 'cpr_tee_*' -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -match '^cpr_tee_[1-5](_keep)?\.flag$' } | ForEach-Object { $_.FullName })
+        }
+    } catch { }
+    $targets += @($RevertFile, $SyncFlag, $TryFlag) | Where-Object { $_ }
+    foreach ($t in $targets) {
+        try {
+            if (Test-Path -LiteralPath $t) {
+                Remove-Item -LiteralPath $t -Force -ErrorAction Stop
+                $removed += (Split-Path -Leaf $t)
+            }
+        } catch {
+            Write-InstallLog "WARN: could not remove tee state file ${t}: $_" "WARN"
+        }
+    }
+    return $removed
+}
+
 function Update-TeeProfile {
     <#
     .SYNOPSIS
     (Re)generates the ACTIVE tee profile from WW_tee_master.psd1 using WW_set_tee_level.ps1.
 
     .DESCRIPTION
-    Level marker present   -> same level, rebuilt from the NEW master (no stale / unsupported tags).
-    Custom = $true         -> left untouched.
-    No marker / no file    -> $TeeDefaultLevel.
-    The previous active file is kept as WW_tee_events.psd1.bak. A failure never removes an
-    existing active profile. Also removes the legacy tee_profiles\ directory (pre-master layout).
+    Always writes $TeeDefaultLevel from the NEW master, whatever level, flag or Custom marker the
+    box had before (the share list raises chosen boxes again on its next sync), and clears the old
+    tee state first (Clear-TeeInstallState). The previous active file is kept as
+    WW_tee_events.psd1.bak. A failure never removes an existing active profile. Also removes the
+    legacy tee_profiles\ directory (pre-master layout).
     #>
     Write-InstallLog "=== Updating Active Tee Profile (from master) ===" "INFO"
     $activePath = Join-Path $TeeEventsDefaultFile.Dest $TeeEventsDefaultFile.Name
@@ -820,15 +864,15 @@ function Update-TeeProfile {
     try {
         . $toolPath   # function scope: defines Set-CprTeeLevel / Get-CprActiveTeeLevelInfo only here
         $info = Get-CprActiveTeeLevelInfo -ActivePath $activePath
-        if ($info.Exists -and $info.Custom) {
-            Write-InstallLog "Active tee profile is marked Custom - leaving it untouched" "INFO"
-            return $true
-        }
-        $level  = if ($null -ne $info.Level) { [int]$info.Level } else { [int]$TeeDefaultLevel }
-        $reasonKey = if ($null -ne $info.Level) { 'upgrade_kept_level' } elseif ($info.Exists) { 'legacy_profile_default' } else { 'first_install_default' }
-        $reason = if ($null -ne $info.Level) { "kept level $level (was ProfileVersion '$($info.ProfileVersion)')" }
-                  elseif ($info.Exists)      { "no Level marker (legacy profile) - using default level $level" }
-                  else                       { "first install - using default level $level" }
+        $level  = [int]$TeeDefaultLevel
+        $reasonKey = if ($info.Exists) { 'upgrade_reset_default' } else { 'first_install_default' }
+        $reason = if ($info.Exists) {
+                      $was = if ($null -ne $info.Level) { "level $($info.Level)" } else { 'no Level marker' }
+                      if ($info.Custom) { $was += ', Custom' }
+                      "reset to default level $level (was $was, ProfileVersion '$($info.ProfileVersion)')"
+                  } else { "first install - using default level $level" }
+        $cleared = @(Clear-TeeInstallState)
+        if ($cleared.Count -gt 0) { Write-InstallLog "Cleared previous tee state: $($cleared -join ', ')" "INFO" }
         $r = Set-CprTeeLevel -Level $level -MasterPath $masterPath -ActivePath $activePath -GeneratedBy 'install.ps1' -Reason $reasonKey
         if ($r.Success) {
             # Trust but verify: read back the REAL active file, not whatever path the writer reported.

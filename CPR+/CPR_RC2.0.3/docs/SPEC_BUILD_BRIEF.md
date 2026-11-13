@@ -94,7 +94,7 @@ Mark "confirmed by Steve" where listed here; everything else you derive is "infe
   `C:\Windows\Temp`: `cpr_tee_<1-5>.flag` (reverts after 336h) and `cpr_tee_<1-5>_keep.flag`
   (sticks). 10-minute cooldown between applies (the flag waits on disk, DEBUG log only).
   Highest level wins, `_keep` wins at equal level. Pending revert keeps its original
-  previous_level. Installer keeps the level and stamps reason `upgrade_kept_level`.
+  previous_level. Installer resets to `$TeeDefaultLevel` (reason `upgrade_reset_default`, or `first_install_default`), clears the revert stamp, `cpr_tee_*` flags and the `tee_assign_sync/try` flags; the share list raises boxes again at the first sync.
 - Self-update: flags `cpr_update_<dev|prod>[_tee_<1-5>[_keep]].flag`. Failure count is
   written into the flag; `$SelfUpdateMaxAttempts` (5) then rename to `.failed`. A tee
   level in the name is applied only after a successful install, by dropping the matching

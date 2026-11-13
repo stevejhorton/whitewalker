@@ -270,16 +270,18 @@ telemetry remains fail-soft - it never blocks remediation or dispatch.
 Every tee level is defined in ONE file, `WW_tee_master.psd1` (each level lists only
 what it adds; level N includes every level below it).  `WW_set_tee_level.ps1 -Level N`
 merges levels 1..N into the active `WW_tee_events.psd1` (header: Level,
-ProfileVersion, Generated).  The installer reapplies the active Level from the new
-master on every upgrade (previous file kept as `.bak`); a profile that has no Level
-marker gets the default level (1); `Custom = $true` in a profile opts it out.  New tags
+ProfileVersion, Generated).  The installer writes the DEFAULT level (1) from the new
+master on every install and upgrade (previous file kept as `.bak`), whatever level, flag
+or `Custom` profile the box had before, and clears the old tee state (revert stamp,
+cpr_tee_<N>[_keep].flag files, tee_assign sync/try flags) so the next run reads the share
+list at once and raises listed boxes.  New tags
 and fields (for example `classification`, `os_name`, `trace_id`) therefore reach
 endpoints on upgrade; a tag missing from the profile is still reported truthfully
 as `tag_not_in_profile`.
 
 Level 0 is not fully silent: the master's L0 section (`tee_level_info`, `tee_level_set`) is part
 of EVERY level.  `tee_level_info` reports the effective level, the reason it is set (`reason`:
-first_install_default, legacy_profile_default, upgrade_kept_level, flag, flag_keep,
+first_install_default, upgrade_reset_default, flag, flag_keep, manifest,
 revert_expired, console_pick, console_refresh), who wrote it, the profile version and any
 pending revert time - once a day and whenever the profile changes.
 
@@ -704,8 +706,9 @@ ACTIVE TEE PROFILE STALENESS AND REPAIR
   Admin menu: option T (admin/Invoke-WhiteWalkerAction.ps1) is the one-step
   repair. WW_diagnostics.ps1 Test-TeeProfileHealth surfaces staleness and spool
   presence in Test-AllDiagnostics.
-  install.ps1 regenerates the active profile from the master at the SAME Level on
-  every upgrade (previous file kept as WW_tee_events.psd1.bak); Custom = $true skips it.
+  install.ps1 regenerates the active profile from the master at the DEFAULT level on
+  every install/upgrade (previous file kept as WW_tee_events.psd1.bak) and clears the
+  revert stamp, cpr_tee_* flags and tee_assign sync/try flags; Custom = $true no longer skips it.
 
 PRESERVED PREFLIGHT / ISE CONTRACT
   Outside the credible active-WebHelper 301-first branch, gateway.optum.com

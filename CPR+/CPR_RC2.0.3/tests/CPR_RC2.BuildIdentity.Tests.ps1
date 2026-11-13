@@ -407,8 +407,12 @@ Describe 'Installer tee profile handling' {
         $inst | Should -Match 'Set-CprTeeLevel -Level \$level'
         $inst | Should -Not -Match 'Copy-TeeEventsIfMissing'
     }
-    It 'honours the Custom opt-out and the default level' {
-        $inst | Should -Match '\$info\.Custom'
+    It 'always writes the default level (no kept level, no Custom opt-out) and clears the old tee state' {
+        $inst | Should -Match '\$level\s*=\s*\[int\]\$TeeDefaultLevel'
+        $inst | Should -Match 'upgrade_reset_default'
+        $inst | Should -Not -Match 'upgrade_kept_level'
+        $inst | Should -Not -Match 'leaving it untouched'
+        $inst | Should -Match '@\(Clear-TeeInstallState\)'
         $inst | Should -Match "Get-CprConfigLiteral -Name 'TeeDefaultLevel' -Default"
         $inst | Should -Not -Match '(?m)^\$TeeDefaultLevel\s*=\s*\d'
     }
