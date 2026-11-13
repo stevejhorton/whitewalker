@@ -1369,6 +1369,15 @@ function Invoke-WWShowEffectiveTee {
     }
 }
 
+function Resolve-WWTeeLevelSelection {
+    <# The typed number IS the tee level (0-5): "1" means tee_level_1. Returns the matching level
+       object, or $null for blank, non-numeric, or a number that is not in the list. #>
+    param([object[]]$Levels, [string]$Text)
+    $n = 0
+    if (-not [int]::TryParse(([string]$Text).Trim(), [ref]$n)) { return $null }
+    return @($Levels | Where-Object { $_.Level -eq $n }) | Select-Object -First 1
+}
+
 function Invoke-WWTeeLevelPicker {
     $levels = @(Get-WWTeeLevelFiles)
     if ($levels.Count -eq 0) {
@@ -1384,18 +1393,17 @@ function Invoke-WWTeeLevelPicker {
     }
     Write-Host "`nCurrently active profile: $(if ($activeName) { $activeName } else { 'unknown/custom' })" -ForegroundColor Cyan
     Write-Host "Available tee log levels:" -ForegroundColor Cyan
-    for ($i = 0; $i -lt $levels.Count; $i++) {
-        Write-Host ("  {0}. {1,-14} {2}" -f ($i + 1), $levels[$i].Name, $levels[$i].Description)
+    foreach ($lv in $levels) {
+        Write-Host ("  {0}. {1,-14} {2}" -f $lv.Level, $lv.Name, $lv.Description)
     }
-    $selection = Read-Host "Select a level to activate (or press Enter to cancel)"
+    $selection = Read-Host "Type the tee level number to activate (0-5, or press Enter to cancel)"
     if ([string]::IsNullOrWhiteSpace($selection)) { Write-Host "Cancelled." -ForegroundColor Yellow; return }
 
-    $index = 0
-    if (-not [int]::TryParse($selection, [ref]$index) -or $index -lt 1 -or $index -gt $levels.Count) {
-        Write-Host "Invalid selection." -ForegroundColor Red
+    $chosen = Resolve-WWTeeLevelSelection -Levels $levels -Text $selection
+    if ($null -eq $chosen) {
+        Write-Host "Invalid selection. Type a level number from the list (0-5)." -ForegroundColor Red
         return
     }
-    $chosen = $levels[$index - 1]
 
     Write-Host "`nThis will regenerate the ACTIVE profile ($script:ActiveTeeProfile) at $($chosen.Name)." -ForegroundColor Yellow
     if (-not (Confirm-WWAction "Overwrite the active tee profile now?")) { Write-Host "Cancelled." -ForegroundColor Yellow; return }

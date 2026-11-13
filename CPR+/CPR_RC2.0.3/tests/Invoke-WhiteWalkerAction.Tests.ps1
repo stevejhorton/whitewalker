@@ -210,6 +210,29 @@ Describe 'Invoke-WhiteWalkerAction - tee level picker (Get-WWTeeLevelFiles / Get
         ($levels | Where-Object Name -eq 'tee_level_2').Description | Should -Match 'CORE \+ NETWORK CONTEXT'
     }
 
+    It 'the number you type IS the tee level: 1 selects tee_level_1, 0 selects tee_level_0 (not shifted by one)' {
+        $levels = @(Get-WWTeeLevelFiles)
+        foreach ($n in 0..5) {
+            $c = Resolve-WWTeeLevelSelection -Levels $levels -Text "$n"
+            $c.Level | Should -Be $n
+            $c.Name  | Should -Be "tee_level_$n"
+        }
+        (Resolve-WWTeeLevelSelection -Levels $levels -Text ' 3 ').Level | Should -Be 3
+    }
+
+    It 'rejects blank, non-numeric and out-of-range picks' {
+        $levels = @(Get-WWTeeLevelFiles)
+        foreach ($bad in '', ' ', 'x', '6', '-1', '1.5', '10') {
+            Resolve-WWTeeLevelSelection -Levels $levels -Text $bad | Should -BeNullOrEmpty -Because "'$bad'"
+        }
+    }
+
+    It 'the picker lists each level under its own number' {
+        $src = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) 'admin\Invoke-WhiteWalkerAction.ps1') -Raw
+        $src | Should -Match '"  \{0\}\. \{1,-14\} \{2\}" -f \$lv\.Level'
+        $src | Should -Not -Match '\(\$i \+ 1\), \$levels\[\$i\]'
+    }
+
     It 'returns $null for the active profile name when no active file exists yet' {
         Get-WWActiveTeeProfileName | Should -BeNullOrEmpty
     }

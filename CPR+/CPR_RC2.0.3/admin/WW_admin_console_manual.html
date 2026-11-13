@@ -252,7 +252,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <details class="item" id="m7"><summary><span class="key">7</span>Tee Log Level Picker <span class="sp"></span><span class="badge b-chg">CHANGES THINGS</span></summary><div class="body">
 <dl class="kv"><dt>Use when</dt><dd>You need more (or less) of WhiteWalker's detail going to the logs and Splunk for an investigation.</dd>
 <dt>What it does</dt><dd>Regenerates the active tee profile (<code>WW_tee_events.psd1</code>) at the level you choose, built from the master file.</dd>
-<dt>You'll be asked</dt><dd>Pick a level number from the list, then "Overwrite the active tee profile now? (y/n)". Enter cancels.</dd></dl>
+<dt>You'll be asked</dt><dd>Type the tee level number, 0 to 5 (the list is labelled the same way: <code>1.</code> is <code>tee_level_1</code>), then "Overwrite the active tee profile now? (y/n)". Enter cancels. Level 0 sends only tee level reporting, so type 1 for the normal default.</dd></dl>
 <div class="warn"><b>If you see "active profile is STALE".</b>The active profile no longer matches the master. Use <b>T</b> (below) to rebuild it without changing the level.</div>
 <p>See <a href="#tee">Tee log levels</a> for what each level sends. Higher levels mean more log volume; go back down when you are done.</p>
 </div></details>
@@ -265,7 +265,7 @@ footer{margin-top:50px;padding-top:14px;border-top:1px solid var(--line);color:v
 <details class="item" id="mE"><summary><span class="key">E</span>Show Effective Tee Level <span class="sp"></span><span class="badge b-ro">READ-ONLY</span></summary><div class="body">
 <dl class="kv"><dt>Use when</dt><dd>You want to know what tee level this box is really running, and why, without opening files.</dd>
 <dt>What it shows</dt><dd>The level now, the reason and who set it (console, flag, installer, or the share list), the revert stamp (what it returns to and when, or that it is kept), any <code>cpr_tee_*</code> flags still waiting, and the share list: when the share was last read and whether this computer is listed and at which level.</dd>
-<dt>Reading it</dt><dd>The picker (7) numbers its list from 1, so option 1 is level 0. This screen shows the actual level number.</dd></dl>
+<dt>Reading it</dt><dd>The picker (7) uses the level number itself, so what you type is the level you get. Older builds numbered that list from 1 (so "1" set level 0); this screen shows the actual level in either case.</dd></dl>
 </div></details>
 
 <details class="item" id="m8"><summary><span class="key">8</span>Diagnostics &amp; Test Tools Launcher <span class="sp"></span><span class="badge b-chg">VARIES BY TOOL</span></summary><div class="body">
