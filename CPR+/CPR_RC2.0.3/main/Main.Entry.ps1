@@ -1223,6 +1223,15 @@ function Invoke-WhiteWalkerMain {
                     Stop-CiscoBrowserKiller -Job $ciscoBrowserKillerJob
                 }
                 
+                # EventID 301 sweep: every exit path lands here, so a navigation that an early exit (VPN gate,
+                # SSID jump, network change) never reached the in-run lookup for is still reported. Before the
+                # maintenance stage so the rows are queued when the drain is kicked. Skipped when no portal is possible.
+                try {
+                    $sweepSkip = ((Test-Path variable:onlineFastPathSelected) -and $onlineFastPathSelected) -or `
+                        ("$($script:exitReason)" -like 'vpn_connected:*')
+                    Invoke-CprWebHelper301Sweep -ExitReason "$($script:exitReason)" -Skip $sweepSkip
+                } catch { Write-Log "webhelper_301_sweep error: $_" "WARN" }
+
                 # Maintenance stage: last, after the flare and any remediation.
                 $maintSkip = (-not $OnlineFastPathRunMaintenance) -and `
                     (((Test-Path variable:onlineFastPathSelected) -and $onlineFastPathSelected) -or "$($script:exitReason)" -like 'vpn_connected:*')

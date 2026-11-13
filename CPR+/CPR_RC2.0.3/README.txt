@@ -176,6 +176,23 @@ dedupe identity, and a fallback identity is used only when RecordId is absent.
 `webhelper_301_lookup` logs queried/examined/rejected/accepted counts, selected
 RecordId/time and a truthful terminal reason.
 
+End-of-run sweep (RC2.0.3): the lookup above is skipped by every early exit (VPN early
+gate, SSID jump, network change) and when no WebHelper process is running, so a portal
+attempt could be in the Event Log and never reach Splunk.  `Invoke-CprWebHelper301Sweep`
+runs in the run's `finally` block (every exit path), before the maintenance stage, and
+skips `vpn_connected` / online-fast-path runs.  It reads every NEW navigation 301 since the
+last sweep (oldest first, at most `$CapPortalWebHelper301SweepMaxScan` records), writes one
+`cap_portal_webhelper_navigation` row per distinct attempt (same traceId, or same host+path;
+newest event wins; at most `$CapPortalWebHelper301SweepMaxRows`, newest kept), then saves the
+last record scanned in `webhelper_301_watermark.json` (one tiny file, written by the SYSTEM
+run only).  Rows carry `detection_source=cisco_webhelper_301_sweep`, `EvtTime` = the event's
+own time and `reason=swept_navigation` (or `swept_navigation_late` when older than 330 s, in
+which case ssid/ip/gw/dns stay empty).  Rows queue locally and the normal drain sends them,
+so attempts made while off-network arrive on reconnect.  A record the run already wrote
+in-line is never written twice.  The Base runner's own rows can still overlap in time; both
+carry `event_record_id`.  No watermark yet = the last 330 s only (an upgrade does not backfill).
+`phase_timing phase='webhelper_301_sweep'` logs elapsed_ms, scanned, written, dropped.
+
 Source precedence is `cisco_webhelper_301`, then `gateway_preflight`.
 `haystack_log_fallback` is optional supporting diagnostics after a direct Event
 Log read failure and can never suppress the gateway probe. Canonical portal URL

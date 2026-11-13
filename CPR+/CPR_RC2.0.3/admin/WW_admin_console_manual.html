@@ -373,7 +373,8 @@ PCB-777        # remove this line when done</div>
 <tr><td><code>vpncli_timeout</code></td><td>A <code>vpncli</code> command did not answer in time and was stopped.</td><td>Informational. Frequent timeouts mean the VPN client is busy or stuck.</td></tr>
 <tr><td><code>VPN re-entered Connecting after our disconnect</code></td><td>WhiteWalker disconnected the VPN and the client immediately retried. WhiteWalker will disconnect again, at most twice per run.</td><td>Normal on guest networks with the client set to always connect.</td></tr>
 <tr><td><code>cap_portal_redirect</code></td><td>A captive portal redirect was detected. The row carries the URL, port, host, and portal details.</td><td>Search Splunk for it to see which portals users hit.</td></tr>
-<tr><td><code>cap_portal_webhelper_navigation</code></td><td>The Cisco browser (WebHelper) navigated to a captive portal. This is the Always-On profile path.</td><td>Informational.</td></tr>
+<tr><td><code>cap_portal_webhelper_navigation</code></td><td>The Cisco browser (WebHelper) navigated to a captive portal. This is the Always-On profile path. Rows with <code>detection_source=cisco_webhelper_301_sweep</code> come from the end-of-run sweep, which reports every new navigation since the last run even when that run ended early; <code>swept_navigation_late</code> means the event was older than 5 minutes, so ssid/ip/gw are blank.</td><td>Informational.</td></tr>
+<tr><td><code>phase_timing phase='webhelper_301_sweep'</code></td><td>The end-of-run sweep finished: how long it took and how many 301 records it scanned and wrote.</td><td>Informational. A high <code>elapsed_ms</code> on many boxes means the Cisco log is large.</td></tr>
 <tr><td><code>detection_source=native_redirect</code></td><td>The redirect was seen by WhiteWalker's own probe, not by the Cisco WebHelper.</td><td>Informational.</td></tr>
 <tr><td><code>Preflight skipped: VPN state 'Connecting' blocks all traffic</code></td><td>The VPN client was mid-connect, so the network check was skipped.</td><td>Re-run once the client settles.</td></tr>
 <tr><td><code>captive_portal_suspected</code></td><td>The network check failed on a plausible network (for example dead DNS). A captive portal is suspected but no redirect was seen.</td><td>The base runner will observe and the Cisco browser may open.</td></tr>
@@ -395,6 +396,7 @@ PCB-777        # remove this line when done</div>
 <tr><td>Lost-log-line spill file</td><td><code>C:\ProgramData\WhiteWalker\logs\log_write_failures.txt</code></td></tr>
 <tr><td>Telemetry queue</td><td><code>logs\haystack_syslog_queue.jsonl</code> and <code>logs\spool\</code></td></tr>
 <tr><td>Local needles</td><td><code>C:\ProgramData\WhiteWalker\needles_local.cfg</code></td></tr>
+<tr><td>301 sweep watermark (last Cisco 301 record reported)</td><td><code>C:\ProgramData\WhiteWalker\webhelper_301_watermark.json</code> (delete it to restart from the last 5 minutes)</td></tr>
 <tr><td>Tee assignment (cached copy of the share list)</td><td><code>C:\ProgramData\WhiteWalker\tee_assign.cfg</code> (last good read: <code>tee_assign_sync.flag</code>)</td></tr>
 <tr><td>Tee revert stamp</td><td><code>C:\ProgramData\WhiteWalker\tee_level_revert.json</code> (<code>source</code> is <code>manifest</code> when the share set the level)</td></tr>
 <tr><td>Bundle catalog</td><td><code>C:\ProgramData\WhiteWalker\bundles\needle_bundles.cfg</code> (the share copy is preferred when reachable)</td></tr>

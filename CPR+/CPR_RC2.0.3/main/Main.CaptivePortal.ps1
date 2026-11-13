@@ -431,7 +431,198 @@ function Write-CprCiscoWebHelper301Evidence {
             ssid=[string]$NetworkContext.ssid; ip=[string]$NetworkContext.ip
             gw=[string]$NetworkContext.gw; dns=[string]$NetworkContext.dns; vpn_state=$VpnState
         }
+        # Remember what this run already wrote so the end-of-run sweep never writes the same record twice.
+        if ($Evidence.EventRecordId) {
+            if (-not $script:WebHelper301EmittedIds) { $script:WebHelper301EmittedIds = @{} }
+            $script:WebHelper301EmittedIds[[string]$Evidence.EventRecordId] = $true
+        }
     } catch { Write-Log "Failed to log/tee Cisco WebHelper EventID 301 evidence: $_" "WARN" }
+}
+
+function Read-CprWebHelper301Watermark {
+    <# Last record the sweep scanned: @{RecordId; Time}, or $null when there is none / it is unreadable. #>
+    param([string]$Path)
+    try {
+        if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return $null }
+        $o = Get-Content -LiteralPath $Path -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        $t = [datetime]::MinValue
+        if ($o.time -is [datetime]) { $t = $o.time }
+        elseif (-not [datetime]::TryParse([string]$o.time, [System.Globalization.CultureInfo]::InvariantCulture,
+                [System.Globalization.DateTimeStyles]::RoundtripKind, [ref]$t)) { return $null }
+        if ($t.Kind -eq [System.DateTimeKind]::Utc) { $t = $t.ToLocalTime() }
+        return [pscustomobject]@{ RecordId = [int64]$o.record_id; Time = $t }
+    } catch { return $null }
+}
+
+function Save-CprWebHelper301Watermark {
+    <# One tiny file, written by the SYSTEM run only: temp file + move, so a reader never sees half of it. #>
+    param([string]$Path, [int64]$RecordId, [datetime]$Time)
+    try {
+        $dir = Split-Path -Parent $Path
+        if ($dir -and -not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+        $tmp = "$Path.tmp"
+        ([pscustomobject]@{ record_id = $RecordId; time = $Time.ToString('o') } | ConvertTo-Json -Compress) |
+            Set-Content -LiteralPath $tmp -Encoding UTF8 -ErrorAction Stop
+        Move-Item -LiteralPath $tmp -Destination $Path -Force -ErrorAction Stop
+        return $true
+    } catch {
+        Write-Log "webhelper_301_sweep watermark save failed: $_" "WARN"
+        return $false
+    }
+}
+
+function Get-CprCiscoWebHelper301SweepEvidence {
+    <#
+    Reads NEW 301 records oldest-first (at most $MaxScan per call) and returns one evidence object per
+    distinct navigation attempt (same traceId, or same host+path when there is none; the newest event of
+    an attempt wins). Records at or below the watermark, and records this run already wrote, are skipped.
+    LastRecordId/LastTime = the last record SCANNED (navigation or not): the new watermark. A full batch
+    sets BatchFull; the rest is picked up by the next sweep. No match = empty result, not an error.
+    #>
+    param(
+        [Parameter(Mandatory)][datetime]$Since,
+        [datetime]$Now = (Get-Date),
+        $Watermark = $null,
+        [string]$LogName = 'Cisco Secure Client',
+        [string]$ProviderName = 'csc_webhelper',
+        [int]$EventId = 301,
+        [int]$MaxScan = 300,
+        [int]$MaxRows = 5,
+        [int]$ContextWindowSec = 330,
+        [hashtable]$AlreadyEmitted = @{}
+    )
+    $r = [pscustomobject]@{
+        Evidence = @(); Scanned = 0; Navigations = 0; Dropped = 0
+        LastRecordId = [int64]0; LastTime = $null; BatchFull = $false; ReadFailed = $false; Error = ''
+    }
+    try {
+        $filter = @{ LogName = $LogName; Id = $EventId; StartTime = $Since }
+        if (-not [string]::IsNullOrWhiteSpace($ProviderName)) { $filter.ProviderName = $ProviderName }
+        $events = @()
+        $limit = [math]::Max(1, $MaxScan)
+        # The query starts AT the watermark time, so the watermark's own record (and any same-timestamp
+        # burst at or below it) come back first and use up slots. If a full batch holds nothing new, ask
+        # again with a bigger limit (bounded) instead of stalling on the same records every sweep.
+        for ($try = 0; $try -lt 4; $try++) {
+            $events = @()
+            try {
+                $events = @(Get-WinEvent -FilterHashtable $filter -Oldest -MaxEvents $limit -ErrorAction Stop)
+            } catch {
+                if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') { $events = @() } else { throw }
+            }
+            if ($null -eq $Watermark -or $events.Count -lt $limit) { break }
+            $fresh = @($events | Where-Object {
+                -not ($_.RecordId -gt 0 -and [int64]$_.RecordId -le $Watermark.RecordId -and [datetime]$_.TimeCreated -le $Watermark.Time)
+            })
+            if ($fresh.Count -gt 0) { break }
+            $limit = $limit * 2
+        }
+        $r.BatchFull = ($events.Count -ge $limit)
+        $byKey = [ordered]@{}
+        foreach ($event in $events) {
+            $recordId = [int64]0
+            if ($null -ne $event.RecordId) { $recordId = [int64]$event.RecordId }
+            $eventTime = [datetime]$event.TimeCreated
+            if ($null -ne $Watermark -and $recordId -gt 0 -and $recordId -le $Watermark.RecordId -and $eventTime -le $Watermark.Time) { continue }
+            $r.Scanned++
+            $r.LastRecordId = $recordId; $r.LastTime = $eventTime
+            if ($recordId -gt 0 -and $AlreadyEmitted.ContainsKey([string]$recordId)) { continue }
+
+            $parsed = ConvertFrom-CprCiscoWebHelperNavigationBody -Body ([string]$event.Message)
+            if (-not $parsed.Parsed -or [string]::IsNullOrWhiteSpace($parsed.NavigatedUrl)) { continue }
+            $details = Get-CprCiscoWebHelperUrlDetails -Url $parsed.NavigatedUrl
+            if (-not $details.Fqdn -or $details.Protocol -notin @('http', 'https')) { continue }
+
+            $ev = New-CprCiscoWebHelperEvidenceResult
+            foreach ($property in $parsed.PSObject.Properties) {
+                if ($property.Name -ne 'Parsed') { $ev.($property.Name) = $property.Value }
+            }
+            $ev.Found = $true; $ev.UsableNavigation = $true
+            $ev.Source = 'cisco_webhelper_301_sweep'; $ev.Status = 'observed'
+            # 'late' = older than the window in which the run's own network context can describe it.
+            $ev.Reason = if (($Now - $eventTime).TotalSeconds -le $ContextWindowSec) { 'swept_navigation' } else { 'swept_navigation_late' }
+            $ev.TerminalReason = 'accepted'
+            $ev.EventRecordId = [string]$recordId; $ev.EventTime = $eventTime
+            $ev.DedupeKey = Get-CprCiscoWebHelperDedupeKey ([string]$recordId) $eventTime $parsed.ProcessId $parsed.NavigatedUrl $parsed.FinalUrl
+            $ev.Protocol = $details.Protocol; $ev.Fqdn = $details.Fqdn; $ev.Port = $details.Port
+            $ev.Classification = if (Get-Command Get-RedirectType -ErrorAction SilentlyContinue) {
+                Get-RedirectType -RedirectUrl $parsed.NavigatedUrl
+            } else { 'NON_ISE' }
+
+            $path = ''
+            try { $path = ([Uri]$parsed.NavigatedUrl).AbsolutePath } catch { }
+            $key = if ($parsed.TraceId) { "trace:$($parsed.TraceId)" } else { "url:$($details.Fqdn)|$path" }
+            $byKey[$key] = $ev
+        }
+        $all = @($byKey.Values)
+        $r.Navigations = $all.Count
+        if ($all.Count -gt $MaxRows) {
+            $r.Dropped = $all.Count - $MaxRows
+            $all = @($all | Select-Object -Last $MaxRows)
+        }
+        $r.Evidence = $all
+    } catch {
+        $r.ReadFailed = $true
+        $r.Error = [string]$_.Exception.Message
+    }
+    return $r
+}
+
+function Invoke-CprWebHelper301Sweep {
+    <#
+    End-of-run sweep (called from the run's finally block, so every exit path gets it): writes one
+    cap_portal_webhelper_navigation row per NEW navigation attempt since the last sweep, then moves the
+    watermark. Rows go to the normal local queue; the drain sends them whenever the box is connected.
+    Skipped on runs that cannot involve a portal (VPN connected / online fast path). Never throws.
+    #>
+    param([string]$ExitReason = '', [bool]$Skip = $false)
+    if (-not $CapPortalWebHelper301SweepEnabled) { return }
+    if ($Skip) { Write-Log "webhelper_301_sweep skipped reason='no_portal_path' exit_reason='$ExitReason'" "DEBUG"; return }
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    try {
+        $now = Get-Date
+        $wm = Read-CprWebHelper301Watermark -Path $CapPortalWebHelper301SweepWatermarkFile
+        $since = $now.AddSeconds(-[math]::Max(1, $CapPortalWebHelper301SweepFirstLookbackSec))
+        if ($null -ne $wm) {
+            $floor = $now.AddSeconds(-[math]::Max(1, $CapPortalWebHelper301SweepMaxAgeSec))
+            $since = if ($wm.Time -gt $floor) { $wm.Time } else { $floor }
+        }
+        if (-not $script:WebHelper301EmittedIds) { $script:WebHelper301EmittedIds = @{} }
+        $scan = Get-CprCiscoWebHelper301SweepEvidence -Since $since -Now $now -Watermark $wm `
+            -LogName $CapPortalWebHelper301LogName -ProviderName $CapPortalWebHelper301ProviderName `
+            -EventId $CapPortalWebHelper301EventId -MaxScan $CapPortalWebHelper301SweepMaxScan `
+            -MaxRows $CapPortalWebHelper301SweepMaxRows -ContextWindowSec $CapPortalWebHelper301MaxAgeSec `
+            -AlreadyEmitted $script:WebHelper301EmittedIds
+        if ($scan.ReadFailed) {
+            Write-Log "webhelper_301_sweep read failed (watermark unchanged): $($scan.Error)" "WARN"
+            return
+        }
+        $written = 0
+        if ($scan.Evidence.Count -gt 0) {
+            $ctxBase = Get-CaptivePortalNetworkContext
+            $vpn = ''
+            if ($script:LastVpnState) { $vpn = [string]$script:LastVpnState }
+            foreach ($ev in $scan.Evidence) {
+                # Network context is only attached to an event recent enough for it to describe; an event
+                # that names its own SSID gets that SSID and no ip/gw/dns. Otherwise left empty, never guessed.
+                $ctx = @{ ssid = ''; ip = ''; gw = ''; dns = '' }
+                if ($ev.Reason -eq 'swept_navigation') {
+                    $evSsid = Get-CprCiscoWebHelperQueryParameterAny $ev.NavigatedUrl @('ssid', 'wlan')
+                    if ($evSsid -and $ctxBase.ssid -and -not $evSsid.Equals([string]$ctxBase.ssid, [System.StringComparison]::OrdinalIgnoreCase)) {
+                        $ctx.ssid = $evSsid
+                    } else { $ctx = $ctxBase }
+                }
+                Write-CprCiscoWebHelper301Evidence -Evidence $ev -NetworkContext $ctx -VpnState $vpn
+                $written++
+            }
+        }
+        if ($scan.Scanned -gt 0 -and $null -ne $scan.LastTime) {
+            [void](Save-CprWebHelper301Watermark -Path $CapPortalWebHelper301SweepWatermarkFile -RecordId $scan.LastRecordId -Time $scan.LastTime)
+        }
+        Write-Log ("phase_timing phase='webhelper_301_sweep' elapsed_ms={0} since='{1}' scanned={2} navigations={3} written={4} dropped={5} batch_full={6} watermark_before='{7}'" -f `
+            $sw.ElapsedMilliseconds, $since.ToString('o'), $scan.Scanned, $scan.Navigations, $written, $scan.Dropped, $scan.BatchFull,
+            $(if ($null -ne $wm) { $wm.RecordId } else { 'none' })) $(if ($written -gt 0) { 'INFO' } else { 'DEBUG' })
+    } catch { Write-Log "webhelper_301_sweep failed (non-fatal): $_" "WARN" }
 }
 
 function New-CprWebHelperPreflightResult {

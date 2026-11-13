@@ -223,6 +223,19 @@ $CapPortalWebHelper301SuppressPreflight         = $true                 # bool, 
 $CapPortalWebHelper301HaystackFallbackEnabled   = $false                # bool, diagnostic haystack.log fallback after Event Log read failure only (consumer: MAIN)
 $CapPortalWebHelper301HaystackLookbackSec       = 120                   # seconds of haystack.log diagnostic fallback lookback (consumer: MAIN)
 
+# ---- EventID 301 end-of-run sweep ---------------------------------------------
+# The in-run lookup above is skipped by every early exit (VPN gate, SSID jump, network change) and
+# when no WebHelper process is running. The sweep runs in the run's finally block instead: it reads
+# every NEW navigation 301 since the last sweep (oldest first, watermark = last record scanned), writes
+# one cap_portal_webhelper_navigation row per distinct attempt, and advances the watermark. Rows queue
+# locally and the normal drain sends them; nothing is re-read, so nothing is duplicated.
+$CapPortalWebHelper301SweepEnabled              = $true                 # bool, end-of-run sweep of all new navigation 301s (consumer: MAIN)
+$CapPortalWebHelper301SweepWatermarkFile        = "C:\ProgramData\WhiteWalker\webhelper_301_watermark.json" # last scanned record; one tiny file, written only by the SYSTEM run (consumer: MAIN)
+$CapPortalWebHelper301SweepFirstLookbackSec     = 330                   # seconds, lookback when no watermark exists yet, so an upgrade does not backfill old events (consumer: MAIN)
+$CapPortalWebHelper301SweepMaxAgeSec            = 86400                 # seconds, oldest event a sweep will still report after a long gap (consumer: MAIN)
+$CapPortalWebHelper301SweepMaxScan              = 300                   # records scanned per sweep, oldest first; a bigger backlog continues on the next sweep (consumer: MAIN)
+$CapPortalWebHelper301SweepMaxRows              = 5                     # distinct attempts written per sweep; the newest are kept, the rest are counted in the log (consumer: MAIN)
+
 # ---- Shared runner behavior -------------------------------------------------
 $CapPortalHandoffMaxAgeSec      = 900     # seconds before a dispatch artifact is stale (consumer: BASE)
 $CapPortalValidationSite        = "https://www.optum.com"  # url, post-auth validation (consumer: BASE, FULL)
