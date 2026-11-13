@@ -17,7 +17,7 @@ Describe 'CPR RC2.1 early VPN gate' {
         function Get-VpnStateStable { param($TimeoutSec) 'Disconnected' }
         function Test-RecentWakeFromSleep { param($TimeWindowSeconds) $false }
         function Invoke-EarlyVpnDisconnect { param($Reason, $VpnStateWas) $true }
-        function Get-NwCheckResult { param($Url) [pscustomobject]@{ Status = 'online' } }
+        function Get-NwCheckResult { param($Url, $Attempt, $TimeoutMs) [pscustomobject]@{ Status = 'online' } }
         function Start-Sleep { param($Seconds) }
         $script:StaleConnectedMaxWaitSec = 8
         $script:StaleConnectedPollSec = 2
@@ -82,12 +82,21 @@ Describe 'CPR RC2.1 early VPN gate' {
         (Invoke-EarlyVpnGate -NetworkInfo $script:HasIp).Reason | Should -Be 'ssid_jump_blocking'
     }
 
-    It 'skips the preflight probe while VPN is in an intermediate state' {
-        Mock Get-VpnStateStable { 'Reconnecting' }
+    It 'probes with the short timeout while VPN reads Connecting/Reconnecting (non-always-on browser auth)' {
+        Mock Get-NwCheckResult { [pscustomobject]@{ Status = 'redirect' } }
+        foreach ($st in 'Connecting','Reconnecting') {
+            (Invoke-GatedNwCheck -KnownVpnState $st).Status | Should -Be 'redirect'
+        }
+        Should -Invoke Get-NwCheckResult -Times 2 -Exactly -ParameterFilter { $TimeoutMs -eq 3000 }
+    }
+
+    It 'still skips the probe for Unknown/Disconnecting, and for Connecting when the switch is off' {
         Mock Get-NwCheckResult { [pscustomobject]@{ Status = 'online' } }
-        $r = Invoke-GatedNwCheck
-        $r.Status | Should -Be 'unreachable'
+        $r = Invoke-GatedNwCheck -KnownVpnState 'Disconnecting'
         $r.Reason | Should -Be 'vpn_state_not_settled'
+        $global:PreflightProbeWhileConnecting = $false; $script:PreflightProbeWhileConnecting = $false
+        try { (Invoke-GatedNwCheck -KnownVpnState 'Connecting').Reason | Should -Be 'vpn_state_not_settled' }
+        finally { $global:PreflightProbeWhileConnecting = $true; $script:PreflightProbeWhileConnecting = $true }
         Should -Invoke Get-NwCheckResult -Times 0 -Exactly
     }
 

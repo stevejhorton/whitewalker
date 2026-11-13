@@ -735,3 +735,11 @@ PRESERVED PREFLIGHT / ISE CONTRACT
   redirect = NON_ISE. Fresh direct EventID 301 navigated_url evidence has
   precedence only while Cisco WebHelper actively owns the captive-portal path.
   Walled-garden remains fallback evidence only.
+
+NON-ALWAYS-ON PORTAL CAPTURE (RC2.0.3)
+While Secure Client waits on browser auth the VPN reads Connecting, and the run used to sit in the
+stabilize wait (up to VpnIntermediateMaxWait) and then exit vpn_connected without ever probing.  Now the
+first Connecting/Reconnecting sighting in a run does one short (PreflightConnectingTimeoutMs) record-only
+gateway probe (Invoke-CprConnectingPortalProbe) and writes cap_portal_redirect with
+detection_source=connecting_probe (url, fqdn, port, protocol).  It never opens a browser or cuts the VPN,
+in any runner mode.  PreflightProbeWhileConnecting=$false turns it off.  Log marker: "connecting_probe".

@@ -1608,7 +1608,8 @@ function Get-NwCheckResult {
     #                             an unexpected status. NOT proof of "no portal".
     param(
         [string]$Url = $NewPreflightURL,
-        [int]$Attempt = 1
+        [int]$Attempt = 1,
+        [int]$TimeoutMs = 8000
     )
 
     Write-Log "RC1 nwcheck preflight: GET $Url" "INFO"
@@ -1634,7 +1635,7 @@ function Get-NwCheckResult {
     try {
         $request = [System.Net.HttpWebRequest]::Create($Url)
         $request.AllowAutoRedirect = $false
-        $request.Timeout = 8000
+        $request.Timeout = $TimeoutMs
 
         $response = $request.GetResponse()
         $result.http_status  = [string][int]$response.StatusCode

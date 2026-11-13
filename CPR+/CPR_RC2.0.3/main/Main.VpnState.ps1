@@ -375,6 +375,31 @@ function Get-VpnState {
   return "Unknown"
 }
 
+function Invoke-CprConnectingPortalProbe {
+    # One short, record-only gateway probe the first time a run sees Connecting/Reconnecting. Writes cap_portal_redirect
+    # (detection_source=connecting_probe) when it gets a redirect. Never opens a browser, never disconnects, never throws.
+    param([string]$VpnState)
+    if ($script:ConnectingProbeDone) { return }
+    $script:ConnectingProbeDone = $true
+    if ($null -ne $PreflightProbeWhileConnecting -and -not $PreflightProbeWhileConnecting) { return }
+    try {
+        $t = if ([int]$PreflightConnectingTimeoutMs -gt 0) { [int]$PreflightConnectingTimeoutMs } else { 3000 }
+        $r = Get-NwCheckResult -Url $NewPreflightURL -TimeoutMs $t
+        Write-Log ("connecting_probe vpn_state='{0}' status='{1}' redirect='{2}'" -f $VpnState, $r.Status, $r.RedirectUrl) "INFO"
+        if ($r.Status -ne 'redirect' -or [string]::IsNullOrWhiteSpace([string]$r.RedirectUrl)) { return }
+        $tel = Get-CaptivePortalRedirectTelemetry -RedirectUrl ([string]$r.RedirectUrl)
+        $ctx = Get-CaptivePortalNetworkContext
+        $row = @{
+            EvtTime = (Get-Date -Format 'o'); url = ConvertTo-TelemetryValue $tel.url; port = ConvertTo-TelemetryValue $tel.port
+            ssid = $ctx.ssid; vpn_state = $VpnState; ip = $ctx.ip; gw = $ctx.gw; dns = $ctx.dns
+            portal_type = 'connecting_probe'; status = 'detected'; reason = 'redirect_detected'
+            detection_source = 'connecting_probe'; protocol = ConvertTo-TelemetryValue $tel.protocol; fqdn = ConvertTo-TelemetryValue $tel.fqdn
+        }
+        try { foreach ($kv in (Get-CprPortalUrlFields -Url ([string]$r.RedirectUrl)).GetEnumerator()) { $row[$kv.Key] = [string]$kv.Value } } catch { }
+        Write-TeeLog 'cap_portal_redirect' $row
+    } catch { Write-Log "connecting_probe error: $_" "WARN" }
+}
+
 function Get-VpnStateStable {
   param([int]$TimeoutSec = $VpnStateMaxWaitSeconds)
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
@@ -451,6 +476,9 @@ function Get-VpnStateStable {
           }
         }
         
+        # Non-always-on: Connecting here usually means Secure Client is waiting on browser auth behind a portal.
+        # Record the portal now (once per run, record-only, no browser) - the wait below can end in vpn_connected.
+        if (@('Connecting', 'Reconnecting') -contains $state) { Invoke-CprConnectingPortalProbe -VpnState $state }
         Write-Log "VPN in intermediate state: $state (will force disconnect after ${VpnIntermediateMaxWait}s if still stuck)" "WARN"
       }
       
@@ -694,6 +722,14 @@ function Invoke-GatedNwCheck {
         $vpnState = $KnownVpnState
         if ([string]::IsNullOrEmpty($vpnState)) { $vpnState = Get-VpnStateStable -TimeoutSec $VpnStateMaxWaitSeconds }
         $script:LastVpnState = $vpnState; $script:LastVpnStateAt = Get-Date
+        # Non-always-on: while Secure Client waits on browser auth the state reads Connecting, yet the client is NOT
+        # blocking the network. A short probe here is the only way to learn the portal url/fqdn/port/protocol, so
+        # try it (record-only: this function never opens a browser). HostScan holds were already handled by the caller.
+        if ($vpnState -in @('Connecting', 'Reconnecting') -and ($null -eq $PreflightProbeWhileConnecting -or $PreflightProbeWhileConnecting)) {
+            $connTimeout = if ([int]$PreflightConnectingTimeoutMs -gt 0) { [int]$PreflightConnectingTimeoutMs } else { 3000 }
+            Write-Log "Preflight probing despite VPN state '$vpnState' (timeout ${connTimeout}ms) - portal may be pending browser auth" "INFO"
+            return (Get-NwCheckResult -Url $Url -TimeoutMs $connTimeout)
+        }
         if ($vpnState -notin @('Connected', 'Disconnected')) {
             Write-Log "Preflight skipped: VPN state '$vpnState' blocks all traffic - probe would always fail" "WARN"
             $skip = [PSCustomObject]@{
