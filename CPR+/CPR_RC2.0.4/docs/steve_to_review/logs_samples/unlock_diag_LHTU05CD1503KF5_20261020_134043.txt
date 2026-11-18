@@ -1,0 +1,179 @@
+
+=== when ===
+now=2026-10-20T13:40:43.3931882-04:00 host=LHTU05CD1503KF5 user=shorto39
+
+=== unlock_probe.txt (one line per unlock the probe saw) ===
+Tue 10/20/2026 13:08:05.83 
+Tue 10/20/2026 13:10:43.20 
+Tue 10/20/2026 13:38:36.50 
+Tue 10/20/2026 13:39:14.61
+
+=== probe cleanup ===
+ZZ_unlock_probe removed
+
+=== CPR tasks ===
+
+TaskPath TaskName                  State
+-------- --------                  -----
+\CPR\    HayStack_Monitor          Ready
+\CPR\    WW_cap_portal_runner      Ready
+\CPR\    WW_cap_portal_runner_base Ready
+\CPR\    WW_flaregun_system        Ready
+\CPR\    WW_flaregun_user          Ready
+\CPR\    WW_main                   Ready
+\CPR\    WW_notify                 Ready
+\CPR\    WW_xml_vault              Ready
+
+=== WW_main triggers at \CPR\ ===
+MSFT_TaskEventTrigger enabled=True state_change= user=
+MSFT_TaskEventTrigger enabled=True state_change= user=
+MSFT_TaskEventTrigger enabled=True state_change= user=
+MSFT_TaskEventTrigger enabled=True state_change= user=
+MSFT_TaskSessionStateChangeTrigger enabled=True state_change=8 user=
+
+=== WW_main task info at \CPR\ ===
+
+LastRunTime           LastTaskResult NextRunTime
+-----------           -------------- -----------
+10/20/2026 1:39:39 PM              0
+
+=== TaskScheduler events (WW_main / probe), last 45 min ===
+13:07:39 id=106 User "SYSTEM" registered Task Scheduler task "\CPR\ZZ_unlock_probe"
+13:07:39 id=140 User "SYSTEM" updated Task Scheduler task "\CPR\ZZ_unlock_probe"
+13:08:05 id=129 Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe" with process ID 28488.
+13:08:05 id=100 Task Scheduler started "{I}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+13:08:05 id=200 Task Scheduler launched action "conhost.exe" in instance "{I}" of task "\CPR\WW_main".
+13:08:05 id=129 Task Scheduler launch task "\CPR\ZZ_unlock_probe" , instance "cmd.exe" with process ID 6540.
+13:08:05 id=100 Task Scheduler started "{I}" instance of the "\CPR\ZZ_unlock_probe" task for user "NT AUTHORITY\SYSTEM".
+13:08:05 id=200 Task Scheduler launched action "cmd.exe" in instance "{I}" of task "\CPR\ZZ_unlock_probe".
+13:08:05 id=201 Task Scheduler successfully completed task "\CPR\ZZ_unlock_probe" , instance "{I}" , action "cmd.exe" with return code 0
+13:08:05 id=102 Task Scheduler successfully finished "{I}" instance of the "\CPR\ZZ_unlock_probe" task for user "NT AUTHORITY\SYSTEM".
+13:08:29 id=201 Task Scheduler successfully completed task "\CPR\WW_main" , instance "{I}" , action "conhost.exe" with return code 0.
+13:08:29 id=102 Task Scheduler successfully finished "{I}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+13:10:43 id=129 Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe" with process ID 13116.
+13:10:43 id=100 Task Scheduler started "{I}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+13:10:43 id=200 Task Scheduler launched action "conhost.exe" in instance "{I}" of task "\CPR\WW_main".
+13:10:43 id=129 Task Scheduler launch task "\CPR\ZZ_unlock_probe" , instance "cmd.exe" with process ID 17268.
+13:10:43 id=100 Task Scheduler started "{I}" instance of the "\CPR\ZZ_unlock_probe" task for user "NT AUTHORITY\SYSTEM".
+13:10:43 id=200 Task Scheduler launched action "cmd.exe" in instance "{I}" of task "\CPR\ZZ_unlock_probe".
+13:10:43 id=201 Task Scheduler successfully completed task "\CPR\ZZ_unlock_probe" , instance "{I}" , action "cmd.exe" with return code 0
+13:10:43 id=102 Task Scheduler successfully finished "{I}" instance of the "\CPR\ZZ_unlock_probe" task for user "NT AUTHORITY\SYSTEM".
+13:11:03 id=201 Task Scheduler successfully completed task "\CPR\WW_main" , instance "{I}" , action "conhost.exe" with return code 0.
+13:11:03 id=102 Task Scheduler successfully finished "{I}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+13:19:56 id=141 User "MS\shorto39" deleted Task Scheduler task "\CPR\WW_main"
+13:37:56 id=106 User "MS\shorto39" registered Task Scheduler task "\CPR\WW_main"
+13:37:56 id=140 User "MS\shorto39" updated Task Scheduler task "\CPR\WW_main"
+13:38:36 id=129 Task Scheduler launch task "\CPR\ZZ_unlock_probe" , instance "cmd.exe" with process ID 22812.
+13:38:36 id=100 Task Scheduler started "{I}" instance of the "\CPR\ZZ_unlock_probe" task for user "NT AUTHORITY\SYSTEM".
+13:38:36 id=200 Task Scheduler launched action "cmd.exe" in instance "{I}" of task "\CPR\ZZ_unlock_probe".
+13:38:36 id=129 Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe" with process ID 21928.
+13:38:36 id=100 Task Scheduler started "{I}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+13:38:36 id=200 Task Scheduler launched action "conhost.exe" in instance "{I}" of task "\CPR\WW_main".
+13:38:36 id=201 Task Scheduler successfully completed task "\CPR\ZZ_unlock_probe" , instance "{I}" , action "cmd.exe" with return code 0
+13:38:36 id=102 Task Scheduler successfully finished "{I}" instance of the "\CPR\ZZ_unlock_probe" task for user "NT AUTHORITY\SYSTEM".
+13:39:05 id=201 Task Scheduler successfully completed task "\CPR\WW_main" , instance "{I}" , action "conhost.exe" with return code 0.
+13:39:05 id=102 Task Scheduler successfully finished "{I}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+13:39:14 id=129 Task Scheduler launch task "\CPR\ZZ_unlock_probe" , instance "cmd.exe" with process ID 26536.
+13:39:14 id=100 Task Scheduler started "{I}" instance of the "\CPR\ZZ_unlock_probe" task for user "NT AUTHORITY\SYSTEM".
+13:39:14 id=200 Task Scheduler launched action "cmd.exe" in instance "{I}" of task "\CPR\ZZ_unlock_probe".
+13:39:14 id=129 Task Scheduler launch task "\CPR\WW_main" , instance "conhost.exe" with process ID 21544.
+13:39:14 id=100 Task Scheduler started "{I}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+13:39:14 id=200 Task Scheduler launched action "conhost.exe" in instance "{I}" of task "\CPR\WW_main".
+13:39:14 id=201 Task Scheduler successfully completed task "\CPR\ZZ_unlock_probe" , instance "{I}" , action "cmd.exe" with return code 0
+13:39:14 id=102 Task Scheduler successfully finished "{I}" instance of the "\CPR\ZZ_unlock_probe" task for user "NT AUTHORITY\SYSTEM".
+13:39:31 id=201 Task Scheduler successfully completed task "\CPR\WW_main" , instance "{I}" , action "conhost.exe" with return code 0.
+13:39:31 id=102 Task Scheduler successfully finished "{I}" instance of the "\CPR\WW_main" task for user "NT AUTHORITY\SYSTEM".
+13:40:51 id=141 User "MS\shorto39" deleted Task Scheduler task "\CPR\ZZ_unlock_probe"
+
+=== WW_main register/update/delete history, last 12h ===
+03:29:26 id=141 User "NT AUTHORITY\System" deleted Task Scheduler task "\WW_main"
+03:29:28 id=106 User "MS\LHTU05CD1503KF5$" registered Task Scheduler task "\WW_main"
+03:29:28 id=140 User "MS\LHTU05CD1503KF5$" updated Task Scheduler task "\WW_main"
+03:54:52 id=141 User "NT AUTHORITY\System" deleted Task Scheduler task "\WW_main"
+03:54:54 id=106 User "MS\LHTU05CD1503KF5$" registered Task Scheduler task "\WW_main"
+03:54:54 id=140 User "MS\LHTU05CD1503KF5$" updated Task Scheduler task "\WW_main"
+04:54:24 id=141 User "NT AUTHORITY\System" deleted Task Scheduler task "\WW_main"
+04:54:48 id=106 User "MS\LHTU05CD1503KF5$" registered Task Scheduler task "\CPR\WW_main"
+04:54:48 id=140 User "MS\LHTU05CD1503KF5$" updated Task Scheduler task "\CPR\WW_main"
+12:42:39 id=141 User "NT AUTHORITY\System" deleted Task Scheduler task "\CPR\WW_main"
+12:42:42 id=106 User "MS\LHTU05CD1503KF5$" registered Task Scheduler task "\CPR\WW_main"
+12:42:42 id=140 User "MS\LHTU05CD1503KF5$" updated Task Scheduler task "\CPR\WW_main"
+13:19:56 id=141 User "MS\shorto39" deleted Task Scheduler task "\CPR\WW_main"
+13:37:56 id=106 User "MS\shorto39" registered Task Scheduler task "\CPR\WW_main"
+13:37:56 id=140 User "MS\shorto39" updated Task Scheduler task "\CPR\WW_main"
+
+=== main log: recent run boundaries ===
+RUN START  White Walker v3.14.0_RC2.1.0
+2026-10-20 13:38:50.833 -04:00 [WW] [INFO] early_vpn_gate state='Connected' has_ip=True acted=False reason='no_action'
+2026-10-20 13:38:57.581 -04:00 [WW] [INFO] VPN Connected at run start (flavor=user_tun) - skipping preflight and captive-portal checks
+2026-10-20 13:38:59.604 -04:00 [WW] [DEBUG] maintenance_stage begin exit_reason='vpn_connected:user_tun' offline=False
+2026-10-20 13:39:05.150 -04:00 [WW] [INFO] phase_timing phase='maintenance_stage' elapsed_ms=5545
+RUN END    run_id=20261020133838825-12556 exit_reason="vpn_connected:user_tun"
+RUN START  White Walker v3.14.0_RC2.1.0
+2026-10-20 13:39:24.002 -04:00 [WW] [INFO] early_vpn_gate state='Connected' has_ip=True acted=False reason='no_action'
+2026-10-20 13:39:31.009 -04:00 [WW] [INFO] VPN Connected at run start (flavor=user_tun) - skipping preflight and captive-portal checks
+2026-10-20 13:39:31.502 -04:00 [WW] [DEBUG] maintenance_stage begin exit_reason='vpn_connected:user_tun' offline=False
+2026-10-20 13:39:31.679 -04:00 [WW] [INFO] phase_timing phase='maintenance_stage' elapsed_ms=178
+RUN END    run_id=20261020133916643-23536 exit_reason="vpn_connected:user_tun"
+
+=== main log tail (60 lines) ===
+2026-10-20 13:39:17.839 -04:00 [WW] [INFO] phase_timing phase='startup_bootstrap' elapsed_ms=535 startup_elapsed_ms=535
+2026-10-20 13:39:17.843 -04:00 [WW] [INFO] CiscoPath=C:\Program Files (x86)\Cisco\Cisco Secure Client
+2026-10-20 13:39:17.844 -04:00 [WW] [INFO] vpncli=C:\Program Files (x86)\Cisco\Cisco Secure Client\vpncli.exe
+2026-10-20 13:39:17.846 -04:00 [WW] [INFO] posturecli=C:\Program Files (x86)\Cisco\Cisco Secure Client\posturecli.exe
+2026-10-20 13:39:17.848 -04:00 [WW] [INFO] CPR+ v3.14.0_RC2.1.0 starting...
+2026-10-20 13:39:17.864 -04:00 [WW] [DEBUG] Flag file present but fresh (age: 1min): network_interrupt.flag
+2026-10-20 13:39:17.867 -04:00 [WW] [DEBUG] No stale flag files found
+2026-10-20 13:39:17.874 -04:00 [WW] [DEBUG] Network interrupt flag set for any active instances
+2026-10-20 13:39:19.378 -04:00 [WW] [DEBUG] WiFi SSID detected on 'Wi-Fi': cia_van
+2026-10-20 13:39:19.812 -04:00 [WW] [DEBUG] DHCP lease on Wi-Fi: 86400s (obtained Tuesday, October 20, 2026 12:44:40 PM, expires Wednesday, October 21, 2026 12:44:40 PM)
+2026-10-20 13:39:19.907 -04:00 [WW] [INFO] phase_timing phase='network_context_snapshot' elapsed_ms=2015 adapter_ip_gateway_ms=1909 ssid_discovery_ms=106 adapter_count=1 adapter_enumeration_ms=747 ip_address_ms=57 gateway_ms=4 dns_ms=329 lease_ms=49
+2026-10-20 13:39:23.473 -04:00 [WW] [DEBUG] Truncated very long vpncli output for parsing
+2026-10-20 13:39:23.481 -04:00 [WW] [DEBUG] VPN state from >> state: line: Connected
+2026-10-20 13:39:23.485 -04:00 [WW] [DEBUG] User tunnel active (management disconnected)
+2026-10-20 13:39:23.992 -04:00 [WW] [DEBUG] No recent wake from sleep detected in last 120s
+2026-10-20 13:39:24.002 -04:00 [WW] [INFO] early_vpn_gate state='Connected' has_ip=True acted=False reason='no_action'
+2026-10-20 13:39:24.007 -04:00 [WW] [INFO] === Network Information ===
+2026-10-20 13:39:24.008 -04:00 [WW] [INFO]   Connection Type: WiFi
+2026-10-20 13:39:24.011 -04:00 [WW] [INFO]   Interface: Wi-Fi
+2026-10-20 13:39:24.012 -04:00 [WW] [INFO]   SSID: cia_van
+2026-10-20 13:39:24.016 -04:00 [WW] [INFO]   IP Address: 10.10.69.217/24
+2026-10-20 13:39:24.017 -04:00 [WW] [INFO]   Default Gateway: 10.10.69.1
+2026-10-20 13:39:24.020 -04:00 [WW] [INFO]   MAC Address: F4-A4-75-A8-95-2B
+2026-10-20 13:39:24.026 -04:00 [WW] [INFO]   DNS Servers: 10.10.69.1
+2026-10-20 13:39:24.031 -04:00 [WW] [INFO]   Connection-Specific Suffix: horton.lan
+2026-10-20 13:39:24.034 -04:00 [WW] [INFO]   Lease Obtained. . . . . . . . . . : Tuesday, October 20, 2026 12:44:40 PM
+2026-10-20 13:39:24.036 -04:00 [WW] [INFO]   Lease Expires . . . . . . . . . . : Wednesday, October 21, 2026 12:44:40 PM
+2026-10-20 13:39:24.037 -04:00 [WW] [INFO]   Lease Duration (seconds). . . . . : 86400
+2026-10-20 13:39:24.040 -04:00 [WW] [INFO]   DNS Suffixes: horton.lan, uhc.com, ms.ds.uhc.com, ds.uhc.com
+2026-10-20 13:39:24.042 -04:00 [WW] [INFO]   Active adapters: 1
+2026-10-20 13:39:24.043 -04:00 [WW] [INFO]   Adapter: WiFi 'Wi-Fi' ip=10.10.69.217/24 gw=10.10.69.1 mac=F4-A4-75-A8-95-2B suffix=horton.lan ssid=cia_van dns=10.10.69.1 lease_obtained='Tuesday, October 20, 2026 12:44:40 PM' lease_expires='Wednesday, October 21, 2026 12:44:40 PM' lease_sec=86400 [PRIMARY]
+2026-10-20 13:39:24.044 -04:00 [WW] [INFO] ===========================
+2026-10-20 13:39:24.052 -04:00 [WW] [DEBUG] MacRandState: MAC=F4-A4-75-A8-95-2B second-char='4' randomized=False
+2026-10-20 13:39:24.057 -04:00 [WW] [DEBUG]   MAC randomization: mode=disabled (value=0) - permanent MAC, portal-safe
+2026-10-20 13:39:24.059 -04:00 [WW] [INFO] Sleeping 3 seconds post-DHCP (DHCP settling - required before probing a fresh lease)...
+2026-10-20 13:39:31.006 -04:00 [WW] [DEBUG] User tunnel detected via 'Management Connection State: Disconnected (user tunnel active)'
+2026-10-20 13:39:31.009 -04:00 [WW] [INFO] VPN Connected at run start (flavor=user_tun) - skipping preflight and captive-portal checks
+2026-10-20 13:39:31.054 -04:00 [WW] [DEBUG] maintenance_step name='handback' elapsed_ms=4
+2026-10-20 13:39:31.058 -04:00 [WW] [DEBUG] Blackhole: disabled - already cleared (marker present) - skipping -rm
+2026-10-20 13:39:31.060 -04:00 [WW] [DEBUG] maintenance_step name='blackhole_startup' elapsed_ms=5
+2026-10-20 13:39:31.297 -04:00 [WW] [DEBUG] WW_tee: queued 'network_state' -> action="network_state" machine="LHTU05CD1503KF5" user="MS\shorto39" EvtTime="2026-10-20T13:39:31.2481997-04:00" connection_type="WiFi" lease_sec="86400" gw="10.10.69.1" ip="10.10.69.217" ssid="cia_van" vpn_state="Connected" dns="10.10.69.1"
+2026-10-20 13:39:31.311 -04:00 [WW] [WARN] FlareEvent suppressed (cooldown 1m): user_tun
+2026-10-20 13:39:31.486 -04:00 [WW] [DEBUG] WW_tee: queued 'flare_suppressed' -> action="flare_suppressed" machine="LHTU05CD1503KF5" user="MS\shorto39" EvtTime="2026-10-20T13:39:31.3255868-04:00" vpn_state="" dispatch_method="" reason="cooldown" event_id="" ssid="cia_van" status="suppressed" context="" flare_tag="user_tun"
+2026-10-20 13:39:31.488 -04:00 [WW] [DEBUG] FlareTelemetry: tee 'flare_suppressed' for 'user_tun' queued=True reason=queued
+2026-10-20 13:39:31.502 -04:00 [WW] [DEBUG] maintenance_stage begin exit_reason='vpn_connected:user_tun' offline=False
+2026-10-20 13:39:31.511 -04:00 [WW] [DEBUG] BlackholeShutdown: task not present (disabled) - OK
+2026-10-20 13:39:31.513 -04:00 [WW] [DEBUG] maintenance_step name='blackhole_task_sync' elapsed_ms=13
+2026-10-20 13:39:31.515 -04:00 [WW] [INFO] HayStack: enabled - invoking reroll check
+2026-10-20 13:39:31.588 -04:00 [WW] [DEBUG] maintenance_step name='haystack' elapsed_ms=74
+2026-10-20 13:39:31.593 -04:00 [WW] [DEBUG] XmlVault: task already registered - OK
+2026-10-20 13:39:31.595 -04:00 [WW] [DEBUG] maintenance_step name='xmlvault_task_sync' elapsed_ms=8
+2026-10-20 13:39:31.620 -04:00 [WW] [DEBUG] OnPremSuffix: non-corp suffix 'horton.lan' present - off-prem
+2026-10-20 13:39:31.634 -04:00 [WW] [DEBUG] maintenance_step name='self_update' elapsed_ms=38
+2026-10-20 13:39:31.637 -04:00 [WW] [INFO] XmlVault: enabled - invoking startup sync
+2026-10-20 13:39:31.676 -04:00 [WW] [DEBUG] maintenance_step name='xmlvault' elapsed_ms=42
+2026-10-20 13:39:31.679 -04:00 [WW] [INFO] phase_timing phase='maintenance_stage' elapsed_ms=178
+2026-10-20 13:39:31.689 -04:00 [WW] [DEBUG] SSID cache updated: cia_van
+--------------------------------------------------------------------------------
+RUN END    run_id=20261020133916643-23536 exit_reason="vpn_connected:user_tun"
+

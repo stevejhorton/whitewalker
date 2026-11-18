@@ -1,0 +1,43 @@
+CPR+ — Captive Portal Remediation Tool
+"Reducing user connection frustration, and support blind spots"
+
+• VPN Blackholing
+   – Prevents VPN hairpinning / improves user experience / drives tickets down
+   – Sinkholes VPN access when confirmed on-prem
+   – Fully supports exception GG membership checks with each on_prem connection
+
+• Connection state "Flare" Generation
+   – As connection state changes, informs Ivanti EM (on_prem,user_tun,etc)
+   – Can be leverged by Ivanti to drive other automations
+
+• Haystack Event Monitor
+   – Reactive Windows Event Log "needle" watcher (no polling loop)
+   – Instant signal detection with near-zero CPU footprint
+   – Supports local + domain shared needle files
+   – Auto rebuilds task schdlr jobs
+   – Auto syncs logs collected while device offline (helpful for captive portal events encountered while users was disconnected)
+
+• Splunk-Ready Telemetry
+   – Structured logs via Syslog, feed dashboards directly from endpoints
+   – Real-time global visibility into remote access health
+   – Global reporting triggered from one location
+
+• XmlVault Backup & Sync
+   – Syncs VPN profile XMLs from NETLOGON to a local vault
+   – Auto-restores on "island" detection — self-heals with a simple flagfile creation
+
+• Auto ISE Rescanning
+   – Detects posture/ACL redirects and re-triggers compliance scans automatically
+   – Eliminates the "stuck unpostured on-prem" loop
+
+• Captive Portal Handling
+   – Monitors, logs, and intervenes automatically ONLY if needed
+   – Launches portal in user context, verifies auth, notifies user with one-click retry on timeout
+   – Informs users of issues and status
+   – Automates complex workflows so users don't need to
+
+By the Numbers
+• ~500,000 endpoints protected
+• 97.4% automated test pass rate
+
+CPR+ · Global Remote Access · NSIS Employee Connectivity · Developed by the VPN Team (With input/testing/validation from countless other Optum teams!!)

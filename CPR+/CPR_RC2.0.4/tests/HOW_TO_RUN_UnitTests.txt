@@ -1,0 +1,14 @@
+# Install Pester if not already installed
+Install-Module -Name Pester -Force -SkipPublisherCheck
+
+# Run all tests
+Invoke-Pester -Path .\WW.Tests.ps1
+
+# Run with detailed output
+Invoke-Pester -Path .\WW.Tests.ps1 -Output Detailed
+
+# Run specific test
+Invoke-Pester -Path .\WW.Tests.ps1 -FullNameFilter "*ISE Employee*"
+
+# Generate code coverage report
+Invoke-Pester -Path .\WW.Tests.ps1 -CodeCoverage .\WW_main.ps1
