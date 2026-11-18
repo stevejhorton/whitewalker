@@ -141,6 +141,8 @@ Actions: `ise_posture_redirect`, `ise_posture_compliant`,
 
 * `vpn_disconnect_forced`: common fields plus `reason` and `vpn_state_was`
 (the previous VPN state).
+* `zpa_detected`: common fields plus `gw_host`, `resolved_ip`, `matched_net`, `ssid`, `connection_type`, `ssid_trusted`, `resulting_state`.
+Written (L1) when DC is reachable with no VPN and the preflight host resolves into a `$ZpaNetworks` range (Zscaler ZPA). `resulting_state` is what CPR decided anyway (`on_prem` or `off_prem_no_vpn`); ZPA never changes it.
 * `vpn_profile_missing`: common fields; no action-specific fields.
 * `network_state`: common fields plus `ip`, `gw`, `dns`, `ssid`, `connection_type`, `vpn_state`,
 and `lease_sec` (DHCP lease duration in seconds).

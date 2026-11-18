@@ -743,3 +743,11 @@ first Connecting/Reconnecting sighting in a run does one short (PreflightConnect
 gateway probe (Invoke-CprConnectingPortalProbe) and writes cap_portal_redirect with
 detection_source=connecting_probe (url, fqdn, port, protocol).  It never opens a browser or cuts the VPN,
 in any runner mode.  PreflightProbeWhileConnecting=$false turns it off.  Log marker: "connecting_probe".
+
+ZSCALER ZPA AWARENESS (RC2.0.4)
+ZPA leaves no trace in the network info, but with ZPA active gateway.optum.com resolves into the ZPA address
+pool.  When DC is reachable with no VPN, CPR resolves the preflight host once (bounded, $ZpaResolveTimeoutMs) and,
+if the answer falls in any $ZpaNetworks CIDR (default 100.64.0.0/10), writes one L1 tee row, zpa_detected
+(resolved_ip, matched_net, ssid, connection_type, ssid_trusted, resulting_state).  Telemetry only: the on_prem /
+off_prem_no_vpn decision and flares are unchanged (an untrusted SSID still becomes off_prem_no_vpn; wired still
+becomes on_prem).  $ZpaDetectEnabled=$false turns it off; add ranges to $ZpaNetworks if the ZPA pool grows.

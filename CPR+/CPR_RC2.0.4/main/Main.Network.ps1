@@ -1584,6 +1584,67 @@ function Test-CprGatewayReachable {
     }
 }
 
+function Test-CprIpInCidr {
+    # IPv4 only. Returns $false on anything malformed. PS 5.1 compatible.
+    param([string]$Ip, [string]$Cidr)
+    try {
+        $parts = $Cidr -split '/'
+        if ($parts.Count -ne 2) { return $false }
+        $bits = [int]$parts[1]
+        if ($bits -lt 0 -or $bits -gt 32) { return $false }
+        $a = [System.Net.IPAddress]::Parse($Ip).GetAddressBytes()
+        $n = [System.Net.IPAddress]::Parse($parts[0]).GetAddressBytes()
+        if ($a.Length -ne 4 -or $n.Length -ne 4) { return $false }
+        $full = [math]::Floor($bits / 8); $rem = $bits % 8
+        for ($i = 0; $i -lt $full; $i++) { if ($a[$i] -ne $n[$i]) { return $false } }
+        if ($rem -gt 0) {
+            $mask = (0xFF -shl (8 - $rem)) -band 0xFF
+            if (($a[$full] -band $mask) -ne ($n[$full] -band $mask)) { return $false }
+        }
+        return $true
+    } catch { return $false }
+}
+
+function Get-CprZpaSignal {
+    # Resolves the preflight host and checks the answer against $ZpaNetworks. Bounded, never throws.
+    # Returns @{ Zpa; ResolvedIp; MatchedNet; Host }.
+    param([string]$HostName, [string[]]$Networks, [int]$TimeoutMs = 1500)
+    $r = [pscustomobject]@{ Zpa = $false; ResolvedIp = ''; MatchedNet = ''; Host = $HostName }
+    try {
+        if ([string]::IsNullOrWhiteSpace($HostName) -or -not $Networks) { return $r }
+        $task = [System.Net.Dns]::GetHostAddressesAsync($HostName)
+        if (-not $task.Wait($TimeoutMs)) { return $r }
+        $ips = @($task.Result | Where-Object { $_.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork } | ForEach-Object { $_.ToString() })
+        $r.ResolvedIp = ($ips -join ',')
+        foreach ($ip in $ips) {
+            foreach ($net in $Networks) {
+                if (Test-CprIpInCidr -Ip $ip -Cidr $net) { $r.Zpa = $true; $r.MatchedNet = $net; return $r }
+            }
+        }
+    } catch { }
+    return $r
+}
+
+function Write-CprZpaSignal {
+    # Called where DC is reachable with no VPN. One tee row when the preflight host resolves into the ZPA pool.
+    param([object]$NetworkInfo, [string]$SsidTrusted = '', [string]$ResultingState = '')
+    if (-not $ZpaDetectEnabled) { return }
+    try {
+        $hostName = ''
+        try { $hostName = ([System.Uri]$NewPreflightURL).Host } catch { }
+        $z = Get-CprZpaSignal -HostName $hostName -Networks @($ZpaNetworks) -TimeoutMs $ZpaResolveTimeoutMs
+        if (-not $z.Zpa) { return }
+        $ct = ''
+        try { $ct = [string]$NetworkInfo.ConnectionType } catch { }
+        Write-Log ("zpa_detected host='{0}' resolved='{1}' net='{2}' ssid_trusted='{3}' resulting_state='{4}'" -f $z.Host, $z.ResolvedIp, $z.MatchedNet, $SsidTrusted, $ResultingState) "INFO"
+        Write-TeeLog 'zpa_detected' @{
+            gw_host = $z.Host; resolved_ip = $z.ResolvedIp; matched_net = $z.MatchedNet
+            ssid = ConvertTo-TelemetryValue $NetworkInfo.SSID; connection_type = $ct
+            ssid_trusted = $SsidTrusted; resulting_state = $ResultingState
+        }
+    } catch { Write-Log "zpa_detected error: $_" "DEBUG" }
+}
+
 function Test-CprDnsResolvable {
     # Cheap name-resolution signal for the authoritative preflight host.
     param([string]$HostName, [int]$TimeoutMs = 1500)

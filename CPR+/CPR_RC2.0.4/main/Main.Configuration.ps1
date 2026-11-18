@@ -432,6 +432,12 @@ $TestDC_DiagnosticMode  = $false   # $true = full verbose suffix classification 
 # Tier 2: trusted_ssids.cfg from NETLOGON - checked only when Tier 1 misses
 # Wired (Ethernet) connections bypass SSID check entirely.
 $HardcodedTrustedSsids       = @('WLANi03')   # fast path - no file I/O
+
+# Zscaler ZPA awareness (RC2.0.4). ZPA leaves no trace in the network info, but with ZPA active the preflight host
+# resolves into the ZPA address pool. Telemetry only: no state, flare or policy changes. Add ranges here if the ZPA pool grows.
+$ZpaDetectEnabled   = $true
+$ZpaNetworks        = @('100.64.0.0/10')   # IPv4 CIDRs assigned to ZPA (consumer: MAIN, Get-CprZpaSignal)
+$ZpaResolveTimeoutMs = 1500
 $TrustedSsidEnabled          = $true           # set $false to bypass SSID check entirely
 $TrustedSsidSyncEnabled      = $true           # set $false to disable NETLOGON sync
 $TrustedSsidSyncCooldownHours = 4              # min hours between NETLOGON syncs

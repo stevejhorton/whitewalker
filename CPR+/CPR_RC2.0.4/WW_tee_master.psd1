@@ -165,6 +165,13 @@
                     # expired, wake-from-sleep intermediate-state timeout, etc.)
                 }
 
+                zpa_detected = @{
+                    action = 'zpa_detected'
+                    fields = @('gw_host','resolved_ip','matched_net','ssid','connection_type','ssid_trusted','resulting_state')
+                    # Fires when: DC reachable, no VPN, and the preflight host resolves into a $ZpaNetworks range (Zscaler ZPA active).
+                    # Telemetry only; the on_prem / off_prem_no_vpn decision is unchanged.
+                }
+
                 vpn_connected_triage = @{
                     action = 'vpn_connected_triage'
                     fields = @('outcome','dc_reachable','preflight','vpn_state','waited_ms','wake','jump')

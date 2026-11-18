@@ -64,6 +64,8 @@ index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="ise_posture_co
 index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="ise_posture_failed" | table EvtTime,action,machine,user,reason | dedup EvtTime | sort - EvtTime
 ```
 ```spl
+index=cba_cpr_logging NOT "send string" action="zpa_detected" | table EvtTime,machine,user,ssid,connection_type,ssid_trusted,resolved_ip,matched_net,resulting_state | dedup machine
+
 index=cba_cpr_logging NOT "send string" machine=<MACHINE> action="vpn_disconnect_forced" | table EvtTime,action,machine,user,reason,vpn_state_was | dedup EvtTime | sort - EvtTime
 ```
 ```spl
