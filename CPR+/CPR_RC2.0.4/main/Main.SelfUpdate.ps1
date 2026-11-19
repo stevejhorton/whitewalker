@@ -125,7 +125,18 @@ function Invoke-SelfUpdate {
     $lastState = $telemetryNetworkState
 
     $goodStates = @("on_prem","user_tun","mgmt_tun")
-    if ($goodStates -notcontains $lastState) {
+    # RC2.0.4: DC reachable with no VPN (ZPA etc.) counts as reachable while that state is fresh (60 min).
+    $dcNoVpnOk = $false
+    try {
+        if ($lastState -eq 'off_prem_no_vpn' -and (Test-Path $StateFile)) {
+            $dcs = Get-Content $StateFile -Raw | ConvertFrom-Json
+            if ($dcs.dcReachableNoVpn -eq $true -and $dcs.currentStateTime) {
+                $dcAge = ((Get-Date) - [datetime]$dcs.currentStateTime).TotalMinutes
+                $dcNoVpnOk = ($dcAge -ge 0 -and $dcAge -le 60)
+            }
+        }
+    } catch { }
+    if ($goodStates -notcontains $lastState -and -not $dcNoVpnOk) {
         Write-Log "SelfUpdate: $channel flag found but network state is '$lastState' - share likely unreachable. Will retry when on-prem or VPN." "WARN"
         Write-TeeLog 'cpr_self_update_failed' @{
             channel       = $channel

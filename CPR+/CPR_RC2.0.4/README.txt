@@ -751,3 +751,11 @@ if the answer falls in any $ZpaNetworks CIDR (default 100.64.0.0/10), writes one
 (resolved_ip, matched_net, ssid, connection_type, ssid_trusted, resulting_state).  Telemetry only: the on_prem /
 off_prem_no_vpn decision and flares are unchanged (an untrusted SSID still becomes off_prem_no_vpn; wired still
 becomes on_prem).  $ZpaDetectEnabled=$false turns it off; add ranges to $ZpaNetworks if the ZPA pool grows.
+
+DC REACHABLE, NO VPN = REACHABLE (RC2.0.4)
+The HayStack drain and self-update used to run only when currentState was on_prem / user_tun / mgmt_tun.  A box
+with DC access but no VPN (Zscaler ZPA, or an untrusted SSID that still reaches the DC) is classified
+off_prem_no_vpn, so its logs queued and it never self-updated.  Now, when a run takes the DC-reachable no-VPN
+branch, state.json also records dcReachableNoVpn=true on that state.  The drain gate (Test-SyslogReachable) and the
+self-update gate treat off_prem_no_vpn + dcReachableNoVpn as reachable for 60 minutes after currentStateTime.
+currentState, the flares and the on_prem / off_prem_no_vpn decision are unchanged.

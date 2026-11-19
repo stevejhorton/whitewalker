@@ -127,6 +127,11 @@ function Set-FlareStamp([string]$key) {
     }
     $global:_state.currentState     = $key
     $global:_state.currentStateTime = (Get-Date).ToString('o')
+    # RC2.0.4: DC reachable with no VPN (ZPA and the like): the share and Splunk are reachable even though the state
+    # is not on_prem / a tunnel. Readers (HayStack drain, self-update) honor this while the state is fresh.
+    $dcNoVpn = (($key -eq 'on_prem' -or $key -eq 'off_prem_no_vpn') -and ($script:DcReachableNoVpn -eq $true))
+    if ($global:_state.PSObject.Properties.Name -contains 'dcReachableNoVpn') { $global:_state.dcReachableNoVpn = $dcNoVpn }
+    else { $global:_state | Add-Member -NotePropertyName dcReachableNoVpn -NotePropertyValue $dcNoVpn -Force }
     Write-Log "State: currentState updated to '$key'" "DEBUG"
   }
 

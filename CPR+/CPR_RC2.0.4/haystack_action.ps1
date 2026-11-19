@@ -171,7 +171,19 @@ function Test-SyslogReachable {
     # Anything else = off-prem / captive portal = cache the hit.
     $state = Get-CurrentNetworkState
     $reachableStates = @("on_prem","user_tun","mgmt_tun")
-    return ($reachableStates -contains $state)
+    if ($reachableStates -contains $state) { return $true }
+    # RC2.0.4: DC reachable with no VPN (Zscaler ZPA etc.) is recorded by WW_main as dcReachableNoVpn on an
+    # off_prem_no_vpn state; the share and syslog are reachable then. Honored for 60 minutes after the state was set.
+    try {
+        if ($state -eq 'off_prem_no_vpn' -and (Test-Path $WwStateFile)) {
+            $s = Get-Content $WwStateFile -Raw -ErrorAction Stop | ConvertFrom-Json
+            if ($s.dcReachableNoVpn -eq $true -and $s.currentStateTime) {
+                $age = ((Get-Date) - [datetime]$s.currentStateTime).TotalMinutes
+                if ($age -ge 0 -and $age -le 60) { return $true }
+            }
+        }
+    } catch { }
+    return $false
 }
 
 function Write-SyslogQueue {

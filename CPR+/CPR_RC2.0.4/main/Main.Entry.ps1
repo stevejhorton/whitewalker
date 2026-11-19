@@ -591,6 +591,7 @@ function Invoke-WhiteWalkerMain {
                             # Protects against: off-prem VPN + ISP hands out no suffix
                             # (VPN pushes corp-only suffixes making DC check look on-prem).
                             $ssidTrusted = Test-SsidTrusted -NetworkInfo $networkInfo
+                            $script:DcReachableNoVpn = $true
                             Write-CprZpaSignal -NetworkInfo $networkInfo -SsidTrusted "$([bool]$ssidTrusted)" `
                                 -ResultingState $(if ($ssidTrusted) { 'on_prem' } else { 'off_prem_no_vpn' })
                             if ($ssidTrusted) {
@@ -903,6 +904,7 @@ function Invoke-WhiteWalkerMain {
                                 } else {
                                     $dcOK = Test-DC -hostname $DC_FQDN
                                     if ($dcOK) {
+                                        $script:DcReachableNoVpn = $true
                                         Write-CprZpaSignal -NetworkInfo $networkInfo -ResultingState 'on_prem'
                                         Send-FlareEvent 'on_prem'
                                         Clear-CaptiveEventHistory "on-premises connection"
