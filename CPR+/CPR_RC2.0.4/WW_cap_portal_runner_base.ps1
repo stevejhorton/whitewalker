@@ -847,6 +847,62 @@ function Write-CaptivePortalEventToHayStack {
     }
 }
 
+function Get-BaseCapWlanEventSsid {
+    <#
+    .SYNOPSIS
+    RC2.0.4: SSID from the newest WLAN-AutoConfig event 8001 (connected) for this adapter GUID within MaxAgeSec, or
+    $null. 'netsh wlan show interfaces' can keep reporting the old SSID for a while after a roam; the event is written
+    at association. Mirror of Get-CprWlanConnectEvent in Main.Network.ps1 (this process shares no code with WW_main).
+    #>
+    param([string]$InterfaceGuid, [int]$MaxAgeSec = 900)
+    try {
+        $g = ([string]$InterfaceGuid).Trim().Trim('{}').ToLowerInvariant()
+        if (-not $g) { return $null }
+        $filter = @{ LogName = 'Microsoft-Windows-WLAN-AutoConfig/Operational'; Id = 8001; StartTime = (Get-Date).AddSeconds(-$MaxAgeSec) }
+        foreach ($e in @(Get-WinEvent -FilterHashtable $filter -MaxEvents 10 -ErrorAction Stop)) {
+            $xml = [string]$e.ToXml()
+            $m = [regex]::Match($xml, "<Data Name=['""]InterfaceGuid['""]>\{?([0-9a-fA-F-]+)\}?</Data>")
+            if (-not $m.Success -or $m.Groups[1].Value.ToLowerInvariant() -ne $g) { continue }
+            $sm = [regex]::Match($xml, "<Data Name=['""]SSID['""]>(.*?)</Data>")
+            if (-not $sm.Success) { continue }
+            return [pscustomobject]@{ Ssid = [System.Net.WebUtility]::HtmlDecode($sm.Groups[1].Value).Trim(); Time = [datetime]$e.TimeCreated }
+        }
+    } catch { }
+    return $null
+}
+
+function Test-BaseCapNetworkChanged {
+    <#
+    .SYNOPSIS
+    RC2.0.4: did the user leave the network the portal was detected on? Compares Main's dispatch context (ssid/gw at
+    detection) and this process's start context (ssid/gw/interface_guid) with the current context. Only non-empty
+    values on both sides count, so a lease that simply arrived late never reads as a change.
+    Returns @{ Changed; Reason; OldSsid; NewSsid; OldGw; NewGw }.
+    #>
+    param($DispatchContext, $StartContext, $CurrentContext)
+    $r = [pscustomobject]@{ Changed = $false; Reason = ''; OldSsid = ''; NewSsid = ''; OldGw = ''; NewGw = '' }
+    if ($null -eq $CurrentContext) { return $r }
+    $curSsid = [string]$CurrentContext.ssid; $curGw = [string]$CurrentContext.gw; $curGuid = [string]$CurrentContext.interface_guid
+    foreach ($base in @($DispatchContext, $StartContext)) {
+        if ($null -eq $base) { continue }
+        $oldGw = [string]$base.gw; $oldSsid = [string]$base.ssid
+        if (-not [string]::IsNullOrWhiteSpace($oldGw) -and -not [string]::IsNullOrWhiteSpace($curGw) -and $oldGw -ne $curGw) {
+            $r.Changed = $true; $r.Reason = 'gateway_changed'; $r.OldGw = $oldGw; $r.NewGw = $curGw; $r.OldSsid = $oldSsid; $r.NewSsid = $curSsid; return $r
+        }
+        if (-not [string]::IsNullOrWhiteSpace($oldSsid) -and -not [string]::IsNullOrWhiteSpace($curSsid) -and ($oldSsid -ine $curSsid)) {
+            $r.Changed = $true; $r.Reason = 'ssid_changed'; $r.OldGw = $oldGw; $r.NewGw = $curGw; $r.OldSsid = $oldSsid; $r.NewSsid = $curSsid; return $r
+        }
+    }
+    if ($null -ne $StartContext) {
+        $oldGuid = [string]$StartContext.interface_guid
+        if (-not [string]::IsNullOrWhiteSpace($oldGuid) -and -not [string]::IsNullOrWhiteSpace($curGuid) -and $oldGuid -ne $curGuid) {
+            $r.Changed = $true; $r.Reason = 'adapter_changed'; $r.OldGw = [string]$StartContext.gw; $r.NewGw = $curGw
+            $r.OldSsid = [string]$StartContext.ssid; $r.NewSsid = $curSsid
+        }
+    }
+    return $r
+}
+
 function Get-BaseCapNetworkContext {
     <#
     .SYNOPSIS
@@ -929,6 +985,13 @@ function Get-BaseCapNetworkContext {
             }
             if ([string]::IsNullOrWhiteSpace($ctx.ssid)) {
                 Write-BaseCapLog "No wireless SSID reported by netsh - ssid left empty" "DEBUG"
+            } elseif (-not [string]::IsNullOrWhiteSpace($ctx.interface_guid)) {
+                # RC2.0.4: netsh can lag after a roam - the newest 8001 for this adapter wins when it names a different SSID.
+                $evSsid = Get-BaseCapWlanEventSsid -InterfaceGuid $ctx.interface_guid
+                if ($evSsid -and -not [string]::IsNullOrWhiteSpace($evSsid.Ssid) -and $evSsid.Ssid -ne $ctx.ssid) {
+                    Write-BaseCapLog ("ssid_crosscheck netsh='{0}' event_8001='{1}' event_age_s={2} using='event_8001'" -f $ctx.ssid, $evSsid.Ssid, [math]::Round(((Get-Date) - $evSsid.Time).TotalSeconds)) "WARN"
+                    $ctx.ssid = $evSsid.Ssid
+                }
             }
         } catch {
             Write-BaseCapLog "Could not read SSID via netsh: $_ - ssid left empty" "DEBUG"
@@ -1890,6 +1953,7 @@ try {
     }
 
     $observed = $false
+    $networkChangedAbandon = $false
     $startTime = Get-Date
     $endTime = $startTime.AddSeconds($ObserveTimeoutSeconds)
     # Pre-start lookback: Cisco's WebView2 frequently pops and logs EventID 301
@@ -1995,6 +2059,30 @@ try {
         if ($remainingSiteMs -lt 1000) { break }
         $siteTimeoutSec = [math]::Max(1, [math]::Min($BaseSiteTimeoutSec, [math]::Floor($remainingSiteMs / 1000)))
         if (Test-SiteReachability -TimeoutSec $siteTimeoutSec) {
+            # RC2.0.4: connectivity alone is not "the portal cleared" if the user left the network the portal was on
+            # (e.g. hopped to a hotspot). Compare with the network at detection before calling it native resolution.
+            $nowCtx = Get-BaseCapNetworkContext
+            $netChange = Test-BaseCapNetworkChanged -DispatchContext $dispatchContext -StartContext $netCtx -CurrentContext $nowCtx
+            if ($netChange.Changed) {
+                Write-BaseCapLog ("network_changed_before_portal_cleared reason='{0}' old_ssid='{1}' new_ssid='{2}' old_gw='{3}' new_gw='{4}' - NOT reporting native_resolution" -f `
+                    $netChange.Reason, $netChange.OldSsid, $netChange.NewSsid, $netChange.OldGw, $netChange.NewGw) "WARN"
+                $networkChangedAbandon = $true
+                $abandonSsid = if (-not [string]::IsNullOrWhiteSpace($netChange.OldSsid)) { $netChange.OldSsid } else { $telemetrySsid }
+                Write-CompletionFlag -Status "NETWORK_CHANGED" -Details ("User left the portal network ({0}): {1} -> {2}" -f $netChange.Reason, $netChange.OldSsid, $netChange.NewSsid) -CaptiveBrowserPID 0 -PreflightObservation $basePreflightObservation
+                Write-BaseCapOutcomeTelemetry -Action 'cap_portal_remediation_failed' `
+                    -Url (Get-BaseCapTelemetryUrl -Url $portalUrl -Protocol $portalProtocol -Fqdn $portalFQDN -WebHelperNavigatedUrl $webHelperNavigationUrl -PreflightRedirectUrl $basePreflightObservation.redirect_url) `
+                    -Port $(if ($portalPort -gt 0) { "$portalPort" } else { "" }) `
+                    -PortalType $portalTypeValue `
+                    -Status 'abandoned' `
+                    -Reason 'network_changed_before_portal_cleared' `
+                    -Ssid $abandonSsid `
+                    -VpnState $vpnState `
+                    -Ip $netCtx.ip `
+                    -Gw $netCtx.gw `
+                    -Dns $netCtx.dns
+                Write-BaseCapRunnerLifecycleTelemetry -Action 'flare_runner_completed' -Status 'abandoned' -Reason 'network_changed_before_portal_cleared' -NetworkContext $netCtx -VpnState $vpnState -DurationSec ([string][math]::Round(((Get-Date) - $startTime).TotalSeconds))
+                break
+            }
             Write-BaseCapLog "Connectivity confirmed after ${elapsed}s - Cisco client resolved captive portal natively" "INFO"
             # Normalized telemetry URL/port are derived BEFORE the legacy
             # "unknown" placeholders below are applied, so a normalized row
@@ -2056,7 +2144,7 @@ try {
         if ($sleepMs -gt 0) { Start-Sleep -Milliseconds $sleepMs }
     }
 
-    if (-not $observed) {
+    if (-not $observed -and -not $networkChangedAbandon) {
         $elapsed = [math]::Round(((Get-Date) - $startTime).TotalSeconds)
         Write-BaseCapLog "Observation window expired after ${elapsed}s - native resolution did not complete" "WARN"
         Reset-BaseCapVpnStateCache
@@ -2128,8 +2216,8 @@ try {
     # Required F: clear the handoff artifact promptly so the next run sees
     # reality instead of this run's SSID/IP/gateway. It is intentionally kept
     # when Base escalated, because the full runner still has to consume it.
-    if ($observed -or -not $BaseAllowFullEscalation) {
-        Clear-BaseRemediationState -Reason $(if ($observed) { 'base_observed_resolution' } else { 'base_observe_only_timeout' })
+    if ($observed -or $networkChangedAbandon -or -not $BaseAllowFullEscalation) {
+        Clear-BaseRemediationState -Reason $(if ($observed) { 'base_observed_resolution' } elseif ($networkChangedAbandon) { 'base_network_changed' } else { 'base_observe_only_timeout' })
     } else {
         Write-BaseCapLog "Remediation state artifact retained for the escalated full runner" "INFO"
     }

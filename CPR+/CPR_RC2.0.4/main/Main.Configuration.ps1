@@ -438,6 +438,13 @@ $HardcodedTrustedSsids       = @('WLANi03')   # fast path - no file I/O
 $ZpaDetectEnabled   = $true
 $ZpaNetworks        = @('100.64.0.0/10')   # IPv4 CIDRs assigned to ZPA (consumer: MAIN, Get-CprZpaSignal)
 $ZpaResolveTimeoutMs = 1500
+
+# SSID cross-check (RC2.0.4). Right after a Wi-Fi roam, 'netsh wlan show interfaces' can keep reporting the OLD SSID for a
+# while (seen: Delta Sky Club -> hotspot, new IP/gateway but old SSID on rows). WLAN-AutoConfig event 8001 is written at
+# association time with the SSID and interface GUID, so when the newest 8001 for this adapter (not older than
+# $SsidCrosscheckMaxAgeSec) names a different SSID than netsh, the event wins. One bounded event-log read, cached ~10 s.
+$SsidCrosscheckEnabled   = $true
+$SsidCrosscheckMaxAgeSec = 900
 $TrustedSsidEnabled          = $true           # set $false to bypass SSID check entirely
 $TrustedSsidSyncEnabled      = $true           # set $false to disable NETLOGON sync
 $TrustedSsidSyncCooldownHours = 4              # min hours between NETLOGON syncs

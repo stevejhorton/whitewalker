@@ -121,3 +121,7 @@ The `needle_hit` query includes DEFENDER-only `rule_match` and `rule_state`
 because those are emitted today even though they are recorded as known schema
 drift in `docs/cpr_field_catalog.md`. Legacy rows use `ts`; normalized rows use
 `EvtTime`.
+
+index=cba_cpr_logging NOT "send string" action="ssid_crosscheck_override" | table EvtTime,machine,user,netsh_ssid,ssid,event_age_sec,adapter | sort - EvtTime
+
+index=cba_cpr_logging NOT "send string" action="cap_portal_remediation_failed" reason="network_changed_before_portal_cleared" | table EvtTime,machine,user,ssid,vpn_state,url | sort - EvtTime

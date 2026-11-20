@@ -141,6 +141,9 @@ Actions: `ise_posture_redirect`, `ise_posture_compliant`,
 
 * `vpn_disconnect_forced`: common fields plus `reason` and `vpn_state_was`
 (the previous VPN state).
+* `ssid_crosscheck_override`: common fields plus `ssid` (the SSID CPR used), `netsh_ssid` (what netsh reported), `event_age_sec`, `adapter`, `ssid_source` (`event_8001`).
+Written (L1) when `netsh wlan show interfaces` named a different SSID than the newest WLAN-AutoConfig event 8001 for the same adapter (stale after a Wi-Fi roam). Rare; cost is one bounded event-log read, cached ~10 s.
+* `cap_portal_remediation_failed` also carries `status=abandoned`, `reason=network_changed_before_portal_cleared` (base runner): the user left the network the portal was detected on, so connectivity on the new network is NOT reported as `native_resolution`. `ssid` is the portal network's.
 * `zpa_detected`: common fields plus `gw_host`, `resolved_ip`, `matched_net`, `ssid`, `connection_type`, `ssid_trusted`, `resulting_state`.
 Written (L1) when DC is reachable with no VPN and the preflight host resolves into a `$ZpaNetworks` range (Zscaler ZPA). `resulting_state` is what CPR decided anyway (`on_prem` or `off_prem_no_vpn`); ZPA never changes it.
 * `vpn_profile_missing`: common fields; no action-specific fields.

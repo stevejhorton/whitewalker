@@ -2,6 +2,71 @@
 # Depends on: Main.Logging.ps1 and Main.Configuration.ps1.
 
 # ---------------------- Connectivity & Redirect Checks -----------------------
+function Get-CprWlanConnectEvent {
+    <#
+    .SYNOPSIS
+    Newest WLAN-AutoConfig event 8001 (connected) for an interface GUID within MaxAgeSec, or $null. Never throws.
+    Returns @{ Ssid; Time; Guid }. Cached for 10 s per GUID in $script:CprWlanEventCache.
+    #>
+    param([string]$InterfaceGuid, [int]$MaxAgeSec = 900)
+    try {
+        $g = ([string]$InterfaceGuid).Trim().Trim('{}').ToLowerInvariant()
+        if (-not $g) { return $null }
+        if ($null -eq $script:CprWlanEventCache) { $script:CprWlanEventCache = @{} }
+        $c = $script:CprWlanEventCache[$g]
+        if ($c -and ((Get-Date) - $c.At).TotalSeconds -lt 10) { return $c.Value }
+        $filter = @{ LogName = 'Microsoft-Windows-WLAN-AutoConfig/Operational'; Id = 8001; StartTime = (Get-Date).AddSeconds(-$MaxAgeSec) }
+        $events = @(Get-WinEvent -FilterHashtable $filter -MaxEvents 10 -ErrorAction Stop)
+        $found = $null
+        foreach ($e in $events) {
+            $xml = [string]$e.ToXml()
+            $m = [regex]::Match($xml, "<Data Name=['""]InterfaceGuid['""]>\{?([0-9a-fA-F-]+)\}?</Data>")
+            if (-not $m.Success -or $m.Groups[1].Value.ToLowerInvariant() -ne $g) { continue }
+            $s = [regex]::Match($xml, "<Data Name=['""]SSID['""]>(.*?)</Data>")
+            if (-not $s.Success) { continue }
+            $found = [pscustomobject]@{ Ssid = [System.Net.WebUtility]::HtmlDecode($s.Groups[1].Value).Trim(); Time = [datetime]$e.TimeCreated; Guid = $g }
+            break
+        }
+        $script:CprWlanEventCache[$g] = @{ At = (Get-Date); Value = $found }
+        return $found
+    } catch {
+        # NoMatchingEventsFound / log missing / access: nothing to cross-check with
+        return $null
+    }
+}
+
+function Resolve-CprWlanSsid {
+    <#
+    .SYNOPSIS
+    Returns the SSID to trust: the netsh value, unless the newest 8001 connect event for the same adapter (within
+    $SsidCrosscheckMaxAgeSec) names a different SSID, in which case the event wins and one ssid_crosscheck_override
+    tee row is written. Never throws; falls back to the netsh value.
+    #>
+    param([string]$NetshSsid, [string]$InterfaceGuid, [string]$AdapterName = '')
+    $enabled = $true
+    try { $v = Get-Variable -Name SsidCrosscheckEnabled -ValueOnly -ErrorAction Stop; if ($null -ne $v) { $enabled = [bool]$v } } catch { }
+    if (-not $enabled -or [string]::IsNullOrWhiteSpace($NetshSsid) -or [string]::IsNullOrWhiteSpace($InterfaceGuid)) { return $NetshSsid }
+    try {
+        $maxAge = 900
+        try { $mv = Get-Variable -Name SsidCrosscheckMaxAgeSec -ValueOnly -ErrorAction Stop; if ($mv) { $maxAge = [int]$mv } } catch { }
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $ev = Get-CprWlanConnectEvent -InterfaceGuid $InterfaceGuid -MaxAgeSec $maxAge
+        $ms = [math]::Round($sw.Elapsed.TotalMilliseconds)
+        if ($null -eq $ev -or [string]::IsNullOrWhiteSpace($ev.Ssid) -or $ev.Ssid -eq $NetshSsid) {
+            Write-Log ("phase_timing phase='ssid_crosscheck' elapsed_ms={0} result='{1}'" -f $ms, $(if ($null -eq $ev) { 'no_event' } else { 'match' })) "DEBUG"
+            return $NetshSsid
+        }
+        $age = [math]::Round(((Get-Date) - $ev.Time).TotalSeconds)
+        Write-Log ("ssid_crosscheck netsh='{0}' event_8001='{1}' event_age_s={2} using='event_8001' adapter='{3}' elapsed_ms={4}" -f $NetshSsid, $ev.Ssid, $age, $AdapterName, $ms) "WARN"
+        try {
+            Write-TeeLog 'ssid_crosscheck_override' @{
+                ssid = $ev.Ssid; netsh_ssid = $NetshSsid; event_age_sec = "$age"; adapter = $AdapterName; ssid_source = 'event_8001'
+            }
+        } catch { }
+        return $ev.Ssid
+    } catch { return $NetshSsid }
+}
+
 function Get-WlanSsidForAdapter {
     <#
     .SYNOPSIS
@@ -48,7 +113,10 @@ function Get-WlanSsidForAdapter {
                 $ssidCandidate -ne "Identifying..." -and
                 $ssidCandidate.Length -gt 0) {
                 Write-Log "WiFi SSID detected on '$AdapterName': $ssidCandidate" "DEBUG"
-                return $ssidCandidate
+                # RC2.0.4: netsh can lag after a roam; cross-check with the newest WLAN-AutoConfig 8001 for this adapter.
+                $ifGuid = ''
+                if ($block -match '(?m)^\s*GUID\s*:\s*\{?([0-9a-fA-F-]{36})\}?') { $ifGuid = $matches[1] }
+                return (Resolve-CprWlanSsid -NetshSsid $ssidCandidate -InterfaceGuid $ifGuid -AdapterName $AdapterName)
             } else {
                 Write-Log "SSID validation failed: '$ssidCandidate' - may be transient state or VPN interface" "DEBUG"
             }

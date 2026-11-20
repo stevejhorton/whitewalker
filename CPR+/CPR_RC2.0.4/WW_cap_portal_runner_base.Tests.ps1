@@ -309,7 +309,7 @@ Describe "WW_cap_portal_runner_base.ps1 RC1.25 - normalized telemetry context" {
             }
 
             It 'emits one final no-observation outcome outside the polling loop' {
-                $timeoutIndex = $script:rawSource.IndexOf('if (-not $observed)')
+                $timeoutIndex = $script:rawSource.IndexOf('if (-not $observed -and -not $networkChangedAbandon)')
                 $timeoutIndex | Should -BeGreaterThan 0
                 $missingIndex = $script:rawSource.IndexOf('Get-BaseCapMissingNavigationOutcome', $timeoutIndex)
                 $missingIndex | Should -BeGreaterThan $timeoutIndex

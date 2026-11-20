@@ -759,3 +759,20 @@ off_prem_no_vpn, so its logs queued and it never self-updated.  Now, when a run 
 branch, state.json also records dcReachableNoVpn=true on that state.  The drain gate (Test-SyslogReachable) and the
 self-update gate treat off_prem_no_vpn + dcReachableNoVpn as reachable for 60 minutes after currentStateTime.
 currentState, the flares and the on_prem / off_prem_no_vpn decision are unchanged.
+
+STALE SSID AFTER A WI-FI ROAM / "PORTAL PASSED" AFTER LEAVING THE PORTAL NETWORK (RC2.0.4)
+Seen: a user on a portal network (no lease) hopped to a hotspot.  Rows carried the hotspot's IP/gateway/DNS but the OLD
+SSID, and the base runner reported cap_portal_remediation_passed / native_resolution although the portal never cleared.
+1. 'netsh wlan show interfaces' can keep the old SSID after a roam.  Get-WlanSsidForAdapter now cross-checks with the
+   newest WLAN-AutoConfig event 8001 (written at association, carries the interface GUID and SSID) for the same adapter,
+   not older than $SsidCrosscheckMaxAgeSec (900).  If they differ the event wins, one ssid_crosscheck_override tee row is
+   written and the log shows "ssid_crosscheck netsh=... event_8001=...".  $SsidCrosscheckEnabled=$false turns it off.
+   Cost: one Get-WinEvent -MaxEvents 10, cached ~10 s; log marker phase_timing phase='ssid_crosscheck'.  The base runner
+   has its own copy (Get-BaseCapWlanEventSsid) because it shares no code with WW_main.
+2. Before reporting native_resolution the base runner re-reads its network context and compares it with Main's dispatch
+   context (ssid/gw at detection) and its own start context (ssid/gw/adapter).  A different gateway, SSID or adapter means
+   the user left the portal network: it writes cap_portal_remediation_failed status=abandoned
+   reason=network_changed_before_portal_cleared (ssid = the portal network), completion flag NETWORK_CHANGED, and does not
+   escalate to the full runner.  Empty values never count, so a lease that merely arrived late is not a change.
+UNVERIFIED on a real box: the event 8001 field names (InterfaceGuid, SSID).  Check with
+  Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-WLAN-AutoConfig/Operational';Id=8001} -MaxEvents 1 | % ToXml

@@ -165,6 +165,13 @@
                     # expired, wake-from-sleep intermediate-state timeout, etc.)
                 }
 
+                ssid_crosscheck_override = @{
+                    action = 'ssid_crosscheck_override'
+                    fields = @('ssid','netsh_ssid','event_age_sec','adapter','ssid_source')
+                    # Fires when: 'netsh wlan show interfaces' reported a different SSID than the newest WLAN-AutoConfig
+                    # event 8001 for the same adapter (stale after a roam). ssid = the event's SSID (the one CPR used).
+                }
+
                 zpa_detected = @{
                     action = 'zpa_detected'
                     fields = @('gw_host','resolved_ip','matched_net','ssid','connection_type','ssid_trusted','resulting_state')
